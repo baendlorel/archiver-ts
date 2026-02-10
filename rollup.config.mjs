@@ -23,7 +23,7 @@ export default {
     replace({
       preventAssignment: true,
       values: {
-        __ARV_DIR__: `join(homedir(), '.archiver')`,
+        'process.env.NODE_ENV': `production`,
       },
     }),
     resolve({ preferBuiltins: true }),

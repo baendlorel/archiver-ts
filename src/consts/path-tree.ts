@@ -1,7 +1,12 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const root = join(process.env.ARCHIVER_DIR_PARENT ?? homedir(), '.archiver');
+const getRoot = () => {
+  const prodHome = process.env.ARCHIVER_PATH ?? join(homedir(), '.archiver');
+  return process.env.NODE_ENV === 'production' ? prodHome : join(process.cwd(), '.archiver');
+};
+
+const root = getRoot();
 const core = join(root, 'core');
 
 export namespace Paths {

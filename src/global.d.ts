@@ -1,9 +1,5 @@
 import type { VaultStatus, ArchiveStatus, CheckIssueLevel } from './consts/enums.js';
 
-declare global {
-  const __ARV_DIR__: string;
-}
-
 export interface ListEntry {
   archivedAt: string;
   status: ArchiveStatus;
