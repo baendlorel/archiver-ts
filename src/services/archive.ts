@@ -7,7 +7,7 @@ import { ArchiveStatus, Paths } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
-import { ConfigService } from './config.service.js';
+import { ConfigService } from './config.js';
 import { AuditLogger } from './audit-logger.js';
 
 interface PutPreparedItem {
