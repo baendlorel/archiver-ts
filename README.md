@@ -112,7 +112,7 @@ Aliases:
 ### Query & Logs
 
 ```bash
-archiver list [--restored] [--all] [--vault <vault>]
+archiver list [--restored] [--all] [--vault <vault>] [--no-interactive]
 archiver log [range]
 archiver log --id <log-id>
 ```
@@ -127,6 +127,14 @@ Aliases:
 
 - `list`: `l`, `ls`
 - `log`: `lg`
+
+`list` interactive mode (TTY terminals):
+
+- `Up` / `Down`: select archive entry
+- `Left` / `Right`: choose action (`Enter slot` / `Restore`)
+- `Enter`: confirm selected action
+- `q` / `Esc`: cancel
+- Use `--no-interactive` to force plain-table output
 
 ### Config
 
@@ -155,7 +163,7 @@ Aliases:
 
 ## Update Checks
 
-Automatic update checks are enabled by default (`config.update_check = on`) and only run for non-display workflows. Display-only commands (`update`, `list`, `log`, `check`) do not trigger auto checks.
+Automatic update checks are enabled by default (`config.update_check = on`) and only run for non-display workflows. Display-only commands (`update`, `list`, `log`, `check`) do not trigger auto checks unless `list` executes a restore action in interactive mode.
 
 Set `ARCHIVER_GITHUB_REPO` to control release source for update checks.
 

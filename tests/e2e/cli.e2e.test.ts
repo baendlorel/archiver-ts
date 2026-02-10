@@ -62,4 +62,22 @@ describe('cli e2e', () => {
     const cdOutput = run(['cd', '1', '--print'], { cwd: projectDir, env });
     expect(cdOutput.trim()).toBe(path.join(customRoot, 'vaults', '0', '1'));
   });
+
+  it('prints a plain table for list in non-interactive mode', () => {
+    const projectDir = mkTempDir('archiver-e2e-list-');
+    const filePath = path.join(projectDir, 'list-file.txt');
+    fs.writeFileSync(filePath, 'list data\n', 'utf8');
+
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['put', filePath], { cwd: projectDir, env });
+
+    const output = run(['list'], { cwd: projectDir, env });
+    expect(output).toContain('ID');
+    expect(output).toContain('Vault');
+    expect(output).toContain('list-file.txt');
+  });
 });

@@ -131,10 +131,11 @@ export function renderTable(headers: string[], rows: string[][]): string {
 }
 
 export function styleArchiveStatus(status: string): string {
-  if (status === 'A') {
+  const normalized = status.toLowerCase();
+  if (status === 'A' || normalized === 'archived') {
     return chalk.green(status);
   }
-  if (status === 'R') {
+  if (status === 'R' || normalized === 'restored') {
     return chalk.gray(status);
   }
   return status;

@@ -1,10 +1,9 @@
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import type { Command } from 'commander';
 import type { CommandContext } from '../services/context.js';
 import { parseIdList } from '../utils/parse.js';
-import { error, info, success, warn } from '../utils/terminal.js';
-import { maybeAutoUpdateCheck, runAction, shellQuote, summarizeBatch } from './command-utils.js';
+import { error, success } from '../utils/terminal.js';
+import { openSubshellAtPath } from './cd-shell.js';
+import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 
 export function registerArchiveCommands(program: Command, ctx: CommandContext): void {
   program
@@ -96,29 +95,7 @@ export function registerArchiveCommands(program: Command, ctx: CommandContext): 
           { aid: resolved.archiveId, vid: resolved.vault.id },
         );
 
-        if (options.print || !process.stdin.isTTY || !process.stdout.isTTY) {
-          console.log(resolved.slotPath);
-          return;
-        }
-
-        info(`Opening subshell in ${shellQuote(resolved.slotPath)}. Type 'exit' to return.`);
-
-        const shell =
-          process.env.SHELL ?? (process.platform === 'win32' ? (process.env.COMSPEC ?? 'cmd.exe') : '/bin/bash');
-
-        const child = spawn(shell, {
-          cwd: resolved.slotPath,
-          stdio: 'inherit',
-        });
-
-        const [exitCode, signal] = (await once(child, 'exit')) as [number | null, NodeJS.Signals | null];
-        if (signal) {
-          warn(`Subshell exited with signal ${signal}.`);
-          return;
-        }
-        if (exitCode !== null && exitCode !== 0) {
-          process.exitCode = exitCode;
-        }
+        await openSubshellAtPath(resolved.slotPath, { print: options.print });
       }),
     );
 }

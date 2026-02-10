@@ -1,4 +1,6 @@
+// @ts-check
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { builtinModules } from 'node:module';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -11,29 +13,34 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const deps = Object.keys(pkg.dependencies ?? {});
 const builtins = new Set([...builtinModules, ...builtinModules.map((name) => `node:${name}`)]);
 
-export default {
-  input: 'src/index.ts',
-  output: {
-    file: 'dist/index.js',
-    format: 'esm',
-    sourcemap: true,
-    banner: '#!/usr/bin/env node',
+/**
+ * @type {import('rollup').RollupOptions[]}
+ */
+export default [
+  {
+    input: 'src/index.ts',
+    output: {
+      file: 'dist/index.js',
+      format: 'esm',
+      sourcemap: true,
+      banner: '#!/usr/bin/env node',
+    },
+    external: (id) => builtins.has(id) || deps.includes(id),
+    plugins: [
+      alias({
+        entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
+      }),
+      replace({
+        preventAssignment: true,
+        values: {
+          'process.env.NODE_ENV': JSON.stringify(`production`),
+          __VERSION__: JSON.stringify(pkg.version),
+        },
+      }),
+      resolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({ tsconfig: './tsconfig.json', declaration: false, declarationMap: false }),
+    ],
   },
-  external: (id) => builtins.has(id) || deps.includes(id),
-  plugins: [
-    alias({
-      entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
-    }),
-    replace({
-      preventAssignment: true,
-      values: {
-        'process.env.NODE_ENV': `production`,
-        __VERSION__: JSON.stringify(pkg.version),
-      },
-    }),
-    resolve({ preferBuiltins: true }),
-    commonjs(),
-    json(),
-    typescript({ tsconfig: './tsconfig.json', declaration: false, declarationMap: false }),
-  ],
-};
+];
