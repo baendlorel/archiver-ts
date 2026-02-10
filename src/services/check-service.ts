@@ -159,7 +159,8 @@ export class CheckService {
       const restorePath = path.join(entry.d, entry.i);
 
       if (entry.st === 'A') {
-        if (!(await pathAccessible(archivePath))) {
+        const location = await this.context.resolveArchiveStorageLocation(entry);
+        if (!location) {
           pushIssue(
             report.issues,
             'ERROR',
@@ -167,7 +168,7 @@ export class CheckService {
             `Archive id ${entry.id} is marked archived but object is missing: ${archivePath}`,
           );
         } else {
-          const archiveStats = await safeLstat(archivePath);
+          const archiveStats = await safeLstat(location.objectPath);
           if (archiveStats) {
             const actualIsDir = archiveStats.isDirectory();
             const expectedIsDir = entry.is_d === 1;

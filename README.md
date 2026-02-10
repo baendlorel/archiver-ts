@@ -9,6 +9,7 @@ A TypeScript rebuild of the `archiver` CLI.
 - `put <items...>`: archive files/folders into the current or specified vault
 - `restore <ids...>`: restore archived items back to original paths
 - `move <ids...> --to <vault>`: move archived objects between vaults
+- `cd <id | vault/id>`: jump to an archive slot folder for inspection
 - `vault`: manage vaults (`use`, `create`, `remove`, `recover`, `rename`, `list`)
 - `list`: query archive records by state and vault
 - `log`: inspect operation logs by range or log id
@@ -31,7 +32,8 @@ The storage layout is intentionally compatible with the original behavior descri
     vaults.jsonl
   vaults/
     <vaultId>/
-      <archiveId>
+      <archiveId>/
+        <originalName>
 ```
 
 Important compatibility points:
@@ -69,6 +71,7 @@ node dist/index.js --help
 archiver put <items...> [-v|--vault <vault>] [-m|--message <msg>] [-r|--remark <remark>]
 archiver restore <ids...>
 archiver move <ids...> --to <vault>
+archiver cd <archive-id | vault/archive-id> [--print]
 ```
 
 Aliases:
@@ -76,6 +79,12 @@ Aliases:
 - `put`: `p`
 - `restore`: `r`, `rst`
 - `move`: `m`, `mv`, `mov`
+- `cd`: (no short alias)
+
+`cd` behavior:
+
+- In interactive terminals, opens a subshell in the archive slot directory.
+- With `--print` (or non-interactive stdout), prints the slot path only.
 
 ### Vault Management
 

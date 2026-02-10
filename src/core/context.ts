@@ -14,7 +14,7 @@ import {
   VAULTS_FILE,
 } from '../constants.js';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
-import { ensureDir, ensureFile, pathAccessible } from '../utils/fs.js';
+import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
@@ -262,6 +262,48 @@ export class ArchiverContext {
 
   archivePath(vaultId: number, archiveId: number): string {
     return path.join(this.vaultDir(vaultId), String(archiveId));
+  }
+
+  archiveObjectPath(vaultId: number, archiveId: number, itemName: string): string {
+    return path.join(this.archivePath(vaultId, archiveId), itemName);
+  }
+
+  async resolveArchiveStorageLocation(entry: Pick<ListEntry, 'vid' | 'id' | 'i'>): Promise<
+    | {
+        slotPath: string;
+        objectPath: string;
+        layout: 'slot' | 'legacy';
+      }
+    | undefined
+  > {
+    const slotPath = this.archivePath(entry.vid, entry.id);
+    const slotStats = await safeLstat(slotPath);
+    if (!slotStats) {
+      return undefined;
+    }
+
+    if (!slotStats.isDirectory()) {
+      return {
+        slotPath,
+        objectPath: slotPath,
+        layout: 'legacy',
+      };
+    }
+
+    const expectedObjectPath = this.archiveObjectPath(entry.vid, entry.id, entry.i);
+    if (await pathAccessible(expectedObjectPath)) {
+      return {
+        slotPath,
+        objectPath: expectedObjectPath,
+        layout: 'slot',
+      };
+    }
+
+    return {
+      slotPath,
+      objectPath: slotPath,
+      layout: 'legacy',
+    };
   }
 
   async ensureVaultDir(vaultId: number): Promise<void> {

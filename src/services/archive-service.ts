@@ -41,6 +41,14 @@ export interface ListOptions {
   vault?: string;
 }
 
+export interface ArchiveCdTarget {
+  vault: Vault;
+  archiveId: number;
+  slotPath: string;
+}
+
+type ArchiveStorageLocation = NonNullable<Awaited<ReturnType<ArchiverContext['resolveArchiveStorageLocation']>>>;
+
 export class ArchiveService {
   constructor(
     private readonly context: ArchiverContext,
@@ -63,7 +71,7 @@ export class ArchiveService {
 
     for (const item of prepared) {
       const archiveId = await this.context.nextAutoIncrement('archive_id');
-      const archivePath = this.context.archivePath(vault.id, archiveId);
+      const archiveSlotPath = this.context.archivePath(vault.id, archiveId);
       const entry: ListEntry = {
         aat: formatDateTime(),
         st: 'A',
@@ -77,11 +85,20 @@ export class ArchiveService {
       };
 
       try {
-        if (await pathAccessible(archivePath)) {
-          throw new Error(`Archive slot already exists: ${archivePath}`);
+        if (await pathAccessible(archiveSlotPath)) {
+          throw new Error(`Archive slot already exists: ${archiveSlotPath}`);
         }
 
-        await fs.rename(item.resolvedPath, archivePath);
+        await fs.mkdir(archiveSlotPath, { recursive: false });
+        const archiveObjectPath = this.context.archiveObjectPath(vault.id, archiveId, entry.i);
+
+        try {
+          await fs.rename(item.resolvedPath, archiveObjectPath);
+        } catch (error) {
+          await fs.rmdir(archiveSlotPath).catch(() => undefined);
+          throw error;
+        }
+
         await this.context.appendListEntry(entry);
 
         await this.logger.log(
@@ -163,12 +180,12 @@ export class ArchiveService {
         continue;
       }
 
-      const sourcePath = this.context.archivePath(entry.vid, entry.id);
+      const location = await this.context.resolveArchiveStorageLocation(entry);
       const targetPath = path.join(entry.d, entry.i);
 
       try {
-        if (!(await pathAccessible(sourcePath))) {
-          throw new Error(`Archive object is missing: ${sourcePath}`);
+        if (!location) {
+          throw new Error(`Archive object is missing: ${this.context.archivePath(entry.vid, entry.id)}`);
         }
 
         if (await pathAccessible(targetPath)) {
@@ -176,7 +193,17 @@ export class ArchiveService {
         }
 
         await fs.mkdir(entry.d, { recursive: true });
-        await fs.rename(sourcePath, targetPath);
+        await fs.rename(location.objectPath, targetPath);
+
+        if (location.layout === 'slot') {
+          await fs.rmdir(location.slotPath).catch((error) => {
+            const code = (error as NodeJS.ErrnoException).code;
+            if (code === 'ENOENT' || code === 'ENOTEMPTY') {
+              return;
+            }
+            throw error;
+          });
+        }
 
         entry.st = 'R';
         changed = true;
@@ -245,6 +272,7 @@ export class ArchiveService {
 
     const entries = await this.context.loadListEntries();
     const entryMap = new Map<number, ListEntry>(entries.map((entry) => [entry.id, entry]));
+    const locationMap = new Map<number, ArchiveStorageLocation>();
 
     for (const id of ids) {
       const entry = entryMap.get(id);
@@ -258,14 +286,17 @@ export class ArchiveService {
         throw new Error(`Archive id ${id} is already in vault ${targetVault.n}.`);
       }
 
-      const source = this.context.archivePath(entry.vid, entry.id);
+      const location = await this.context.resolveArchiveStorageLocation(entry);
+      const source = location?.slotPath ?? this.context.archivePath(entry.vid, entry.id);
       const target = this.context.archivePath(targetVault.id, entry.id);
-      if (!(await pathAccessible(source))) {
+      if (!location) {
         throw new Error(`Archive object is missing: ${source}`);
       }
       if (await pathAccessible(target)) {
         throw new Error(`Target archive slot exists: ${target}`);
       }
+
+      locationMap.set(id, location);
     }
 
     const result: BatchResult = { ok: [], failed: [] };
@@ -277,12 +308,35 @@ export class ArchiveService {
         continue;
       }
 
-      const source = this.context.archivePath(entry.vid, entry.id);
+      const location = locationMap.get(id);
+      if (!location) {
+        result.failed.push({
+          id,
+          input: String(id),
+          success: false,
+          message: 'Archive object is missing.',
+        });
+        continue;
+      }
+
+      const source = location.slotPath;
       const target = this.context.archivePath(targetVault.id, entry.id);
       const fromVaultId = entry.vid;
 
       try {
-        await fs.rename(source, target);
+        if (location.layout === 'slot') {
+          await fs.rename(source, target);
+        } else {
+          await fs.mkdir(target, { recursive: false });
+          const targetObjectPath = this.context.archiveObjectPath(targetVault.id, entry.id, entry.i);
+          try {
+            await fs.rename(location.objectPath, targetObjectPath);
+          } catch (error) {
+            await fs.rmdir(target).catch(() => undefined);
+            throw error;
+          }
+        }
+
         entry.vid = targetVault.id;
         changed = true;
 
@@ -332,6 +386,64 @@ export class ArchiveService {
     }
 
     return result;
+  }
+
+  async resolveCdTarget(target: string): Promise<ArchiveCdTarget> {
+    const trimmed = target.trim();
+    if (!trimmed) {
+      throw new Error('Target cannot be empty.');
+    }
+
+    const { vaultRef, archiveId } = this.parseCdTarget(trimmed);
+    const entries = await this.context.loadListEntries();
+    const entry = entries.find((item) => item.id === archiveId);
+
+    if (!entry) {
+      throw new Error(`Archive id ${archiveId} does not exist.`);
+    }
+
+    if (entry.st !== 'A') {
+      throw new Error(`Archive id ${archiveId} is restored and has no active slot.`);
+    }
+
+    if (vaultRef !== undefined) {
+      const requestedVault = await this.context.resolveVault(vaultRef, {
+        includeRemoved: true,
+        fallbackCurrent: false,
+      });
+
+      if (!requestedVault) {
+        throw new Error(`Vault not found: ${vaultRef}`);
+      }
+
+      if (requestedVault.id !== entry.vid) {
+        throw new Error(`Archive id ${archiveId} is in vault ${entry.vid}, not ${requestedVault.id}.`);
+      }
+    }
+
+    const vault = await this.context.resolveVault(entry.vid, {
+      includeRemoved: true,
+      fallbackCurrent: false,
+    });
+
+    if (!vault) {
+      throw new Error(`Vault ${entry.vid} for archive id ${archiveId} does not exist.`);
+    }
+
+    const slotPath = this.context.archivePath(entry.vid, entry.id);
+    const stats = await safeLstat(slotPath);
+    if (!stats) {
+      throw new Error(`Archive slot is missing: ${slotPath}`);
+    }
+    if (!stats.isDirectory()) {
+      throw new Error(`Archive slot is a file in legacy layout and cannot be entered: ${slotPath}`);
+    }
+
+    return {
+      vault,
+      archiveId,
+      slotPath,
+    };
   }
 
   async listEntries(options: ListOptions): Promise<ListEntry[]> {
@@ -403,6 +515,34 @@ export class ArchiveService {
     }
 
     return vault;
+  }
+
+  private parseCdTarget(target: string): { vaultRef?: string; archiveId: number } {
+    const slashIndex = target.lastIndexOf('/');
+    if (slashIndex === -1) {
+      if (!/^\d+$/.test(target)) {
+        throw new Error(`Invalid target '${target}'. Use '<archive-id>' or '<vault>/<archive-id>'.`);
+      }
+      return {
+        archiveId: Number(target),
+      };
+    }
+
+    const vaultRef = target.slice(0, slashIndex).trim();
+    const archiveIdText = target.slice(slashIndex + 1).trim();
+
+    if (!vaultRef) {
+      throw new Error(`Invalid target '${target}'. Vault name or id cannot be empty.`);
+    }
+
+    if (!/^\d+$/.test(archiveIdText)) {
+      throw new Error(`Invalid archive id in target '${target}'.`);
+    }
+
+    return {
+      vaultRef,
+      archiveId: Number(archiveIdText),
+    };
   }
 
   private async preValidatePutItems(items: string[]): Promise<PutPreparedItem[]> {

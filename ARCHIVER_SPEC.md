@@ -18,6 +18,7 @@ Core principle:
 - `put <items...>` (`p`)
 - `restore <ids...>` (`r`, `rst`)
 - `move <ids...> --to <vault>` (`m`, `mv`, `mov`)
+- `cd <archive-id | vault/archive-id>`
 - `vault <subcommand>` (`v`, `vlt`)
 - `list` (`l`, `ls`)
 - `log [range]` (`lg`)
@@ -38,11 +39,13 @@ Core principle:
     vaults.jsonl
   vaults/
     <vaultId>/
-      <archiveId>
+      <archiveId>/
+        <originalName>
 ```
 
 - Default vault is runtime-injected: name `@`, id `0`, protected.
-- Archived object path: `~/.archiver/vaults/<vaultId>/<archiveId>`.
+- Archive slot path: `~/.archiver/vaults/<vaultId>/<archiveId>`.
+- Archived object path: `~/.archiver/vaults/<vaultId>/<archiveId>/<originalName>`.
 
 ## Core Record Fields
 
@@ -93,6 +96,12 @@ Operation payload (`o`):
 - Validate each archive id and source/target slot existence.
 - Move archive object via `rename`.
 - Update `vid` and write audit log.
+
+### cd
+
+- Resolve `<archive-id>` globally or `<vault>/<archive-id>` explicitly.
+- Validate archive entry state and slot directory.
+- Open a subshell at the slot path (interactive), or print path in non-interactive mode.
 
 ### vault
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import path from 'node:path';
 import { Command } from 'commander';
 import {
@@ -45,6 +47,10 @@ interface CommandContext {
 
 function summarizeBatch(operationName: string, result: { ok: unknown[]; failed: unknown[] }): void {
   info(`${operationName}: ${result.ok.length} succeeded, ${result.failed.length} failed.`);
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`;
 }
 
 async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
@@ -188,6 +194,52 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         summarizeBatch('move', result);
 
         await maybeAutoUpdateCheck(ctx);
+      }),
+    );
+
+  program
+    .command('cd')
+    .description('Enter archived slot folder by <archive-id> or <vault>/<archive-id>')
+    .argument('<target>', 'Archive id, or vault/id')
+    .option('-p, --print', 'Print slot path only')
+    .action((target: string, options: { print?: boolean }) =>
+      runAction(async () => {
+        const resolved = await ctx.archiveService.resolveCdTarget(target);
+
+        await ctx.auditLogger.log(
+          'INFO',
+          {
+            m: 'cd',
+            a: [target],
+            sc: 'u',
+          },
+          `Open archive slot ${resolved.vault.id}/${resolved.archiveId}`,
+          { aid: resolved.archiveId, vid: resolved.vault.id },
+        );
+
+        if (options.print || !process.stdin.isTTY || !process.stdout.isTTY) {
+          console.log(resolved.slotPath);
+          return;
+        }
+
+        info(`Opening subshell in ${shellQuote(resolved.slotPath)}. Type 'exit' to return.`);
+
+        const shell =
+          process.env.SHELL ?? (process.platform === 'win32' ? process.env.COMSPEC ?? 'cmd.exe' : '/bin/bash');
+
+        const child = spawn(shell, {
+          cwd: resolved.slotPath,
+          stdio: 'inherit',
+        });
+
+        const [exitCode, signal] = (await once(child, 'exit')) as [number | null, NodeJS.Signals | null];
+        if (signal) {
+          warn(`Subshell exited with signal ${signal}.`);
+          return;
+        }
+        if (exitCode !== null && exitCode !== 0) {
+          process.exitCode = exitCode;
+        }
       }),
     );
 
