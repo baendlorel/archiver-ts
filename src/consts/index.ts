@@ -1,20 +1,8 @@
-import os from 'node:os';
-import path from 'node:path';
 import type { ArchiverConfig, AutoIncrVars, Vault } from '../global.js';
 import { VaultStatus } from './enums.js';
 
 export const APP_NAME = 'archiver';
 export const APP_DESCRIPTION = 'Archive files and folders into ~/.archiver with audit logs';
-
-export const ARCHIVER_ROOT = path.join(os.homedir(), '.archiver');
-export const CORE_DIR = path.join(ARCHIVER_ROOT, 'core');
-export const LOG_DIR = path.join(ARCHIVER_ROOT, 'logs');
-export const VAULT_DIR = path.join(ARCHIVER_ROOT, 'vaults');
-
-export const CONFIG_FILE = path.join(CORE_DIR, 'config.jsonc');
-export const AUTO_INCR_FILE = path.join(CORE_DIR, 'auto-incr.jsonc');
-export const LIST_FILE = path.join(CORE_DIR, 'list.jsonl');
-export const VAULTS_FILE = path.join(CORE_DIR, 'vaults.jsonl');
 
 export const DEFAULT_VAULT_ID = 0;
 export const DEFAULT_VAULT_NAME = '@';

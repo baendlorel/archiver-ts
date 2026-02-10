@@ -4,7 +4,7 @@ import { join } from 'node:path';
 const root = join(homedir(), '.archiver');
 const core = join(root, 'core');
 
-export const PathTree = {
+export const ArchiverTree = {
   directories: {
     root,
     core: join(root, 'core'),
@@ -15,6 +15,6 @@ export const PathTree = {
     config: join(core, 'config.jsonc'),
     autoIncr: join(core, 'auto-incr.json'),
     list: join(core, 'list.json'),
-    vaultsList: join(core, 'vaults.json'),
+    vaults: join(core, 'vaults.json'),
   },
 };

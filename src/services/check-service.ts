@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
+import { ArchiverTree } from '../consts/path-tree.js';
 import { DEFAULT_VAULT_ID } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import { listDirectories, pathAccessible, safeLstat } from '../utils/fs.js';
@@ -22,7 +23,7 @@ function findDuplicates(values: number[]): number[] {
   return [...duplicate].sort((a, b) => a - b);
 }
 
-function pushIssue(issues: CheckIssue[], level: CheckIssue['level'], code: string, message: string): void {
+function pushIssue(issues: CheckIssue[], level: CheckIssueLevel, code: string, message: string): void {
   issues.push({ level, code, message });
 }
 
@@ -58,14 +59,8 @@ export class CheckService {
 
   private async checkRequiredPaths(report: CheckReport): Promise<void> {
     const requiredPaths = [
-      this.context.rootDir,
-      this.context.coreDir,
-      this.context.logsDir,
-      this.context.vaultsDir,
-      this.context.configFile,
-      this.context.autoIncrFile,
-      this.context.listFile,
-      this.context.vaultsFile,
+      ...Object.values(ArchiverTree.directories),
+      ...Object.values(ArchiverTree.files),
       this.context.vaultDir(DEFAULT_VAULT_ID),
     ];
 
@@ -250,7 +245,7 @@ export class CheckService {
       entries.filter((entry) => entry.status === ArchiveStatus.Archived).map((entry) => `${entry.vaultId}/${entry.id}`),
     );
 
-    const vaultDirs = await listDirectories(this.context.vaultsDir);
+    const vaultDirs = await listDirectories(ArchiverTree.directories.vaults);
 
     for (const dirName of vaultDirs) {
       if (!/^\d+$/.test(dirName)) {
@@ -258,7 +253,7 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'NON_NUMERIC_VAULT_DIR',
-          `Unexpected non-numeric vault directory: ${path.join(this.context.vaultsDir, dirName)}`,
+          `Unexpected non-numeric vault directory: ${path.join(ArchiverTree.directories.vaults, dirName)}`,
         );
         continue;
       }
@@ -269,7 +264,7 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'ORPHAN_VAULT_DIR',
-          `Vault directory exists but no metadata: ${path.join(this.context.vaultsDir, dirName)}`,
+          `Vault directory exists but no metadata: ${path.join(ArchiverTree.directories.vaults, dirName)}`,
         );
       }
 
@@ -316,7 +311,7 @@ export class CheckService {
   }
 
   private async checkLogConsistency(report: CheckReport, logAutoIncr: number): Promise<void> {
-    const yearFiles = await fs.readdir(this.context.logsDir, { withFileTypes: true }).catch((error) => {
+    const yearFiles = await fs.readdir(ArchiverTree.directories.logs, { withFileTypes: true }).catch((error) => {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
       }
@@ -328,7 +323,7 @@ export class CheckService {
       if (!file.isFile() || !/^\d{4}\.jsonl$/.test(file.name)) {
         continue;
       }
-      const rows = await readJsonLinesFile<LogEntry>(path.join(this.context.logsDir, file.name));
+      const rows = await readJsonLinesFile<LogEntry>(path.join(ArchiverTree.directories.logs, file.name));
       logs.push(...rows);
     }
 

@@ -1,13 +1,14 @@
 import fs from 'node:fs/promises';
 import type { Stats } from 'node:fs';
 import path from 'node:path';
-import { ARCHIVER_ROOT } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, OperationSource, Vault } from '../global.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
 import { ConfigService } from './config-service.js';
 import { AuditLogger } from './audit-logger.js';
+import { ArchiveStatus } from '../consts/enums.js';
+import { ArchiverTree } from '../consts/path-tree.js';
 
 interface PutPreparedItem {
   input: string;
@@ -70,11 +71,11 @@ export class ArchiveService {
     const result: BatchResult = { ok: [], failed: [] };
 
     for (const item of prepared) {
-      const archiveId = await this.context.nextAutoIncrement('archive_id');
+      const archiveId = await this.context.nextAutoIncrement('archiveId');
       const archiveSlotPath = this.context.archivePath(vault.id, archiveId);
       const entry: ListEntry = {
         archivedAt: formatDateTime(),
-        status: 'A',
+        status: ArchiveStatus.Archived,
         isDirectory: item.stats.isDirectory() ? 1 : 0,
         vaultId: vault.id,
         id: archiveId,
@@ -161,7 +162,7 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.status !== 'A') {
+      if (entry.status !== ArchiveStatus.Archived) {
         throw new Error(`Archive id ${id} is already restored.`);
       }
     }
@@ -205,7 +206,7 @@ export class ArchiveService {
           });
         }
 
-        entry.status = 'R';
+        entry.status = ArchiveStatus.Restored;
         changed = true;
 
         await this.logger.log(
@@ -279,7 +280,7 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.status !== 'A') {
+      if (entry.status !== ArchiveStatus.Archived) {
         throw new Error(`Archive id ${id} has been restored and cannot be moved.`);
       }
       if (entry.vaultId === targetVault.id) {
@@ -402,7 +403,7 @@ export class ArchiveService {
       throw new Error(`Archive id ${archiveId} does not exist.`);
     }
 
-    if (entry.status !== 'A') {
+    if (entry.status !== ArchiveStatus.Archived) {
       throw new Error(`Archive id ${archiveId} is restored and has no active slot.`);
     }
 
@@ -452,9 +453,9 @@ export class ArchiveService {
     let filtered = entries;
     if (!options.all) {
       if (options.restored) {
-        filtered = filtered.filter((entry) => entry.status === 'R');
+        filtered = filtered.filter((entry) => entry.status === ArchiveStatus.Restored);
       } else {
-        filtered = filtered.filter((entry) => entry.status === 'A');
+        filtered = filtered.filter((entry) => entry.status === ArchiveStatus.Archived);
       }
     }
 
@@ -549,7 +550,7 @@ export class ArchiveService {
     const prepared: PutPreparedItem[] = [];
     const seen = new Set<string>();
 
-    const archiverRootCanonical = await safeRealPath(ARCHIVER_ROOT);
+    const archiverRootCanonical = await safeRealPath(ArchiverTree.directories.root);
 
     for (const item of items) {
       const resolvedPath = path.resolve(item);
