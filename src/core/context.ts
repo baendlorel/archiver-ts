@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { DEFAULT_AUTO_INCR, DEFAULT_CONFIG, DEFAULT_VAULT } from '../consts/index.js';
+import { Defaults } from '../consts/index.js';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';
@@ -12,14 +12,14 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
     currentVaultId:
       Number.isInteger(config.currentVaultId) && config.currentVaultId >= 0
         ? config.currentVaultId
-        : DEFAULT_CONFIG.currentVaultId,
+        : Defaults.config.currentVaultId,
     updateCheck: config.updateCheck === 'off' ? 'off' : 'on',
     lastUpdateCheck: typeof config.lastUpdateCheck === 'string' ? config.lastUpdateCheck : '',
     aliasMap: typeof config.aliasMap === 'object' && config.aliasMap !== null ? config.aliasMap : {},
     vaultItemSeparator:
       typeof config.vaultItemSeparator === 'string' && config.vaultItemSeparator.length > 0
         ? config.vaultItemSeparator
-        : DEFAULT_CONFIG.vaultItemSeparator,
+        : Defaults.config.vaultItemSeparator,
   };
 }
 
@@ -69,11 +69,11 @@ export class ArchiverContext {
     for (const dir of Object.values(ArchiverTree.directories)) {
       await ensureDir(dir);
     }
-    await ensureDir(this.vaultDir(DEFAULT_VAULT.id));
+    await ensureDir(this.vaultDir(Defaults.vault.id));
 
-    await writeJsonFile(ArchiverTree.files.config, DEFAULT_CONFIG);
+    await writeJsonFile(ArchiverTree.files.config, Defaults.config);
 
-    await writeJsonFile(ArchiverTree.files.autoIncr, DEFAULT_AUTO_INCR);
+    await writeJsonFile(ArchiverTree.files.autoIncr, Defaults.autoIncr);
 
     await ensureFile(ArchiverTree.files.list);
     await ensureFile(ArchiverTree.files.vaults);
@@ -83,7 +83,7 @@ export class ArchiverContext {
       return;
     }
 
-    config.currentVaultId = DEFAULT_VAULT.id;
+    config.currentVaultId = Defaults.vault.id;
     await this.saveConfig(config);
   }
 
@@ -92,8 +92,8 @@ export class ArchiverContext {
       return this.configCache;
     }
 
-    const loaded = await readJsoncFile(ArchiverTree.files.config, DEFAULT_CONFIG);
-    const merged = sanitizeConfig({ ...DEFAULT_CONFIG, ...loaded });
+    const loaded = await readJsoncFile(ArchiverTree.files.config, Defaults.config);
+    const merged = sanitizeConfig({ ...Defaults.config, ...loaded });
     this.configCache = merged;
     return merged;
   }
@@ -108,8 +108,8 @@ export class ArchiverContext {
       return this.autoIncrCache;
     }
 
-    const loaded = await readJsoncFile(ArchiverTree.files.autoIncr, DEFAULT_AUTO_INCR);
-    const merged = sanitizeAutoIncr({ ...DEFAULT_AUTO_INCR, ...loaded });
+    const loaded = await readJsoncFile(ArchiverTree.files.autoIncr, Defaults.autoIncr);
+    const merged = sanitizeAutoIncr({ ...Defaults.autoIncr, ...loaded });
     this.autoIncrCache = merged;
     return merged;
   }
@@ -190,7 +190,7 @@ export class ArchiverContext {
       return filtered;
     }
 
-    return [DEFAULT_VAULT, ...filtered];
+    return [Defaults.vault, ...filtered];
   }
 
   async resolveVault(
@@ -288,7 +288,7 @@ export class ArchiverContext {
   }
 
   async removeVaultDir(vaultId: number): Promise<void> {
-    if (vaultId === DEFAULT_VAULT.id) {
+    if (vaultId === Defaults.vault.id) {
       return;
     }
     await fs.rm(this.vaultDir(vaultId), { recursive: true, force: true });
