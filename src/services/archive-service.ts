@@ -1,13 +1,13 @@
-import fs from "node:fs/promises";
-import type { Stats } from "node:fs";
-import path from "node:path";
-import { ARCHIVER_ROOT } from "../constants.js";
-import { ArchiverContext } from "../core/context.js";
-import type { ListEntry, OperationSource, Vault } from "../types.js";
-import { formatDateTime } from "../utils/date.js";
-import { isParentOrSamePath, isSubPath, pathExists, safeLstat, safeRealPath } from "../utils/fs.js";
-import { ConfigService } from "./config-service.js";
-import { AuditLogger } from "./audit-logger.js";
+import fs from 'node:fs/promises';
+import type { Stats } from 'node:fs';
+import path from 'node:path';
+import { ARCHIVER_ROOT } from '../constants.js';
+import { ArchiverContext } from '../core/context.js';
+import type { ListEntry, OperationSource, Vault } from '../types.js';
+import { formatDateTime } from '../utils/date.js';
+import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
+import { ConfigService } from './config-service.js';
+import { AuditLogger } from './audit-logger.js';
 
 interface PutPreparedItem {
   input: string;
@@ -50,7 +50,7 @@ export class ArchiveService {
 
   async put(items: string[], options: PutOptions): Promise<BatchResult> {
     if (items.length === 0) {
-      throw new Error("At least one item is required.");
+      throw new Error('At least one item is required.');
     }
 
     const vault = await this.resolveTargetVault(options.vault);
@@ -62,22 +62,22 @@ export class ArchiveService {
     const result: BatchResult = { ok: [], failed: [] };
 
     for (const item of prepared) {
-      const archiveId = await this.context.nextAutoIncrement("archive_id");
+      const archiveId = await this.context.nextAutoIncrement('archive_id');
       const archivePath = this.context.archivePath(vault.id, archiveId);
       const entry: ListEntry = {
         aat: formatDateTime(),
-        st: "A",
+        st: 'A',
         is_d: item.stats.isDirectory() ? 1 : 0,
         vid: vault.id,
         id: archiveId,
         i: path.basename(item.resolvedPath),
         d: path.dirname(item.resolvedPath),
-        m: options.message ?? "",
-        r: options.remark ?? "",
+        m: options.message ?? '',
+        r: options.remark ?? '',
       };
 
       try {
-        if (await pathExists(archivePath)) {
+        if (await pathAccessible(archivePath)) {
           throw new Error(`Archive slot already exists: ${archivePath}`);
         }
 
@@ -85,14 +85,14 @@ export class ArchiveService {
         await this.context.appendListEntry(entry);
 
         await this.logger.log(
-          "INFO",
+          'INFO',
           {
-            m: "put",
+            m: 'put',
             a: [item.input],
             opt: {
               vault: options.vault ?? vault.id,
             },
-            sc: options.source ?? "u",
+            sc: options.source ?? 'u',
           },
           `Archived ${item.input}`,
           { aid: archiveId, vid: vault.id },
@@ -107,14 +107,14 @@ export class ArchiveService {
       } catch (error) {
         const message = (error as Error).message;
         await this.logger.log(
-          "ERROR",
+          'ERROR',
           {
-            m: "put",
+            m: 'put',
             a: [item.input],
             opt: {
               vault: options.vault ?? vault.id,
             },
-            sc: options.source ?? "u",
+            sc: options.source ?? 'u',
           },
           `Failed to archive ${item.input}: ${message}`,
         );
@@ -133,7 +133,7 @@ export class ArchiveService {
 
   async restore(ids: number[]): Promise<BatchResult> {
     if (ids.length === 0) {
-      throw new Error("At least one id is required.");
+      throw new Error('At least one id is required.');
     }
 
     const entries = await this.context.loadListEntries();
@@ -144,7 +144,7 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.st !== "A") {
+      if (entry.st !== 'A') {
         throw new Error(`Archive id ${id} is already restored.`);
       }
     }
@@ -158,7 +158,7 @@ export class ArchiveService {
         result.failed.push({
           input: String(id),
           success: false,
-          message: "Archive id not found.",
+          message: 'Archive id not found.',
         });
         continue;
       }
@@ -167,26 +167,26 @@ export class ArchiveService {
       const targetPath = path.join(entry.d, entry.i);
 
       try {
-        if (!(await pathExists(sourcePath))) {
+        if (!(await pathAccessible(sourcePath))) {
           throw new Error(`Archive object is missing: ${sourcePath}`);
         }
 
-        if (await pathExists(targetPath)) {
+        if (await pathAccessible(targetPath)) {
           throw new Error(`Restore target already exists: ${targetPath}`);
         }
 
         await fs.mkdir(entry.d, { recursive: true });
         await fs.rename(sourcePath, targetPath);
 
-        entry.st = "R";
+        entry.st = 'R';
         changed = true;
 
         await this.logger.log(
-          "INFO",
+          'INFO',
           {
-            m: "restore",
+            m: 'restore',
             a: [String(id)],
-            sc: "u",
+            sc: 'u',
           },
           `Restored archive id ${id}`,
           { aid: id, vid: entry.vid },
@@ -201,11 +201,11 @@ export class ArchiveService {
       } catch (error) {
         const message = (error as Error).message;
         await this.logger.log(
-          "ERROR",
+          'ERROR',
           {
-            m: "restore",
+            m: 'restore',
             a: [String(id)],
-            sc: "u",
+            sc: 'u',
           },
           `Failed to restore archive id ${id}: ${message}`,
           { aid: id, vid: entry.vid },
@@ -229,7 +229,7 @@ export class ArchiveService {
 
   async move(ids: number[], toVaultRef: string): Promise<BatchResult> {
     if (ids.length === 0) {
-      throw new Error("At least one id is required.");
+      throw new Error('At least one id is required.');
     }
 
     const targetVault = await this.context.resolveVault(toVaultRef, {
@@ -251,7 +251,7 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.st !== "A") {
+      if (entry.st !== 'A') {
         throw new Error(`Archive id ${id} has been restored and cannot be moved.`);
       }
       if (entry.vid === targetVault.id) {
@@ -260,10 +260,10 @@ export class ArchiveService {
 
       const source = this.context.archivePath(entry.vid, entry.id);
       const target = this.context.archivePath(targetVault.id, entry.id);
-      if (!(await pathExists(source))) {
+      if (!(await pathAccessible(source))) {
         throw new Error(`Archive object is missing: ${source}`);
       }
-      if (await pathExists(target)) {
+      if (await pathAccessible(target)) {
         throw new Error(`Target archive slot exists: ${target}`);
       }
     }
@@ -287,12 +287,12 @@ export class ArchiveService {
         changed = true;
 
         await this.logger.log(
-          "INFO",
+          'INFO',
           {
-            m: "move",
+            m: 'move',
             a: [String(id)],
             opt: { to: targetVault.id },
-            sc: "u",
+            sc: 'u',
           },
           `Moved archive id ${id} from vault ${fromVaultId} to ${targetVault.id}`,
           { aid: id, vid: targetVault.id },
@@ -307,12 +307,12 @@ export class ArchiveService {
       } catch (error) {
         const message = (error as Error).message;
         await this.logger.log(
-          "ERROR",
+          'ERROR',
           {
-            m: "move",
+            m: 'move',
             a: [String(id)],
             opt: { to: targetVault.id },
-            sc: "u",
+            sc: 'u',
           },
           `Failed to move archive id ${id}: ${message}`,
           { aid: id, vid: fromVaultId },
@@ -340,9 +340,9 @@ export class ArchiveService {
     let filtered = entries;
     if (!options.all) {
       if (options.restored) {
-        filtered = filtered.filter((entry) => entry.st === "R");
+        filtered = filtered.filter((entry) => entry.st === 'R');
       } else {
-        filtered = filtered.filter((entry) => entry.st === "A");
+        filtered = filtered.filter((entry) => entry.st === 'A');
       }
     }
 
@@ -394,11 +394,11 @@ export class ArchiveService {
     });
 
     if (!vault) {
-      const fallbackMessage = reference ? `Vault not found: ${reference}` : "Current vault is invalid.";
+      const fallbackMessage = reference ? `Vault not found: ${reference}` : 'Current vault is invalid.';
       throw new Error(fallbackMessage);
     }
 
-    if (vault.st === "Removed") {
+    if (vault.st === 'Removed') {
       throw new Error(`Vault ${vault.n} is removed.`);
     }
 
@@ -420,10 +420,7 @@ export class ArchiveService {
 
       const canonicalPath = await safeRealPath(resolvedPath);
 
-      if (
-        isParentOrSamePath(canonicalPath, archiverRootCanonical) ||
-        isSubPath(archiverRootCanonical, canonicalPath)
-      ) {
+      if (isParentOrSamePath(canonicalPath, archiverRootCanonical) || isSubPath(archiverRootCanonical, canonicalPath)) {
         throw new Error(
           `Path ${item} is the archiver directory itself, inside it, or a parent of it. This is not allowed.`,
         );
@@ -451,7 +448,7 @@ export class ArchiveService {
     for (let index = 1; index <= count; index += 1) {
       const predictedArchiveId = auto.archive_id + index;
       const predictedPath = this.context.archivePath(vaultId, predictedArchiveId);
-      if (await pathExists(predictedPath)) {
+      if (await pathAccessible(predictedPath)) {
         throw new Error(`Archive slot is already occupied: ${predictedPath}`);
       }
     }

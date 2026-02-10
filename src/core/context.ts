@@ -1,5 +1,5 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import {
   ARCHIVER_ROOT,
   AUTO_INCR_FILE,
@@ -12,10 +12,10 @@ import {
   LOG_DIR,
   VAULT_DIR,
   VAULTS_FILE,
-} from "../constants.js";
-import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from "../types.js";
-import { ensureDir, ensureFile, pathExists } from "../utils/fs.js";
-import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from "../utils/json.js";
+} from '../constants.js';
+import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../types.js';
+import { ensureDir, ensureFile, pathAccessible } from '../utils/fs.js';
+import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
   return {
@@ -23,11 +23,11 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
       Number.isInteger(config.current_vault_id) && config.current_vault_id >= 0
         ? config.current_vault_id
         : DEFAULT_CONFIG.current_vault_id,
-    update_check: config.update_check === "off" ? "off" : "on",
-    last_update_check: typeof config.last_update_check === "string" ? config.last_update_check : "",
-    alias_map: typeof config.alias_map === "object" && config.alias_map !== null ? config.alias_map : {},
+    update_check: config.update_check === 'off' ? 'off' : 'on',
+    last_update_check: typeof config.last_update_check === 'string' ? config.last_update_check : '',
+    alias_map: typeof config.alias_map === 'object' && config.alias_map !== null ? config.alias_map : {},
     vault_item_sep:
-      typeof config.vault_item_sep === "string" && config.vault_item_sep.length > 0
+      typeof config.vault_item_sep === 'string' && config.vault_item_sep.length > 0
         ? config.vault_item_sep
         : DEFAULT_CONFIG.vault_item_sep,
   };
@@ -43,27 +43,27 @@ function sanitizeAutoIncr(values: AutoIncrVars): AutoIncrVars {
 
 function sanitizeListEntry(raw: ListEntry): ListEntry {
   const isDirectory = raw.is_d === 1 ? 1 : 0;
-  const status = raw.st === "R" ? "R" : "A";
+  const status = raw.st === 'R' ? 'R' : 'A';
   return {
-    aat: String(raw.aat ?? ""),
+    aat: String(raw.aat ?? ''),
     st: status,
     is_d: isDirectory,
     vid: Number(raw.vid ?? 0),
     id: Number(raw.id),
-    i: String(raw.i ?? ""),
-    d: String(raw.d ?? ""),
-    m: String(raw.m ?? ""),
-    r: String(raw.r ?? ""),
+    i: String(raw.i ?? ''),
+    d: String(raw.d ?? ''),
+    m: String(raw.m ?? ''),
+    r: String(raw.r ?? ''),
   };
 }
 
 function sanitizeVault(raw: Vault): Vault {
-  const validStatus = raw.st === "Removed" || raw.st === "Protected" ? raw.st : "Valid";
+  const validStatus = raw.st === 'Removed' || raw.st === 'Protected' ? raw.st : 'Valid';
   return {
     id: Number(raw.id),
-    n: String(raw.n ?? ""),
-    r: String(raw.r ?? ""),
-    cat: String(raw.cat ?? ""),
+    n: String(raw.n ?? ''),
+    r: String(raw.r ?? ''),
+    cat: String(raw.cat ?? ''),
     st: validStatus,
   };
 }
@@ -90,11 +90,11 @@ export class ArchiverContext {
     await ensureDir(this.vaultsDir);
     await ensureDir(this.vaultDir(DEFAULT_VAULT.id));
 
-    if (!(await pathExists(this.configFile))) {
+    if (!(await pathAccessible(this.configFile))) {
       await writeJsonFile(this.configFile, DEFAULT_CONFIG);
     }
 
-    if (!(await pathExists(this.autoIncrFile))) {
+    if (!(await pathAccessible(this.autoIncrFile))) {
       await writeJsonFile(this.autoIncrFile, DEFAULT_AUTO_INCR);
     }
 
@@ -102,7 +102,7 @@ export class ArchiverContext {
     await ensureFile(this.vaultsFile);
 
     const config = await this.loadConfig();
-    if (config.current_vault_id === 0 || (await pathExists(this.vaultDir(config.current_vault_id)))) {
+    if (config.current_vault_id === 0 || (await pathAccessible(this.vaultDir(config.current_vault_id)))) {
       return;
     }
 
@@ -207,7 +207,7 @@ export class ArchiverContext {
     const withDefault = options?.withDefault ?? true;
 
     const loaded = await this.loadVaults();
-    const filtered = includeRemoved ? loaded : loaded.filter((vault) => vault.st === "Valid");
+    const filtered = includeRemoved ? loaded : loaded.filter((vault) => vault.st === 'Valid');
 
     if (!withDefault) {
       return filtered;
@@ -226,17 +226,17 @@ export class ArchiverContext {
     const vaults = await this.getVaults({ includeRemoved: true, withDefault: true });
 
     let targetRef = ref;
-    if ((targetRef === undefined || targetRef === null || targetRef === "") && fallbackCurrent) {
+    if ((targetRef === undefined || targetRef === null || targetRef === '') && fallbackCurrent) {
       const config = await this.loadConfig();
       targetRef = config.current_vault_id;
     }
 
-    if (targetRef === undefined || targetRef === null || targetRef === "") {
+    if (targetRef === undefined || targetRef === null || targetRef === '') {
       return undefined;
     }
 
     let found: Vault | undefined;
-    if (typeof targetRef === "number") {
+    if (typeof targetRef === 'number') {
       found = vaults.find((vault) => vault.id === targetRef);
     } else if (/^\d+$/.test(targetRef)) {
       const asNumber = Number(targetRef);
@@ -249,7 +249,7 @@ export class ArchiverContext {
       return undefined;
     }
 
-    if (!includeRemoved && found.st === "Removed") {
+    if (!includeRemoved && found.st === 'Removed') {
       return undefined;
     }
 

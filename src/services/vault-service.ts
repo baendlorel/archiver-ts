@@ -1,11 +1,11 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { DEFAULT_VAULT } from "../constants.js";
-import { ArchiverContext } from "../core/context.js";
-import type { ListEntry, Vault } from "../types.js";
-import { formatDateTime } from "../utils/date.js";
-import { pathExists } from "../utils/fs.js";
-import { ConfigService } from "./config-service.js";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { DEFAULT_VAULT } from '../constants.js';
+import { ArchiverContext } from '../core/context.js';
+import type { ListEntry, Vault } from '../types.js';
+import { formatDateTime } from '../utils/date.js';
+import { pathAccessible } from '../utils/fs.js';
+import { ConfigService } from './config-service.js';
 
 export interface RemoveVaultResult {
   vault: Vault;
@@ -30,7 +30,7 @@ export class VaultService {
   }): Promise<{ vault: Vault; recovered: boolean }> {
     const name = options.name.trim();
     if (!name) {
-      throw new Error("Vault name cannot be empty.");
+      throw new Error('Vault name cannot be empty.');
     }
     if (name === DEFAULT_VAULT.n) {
       throw new Error(`Vault name ${DEFAULT_VAULT.n} is reserved.`);
@@ -39,17 +39,17 @@ export class VaultService {
     const vaults = await this.context.loadVaults();
     const duplicated = vaults.find((vault) => vault.n === name);
 
-    if (duplicated?.st === "Valid" || duplicated?.st === "Protected") {
+    if (duplicated?.st === 'Valid' || duplicated?.st === 'Protected') {
       throw new Error(`Vault ${name} already exists.`);
     }
 
-    if (duplicated?.st === "Removed") {
+    if (duplicated?.st === 'Removed') {
       if (!options.recoverRemoved) {
         throw new Error(
           `A removed vault named ${name} exists. Use vault recover ${name} or create with recovery option.`,
         );
       }
-      duplicated.st = "Valid";
+      duplicated.st = 'Valid';
       await this.context.ensureVaultDir(duplicated.id);
       await this.context.saveVaults(vaults);
       if (options.activate) {
@@ -58,13 +58,13 @@ export class VaultService {
       return { vault: duplicated, recovered: true };
     }
 
-    const vaultId = await this.context.nextAutoIncrement("vault_id");
+    const vaultId = await this.context.nextAutoIncrement('vault_id');
     const vault: Vault = {
       id: vaultId,
       n: name,
-      r: options.remark ?? "",
+      r: options.remark ?? '',
       cat: formatDateTime(),
-      st: "Valid",
+      st: 'Valid',
     };
 
     vaults.push(vault);
@@ -84,7 +84,7 @@ export class VaultService {
       throw new Error(`Vault not found: ${reference}`);
     }
 
-    if (vault.st === "Removed") {
+    if (vault.st === 'Removed') {
       throw new Error(`Vault ${vault.n} is removed.`);
     }
 
@@ -100,11 +100,11 @@ export class VaultService {
       throw new Error(`Vault not found: ${reference}`);
     }
 
-    if (vault.st !== "Removed") {
+    if (vault.st !== 'Removed') {
       throw new Error(`Vault ${vault.n} is not removed.`);
     }
 
-    vault.st = "Valid";
+    vault.st = 'Valid';
     await this.context.ensureVaultDir(vault.id);
     await this.context.saveVaults(vaults);
     return vault;
@@ -113,7 +113,7 @@ export class VaultService {
   async renameVault(oldNameOrId: string, newName: string): Promise<Vault> {
     const trimmed = newName.trim();
     if (!trimmed) {
-      throw new Error("New vault name cannot be empty.");
+      throw new Error('New vault name cannot be empty.');
     }
     if (trimmed === DEFAULT_VAULT.n) {
       throw new Error(`Vault name ${DEFAULT_VAULT.n} is reserved.`);
@@ -124,7 +124,7 @@ export class VaultService {
     if (!target) {
       throw new Error(`Vault not found: ${oldNameOrId}`);
     }
-    if (target.st !== "Valid") {
+    if (target.st !== 'Valid') {
       throw new Error(`Vault ${target.n} is not in valid state.`);
     }
 
@@ -148,16 +148,16 @@ export class VaultService {
       throw new Error(`Vault not found: ${nameOrId}`);
     }
 
-    if (vault.id === DEFAULT_VAULT.id || vault.st === "Protected") {
-      throw new Error("Default vault cannot be removed.");
+    if (vault.id === DEFAULT_VAULT.id || vault.st === 'Protected') {
+      throw new Error('Default vault cannot be removed.');
     }
 
-    if (vault.st === "Removed") {
+    if (vault.st === 'Removed') {
       throw new Error(`Vault ${vault.n} is already removed.`);
     }
 
     const entries = await this.context.loadListEntries();
-    const archived = entries.filter((entry) => entry.vid === vault.id && entry.st === "A");
+    const archived = entries.filter((entry) => entry.vid === vault.id && entry.st === 'A');
 
     await this.context.ensureVaultDir(DEFAULT_VAULT.id);
 
@@ -178,7 +178,7 @@ export class VaultService {
     if (!target) {
       throw new Error(`Vault not found while saving: ${vault.id}`);
     }
-    target.st = "Removed";
+    target.st = 'Removed';
 
     await this.context.saveListEntries(entries);
     await this.context.saveVaults(vaults);
@@ -197,11 +197,11 @@ export class VaultService {
       const from = this.context.archivePath(entry.vid, entry.id);
       const to = this.context.archivePath(DEFAULT_VAULT.id, entry.id);
 
-      if (!(await pathExists(from))) {
+      if (!(await pathAccessible(from))) {
         throw new Error(`Archived object is missing: ${from}`);
       }
 
-      if (await pathExists(to)) {
+      if (await pathAccessible(to)) {
         throw new Error(`Default vault already contains archive id ${entry.id}.`);
       }
     }
@@ -219,7 +219,7 @@ export class VaultService {
 
   async listArchivedIdsInVault(vaultId: number): Promise<number[]> {
     const dirPath = this.context.vaultDir(vaultId);
-    const exists = await pathExists(dirPath);
+    const exists = await pathAccessible(dirPath);
     if (!exists) {
       return [];
     }
