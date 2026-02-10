@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import type { Stats } from 'node:fs';
 import path from 'node:path';
-import { ARCHIVER_ROOT } from '../constants.js';
+import { ARCHIVER_ROOT } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, OperationSource, Vault } from '../global.js';
 import { formatDateTime } from '../utils/date.js';

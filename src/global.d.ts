@@ -1,4 +1,4 @@
-export type ArchiveStatus = 'A' | 'R';
+import type { VaultStatus, ArchiveStatus } from './consts/enums.js';
 
 export interface ListEntry {
   archivedAt: string;
@@ -11,8 +11,6 @@ export interface ListEntry {
   message: string;
   remark: string;
 }
-
-export type VaultStatus = 'Valid' | 'Removed' | 'Protected';
 
 export interface Vault {
   id: number;

@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
-import type { ArchiverConfig, AutoIncrVars, Vault } from './global.js';
+import type { ArchiverConfig, AutoIncrVars, Vault } from '../global.js';
+import { VaultStatus } from './enums.js';
 
 export const APP_NAME = 'archiver';
 export const APP_DESCRIPTION = 'Archive files and folders into ~/.archiver with audit logs';
@@ -37,7 +38,7 @@ export const DEFAULT_VAULT: Vault = {
   name: DEFAULT_VAULT_NAME,
   remark: 'Default vault',
   createdAt: 'system',
-  status: 'Protected',
+  status: VaultStatus.Protected,
 };
 
 export const DEFAULT_LOG_TAIL = 15;

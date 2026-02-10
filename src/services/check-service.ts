@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { DEFAULT_VAULT_ID } from '../constants.js';
+import { DEFAULT_VAULT_ID } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
 import { listDirectories, pathAccessible, safeLstat } from '../utils/fs.js';

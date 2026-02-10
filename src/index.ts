@@ -10,7 +10,7 @@ import {
   DEFAULT_VAULT,
   UPDATE_CHECK_INTERVAL_MS,
   UPDATE_REPO,
-} from './constants.js';
+} from './consts/index.js';
 import { ArchiverContext } from './core/context.js';
 import { ArchiveService } from './services/archive-service.js';
 import { AuditLogger } from './services/audit-logger.js';

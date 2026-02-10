@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { DEFAULT_LOG_TAIL } from '../constants.js';
+import { DEFAULT_LOG_TAIL } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, LogEntry, Vault } from '../global.js';
 import type { LogRange } from '../utils/parse.js';

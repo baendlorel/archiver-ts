@@ -13,7 +13,7 @@ export class AuditLogger {
     message: string,
     links?: { aid?: number; vid?: number },
   ): Promise<LogEntry> {
-    const id = await this.context.nextAutoIncrement('log_id');
+    const id = await this.context.nextAutoIncrement('logId');
     const now = new Date();
     const year = String(now.getFullYear());
 

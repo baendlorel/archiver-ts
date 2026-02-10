@@ -12,7 +12,7 @@ import {
   LOG_DIR,
   VAULT_DIR,
   VAULTS_FILE,
-} from '../constants.js';
+} from '../consts/index.js';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { UPDATE_REPO, UPDATE_TIMEOUT_MS } from '../constants.js';
+import { UPDATE_REPO, UPDATE_TIMEOUT_MS } from '../consts/index.js';
 import type { UpdateInfo } from '../global.js';
 
 const execFileAsync = promisify(execFile);
