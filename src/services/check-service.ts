@@ -281,6 +281,16 @@ export class CheckService {
           continue;
         }
 
+        if (!child.isDirectory()) {
+          pushIssue(
+            report.issues,
+            CheckIssueLevel.Error,
+            'INVALID_ARCHIVE_SLOT',
+            `Vault ${vaultId} archive slot ${child.name} must be a directory in the current layout.`,
+          );
+          continue;
+        }
+
         const key = `${vaultId}/${Number(child.name)}`;
         if (!expectedArchivedPairs.has(key)) {
           pushIssue(

@@ -39,6 +39,7 @@ The storage layout is intentionally compatible with the original behavior descri
 Important compatibility points:
 
 - Uses filesystem rename/move (no compression, no copy/delete fallback).
+- Supports only slot-based storage (`<archiveId>/<originalName>`); legacy direct-object layout is not handled.
 - Keeps compact field names in JSON/JSONL (`aat`, `st`, `is_d`, `vid`, `id`, etc.).
 - Keeps default vault `@` with id `0` as a runtime-injected protected vault.
 - Maintains auto increment behavior (`next` = increment first, then return).

@@ -249,37 +249,23 @@ export class ArchiverContext {
     | {
         slotPath: string;
         objectPath: string;
-        layout: 'slot' | 'legacy';
       }
     | undefined
   > {
     const slotPath = this.archivePath(entry.vaultId, entry.id);
     const slotStats = await safeLstat(slotPath);
-    if (!slotStats) {
+    if (!slotStats || !slotStats.isDirectory()) {
       return undefined;
     }
 
-    if (!slotStats.isDirectory()) {
-      return {
-        slotPath,
-        objectPath: slotPath,
-        layout: 'legacy',
-      };
-    }
-
     const expectedObjectPath = this.archiveObjectPath(entry.vaultId, entry.id, entry.item);
-    if (await pathAccessible(expectedObjectPath)) {
-      return {
-        slotPath,
-        objectPath: expectedObjectPath,
-        layout: 'slot',
-      };
+    if (!(await pathAccessible(expectedObjectPath))) {
+      return undefined;
     }
 
     return {
       slotPath,
-      objectPath: slotPath,
-      layout: 'legacy',
+      objectPath: expectedObjectPath,
     };
   }
 

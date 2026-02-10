@@ -196,15 +196,13 @@ export class ArchiveService {
         await fs.mkdir(entry.directory, { recursive: true });
         await fs.rename(location.objectPath, targetPath);
 
-        if (location.layout === 'slot') {
-          await fs.rmdir(location.slotPath).catch((error) => {
-            const code = (error as NodeJS.ErrnoException).code;
-            if (code === 'ENOENT' || code === 'ENOTEMPTY') {
-              return;
-            }
-            throw error;
-          });
-        }
+        await fs.rmdir(location.slotPath).catch((error) => {
+          const code = (error as NodeJS.ErrnoException).code;
+          if (code === 'ENOENT') {
+            return;
+          }
+          throw error;
+        });
 
         entry.status = ArchiveStatus.Restored;
         changed = true;
@@ -288,7 +286,7 @@ export class ArchiveService {
       }
 
       const location = await this.context.resolveArchiveStorageLocation(entry);
-      const source = location?.slotPath ?? this.context.archivePath(entry.vaultId, entry.id);
+      const source = this.context.archivePath(entry.vaultId, entry.id);
       const target = this.context.archivePath(targetVault.id, entry.id);
       if (!location) {
         throw new Error(`Archive object is missing: ${source}`);
@@ -320,23 +318,11 @@ export class ArchiveService {
         continue;
       }
 
-      const source = location.slotPath;
       const target = this.context.archivePath(targetVault.id, entry.id);
       const fromVaultId = entry.vaultId;
 
       try {
-        if (location.layout === 'slot') {
-          await fs.rename(source, target);
-        } else {
-          await fs.mkdir(target, { recursive: false });
-          const targetObjectPath = this.context.archiveObjectPath(targetVault.id, entry.id, entry.item);
-          try {
-            await fs.rename(location.objectPath, targetObjectPath);
-          } catch (error) {
-            await fs.rmdir(target).catch(() => undefined);
-            throw error;
-          }
-        }
+        await fs.rename(location.slotPath, target);
 
         entry.vaultId = targetVault.id;
         changed = true;
@@ -431,19 +417,15 @@ export class ArchiveService {
       throw new Error(`Vault ${entry.vaultId} for archive id ${archiveId} does not exist.`);
     }
 
-    const slotPath = this.context.archivePath(entry.vaultId, entry.id);
-    const stats = await safeLstat(slotPath);
-    if (!stats) {
-      throw new Error(`Archive slot is missing: ${slotPath}`);
-    }
-    if (!stats.isDirectory()) {
-      throw new Error(`Archive slot is a file in legacy layout and cannot be entered: ${slotPath}`);
+    const location = await this.context.resolveArchiveStorageLocation(entry);
+    if (!location) {
+      throw new Error(`Archive slot is missing or invalid: ${this.context.archivePath(entry.vaultId, entry.id)}`);
     }
 
     return {
       vault,
       archiveId,
-      slotPath,
+      slotPath: location.slotPath,
     };
   }
 

@@ -46,6 +46,7 @@ Core principle:
 - Default vault is runtime-injected: name `@`, id `0`, protected.
 - Archive slot path: `~/.archiver/vaults/<vaultId>/<archiveId>`.
 - Archived object path: `~/.archiver/vaults/<vaultId>/<archiveId>/<originalName>`.
+- Legacy direct-object layout (`~/.archiver/vaults/<vaultId>/<archiveId>`) is not supported.
 
 ## Core Record Fields
 
