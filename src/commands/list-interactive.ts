@@ -24,7 +24,10 @@ interface Keypress {
 const LIST_ACTIONS: ListAction[] = ['enter', 'restore'];
 
 export function canRunInteractiveList(): boolean {
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+  if (process.stdin.isTTY && process.stdout.isTTY) {
+    return true;
+  }
+  return Boolean(process.stdin.isTTY && process.env.ARV_FORCE_INTERACTIVE === '1');
 }
 
 export function isActionAvailable(entry: InteractiveListEntry, action: ListAction): boolean {

@@ -91,9 +91,8 @@ Aliases:
 
 `cd` behavior:
 
-- In interactive terminals, opens a subshell in the archive slot directory.
-- With `--print` (or non-interactive stdout), prints the slot path only.
-- If `ARV_CWD_HANDOFF_FILE` is set, writes the slot path into that file and exits (for shell wrappers that perform real `cd`).
+- Outputs `__ARCHIVER_CD__:<slot-path>` and exits (no subshell).
+- With `--print`, prints the slot path only.
 
 ### Vault Management
 
@@ -137,20 +136,23 @@ Aliases:
 - `q` / `Esc`: cancel
 - Use `--no-interactive` to force plain-table output
 
-To make `Enter slot` switch your current shell directory (instead of opening a subshell), add this wrapper in `~/.bashrc` or `~/.zshrc`:
+To make `Enter slot` switch your current shell directory, add this wrapper in `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 arv() {
-  local handoff
-  handoff="$(mktemp)"
-  ARV_CWD_HANDOFF_FILE="$handoff" command arv "$@"
-  local status=$?
-  if [ -s "$handoff" ]; then
-    local target
-    target="$(cat "$handoff")"
-    cd "$target" || status=$?
+  local line target status
+  while IFS= read -r line; do
+    if [[ "$line" == __ARCHIVER_CD__:* ]]; then
+      target="${line#__ARCHIVER_CD__:}"
+    else
+      printf '%s\n' "$line"
+    fi
+  done < <(ARV_FORCE_INTERACTIVE=1 command arv "$@")
+  status=${PIPESTATUS[0]}
+
+  if [[ -n "$target" ]]; then
+    cd -- "$target" || return $?
   fi
-  rm -f "$handoff"
   return $status
 }
 ```

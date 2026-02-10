@@ -1,42 +1,24 @@
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
-import { info, warn } from '../utils/terminal.js';
-import { shellQuote } from './command-utils.js';
-import { writeCwdHandoff } from './cwd-handoff.js';
+export const ARCHIVER_CD_MARKER_PREFIX = '__ARCHIVER_CD__:';
 
-interface OpenSubshellAtPathOptions {
+interface EmitCdTargetOptions {
   print?: boolean;
 }
 
-export async function openSubshellAtPath(
-  slotPath: string,
-  options: OpenSubshellAtPathOptions = {},
-): Promise<void> {
-  if (await writeCwdHandoff(slotPath)) {
-    return;
+export function formatCdMarker(slotPath: string): string {
+  if (slotPath.includes('\n') || slotPath.includes('\r')) {
+    throw new Error('Archive slot path contains unsupported newline characters.');
   }
+  return `${ARCHIVER_CD_MARKER_PREFIX}${slotPath}`;
+}
 
-  if (options.print || !process.stdin.isTTY || !process.stdout.isTTY) {
+export async function emitCdTarget(
+  slotPath: string,
+  options: EmitCdTargetOptions = {},
+): Promise<void> {
+  if (options.print) {
     console.log(slotPath);
     return;
   }
 
-  info(`Opening subshell in ${shellQuote(slotPath)}. Type 'exit' to return.`);
-
-  const shell =
-    process.env.SHELL ?? (process.platform === 'win32' ? (process.env.COMSPEC ?? 'cmd.exe') : '/bin/bash');
-
-  const child = spawn(shell, {
-    cwd: slotPath,
-    stdio: 'inherit',
-  });
-
-  const [exitCode, signal] = (await once(child, 'exit')) as [number | null, NodeJS.Signals | null];
-  if (signal) {
-    warn(`Subshell exited with signal ${signal}.`);
-    return;
-  }
-  if (exitCode !== null && exitCode !== 0) {
-    process.exitCode = exitCode;
-  }
+  console.log(formatCdMarker(slotPath));
 }

@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import { ArchiveStatus } from '../consts/index.js';
 import type { CommandContext } from '../services/context.js';
 import { error, styleArchiveStatus, info, renderTable, success } from '../utils/terminal.js';
-import { openSubshellAtPath } from './cd-shell.js';
+import { emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 import {
   canRunInteractiveList,
@@ -78,7 +78,7 @@ async function runSelectionAction(ctx: CommandContext, selection: InteractiveLis
     { aid: resolved.archiveId, vid: resolved.vault.id },
   );
 
-  await openSubshellAtPath(resolved.slotPath);
+  await emitCdTarget(resolved.slotPath);
 }
 
 export function registerListCommands(program: Command, ctx: CommandContext): void {

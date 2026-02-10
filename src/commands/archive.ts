@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import type { CommandContext } from '../services/context.js';
 import { parseIdList } from '../utils/parse.js';
 import { error, success } from '../utils/terminal.js';
-import { openSubshellAtPath } from './cd-shell.js';
+import { emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 
 export function registerArchiveCommands(program: Command, ctx: CommandContext): void {
@@ -77,7 +77,7 @@ export function registerArchiveCommands(program: Command, ctx: CommandContext): 
 
   program
     .command('cd')
-    .description('Enter archived slot folder by <archive-id> or <vault>/<archive-id>')
+    .description('Emit archive slot path marker by <archive-id> or <vault>/<archive-id>')
     .argument('<target>', 'Archive id, or vault/id')
     .option('-p, --print', 'Print slot path only')
     .action((target: string, options: { print?: boolean }) =>
@@ -95,7 +95,7 @@ export function registerArchiveCommands(program: Command, ctx: CommandContext): 
           { aid: resolved.archiveId, vid: resolved.vault.id },
         );
 
-        await openSubshellAtPath(resolved.slotPath, { print: options.print });
+        await emitCdTarget(resolved.slotPath, { print: options.print });
       }),
     );
 }
