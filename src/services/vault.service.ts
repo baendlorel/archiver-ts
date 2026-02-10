@@ -6,7 +6,7 @@ import { Defaults, Paths, ArchiveStatus, VaultStatus } from '../consts/index.js'
 import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { pathAccessible } from '../utils/fs.js';
-import { ConfigService } from './config-service.js';
+import { ConfigService } from './config.service.js';
 
 export interface RemoveVaultResult {
   vault: Vault;

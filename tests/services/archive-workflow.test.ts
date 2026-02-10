@@ -4,11 +4,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ArchiveStatus, CheckIssueLevel, Paths } from '../../src/consts/index.js';
 import { ArchiverContext } from '../../src/core/context.js';
-import { ArchiveService } from '../../src/services/archive-service.js';
+import { ArchiveService } from '../../src/services/archive.service.js';
 import { AuditLogger } from '../../src/services/audit-logger.js';
-import { CheckService } from '../../src/services/check-service.js';
-import { ConfigService } from '../../src/services/config-service.js';
-import { VaultService } from '../../src/services/vault-service.js';
+import { CheckService } from '../../src/services/check.service.js';
+import { ConfigService } from '../../src/services/config.service.js';
+import { VaultService } from '../../src/services/vault.service.js';
 
 type PathsSnapshot = {
   dir: Record<keyof typeof Paths.dir, string>;
