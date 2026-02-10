@@ -41,13 +41,13 @@ export class CheckService {
     const listEntries = await this.context.loadListEntries();
     const vaults = await this.context.getVaults({ includeRemoved: true, withDefault: true });
 
-    this.checkConfigVaultReference(report, config.current_vault_id, vaults);
-    this.checkListIds(report, listEntries, auto.archive_id);
-    this.checkVaultIds(report, vaults, auto.vault_id);
+    this.checkConfigVaultReference(report, config.currentVaultId, vaults);
+    this.checkListIds(report, listEntries, auto.archiveId);
+    this.checkVaultIds(report, vaults, auto.vaultId);
 
     await this.checkListConsistency(report, listEntries, vaults);
     await this.checkVaultDirectoryConsistency(report, listEntries, vaults);
-    await this.checkLogConsistency(report, auto.log_id);
+    await this.checkLogConsistency(report, auto.logId);
 
     report.info.push(`Checked ${listEntries.length} archive entries.`);
     report.info.push(`Checked ${vaults.length} vault definitions (including default).`);
@@ -76,7 +76,7 @@ export class CheckService {
   }
 
   private checkConfigVaultReference(report: CheckReport, currentVaultId: number, vaults: Vault[]): void {
-    const currentVault = vaults.find((vault) => vault.id === currentVaultId && vault.st !== 'Removed');
+    const currentVault = vaults.find((vault) => vault.id === currentVaultId && vault.status !== 'Removed');
     if (!currentVault) {
       pushIssue(
         report.issues,
@@ -118,7 +118,7 @@ export class CheckService {
       pushIssue(report.issues, 'ERROR', 'DUPLICATE_VAULT_ID', `Duplicated vault ids found: ${duplicates.join(', ')}`);
     }
 
-    const names = nonDefaultVaults.map((vault) => vault.n);
+    const names = nonDefaultVaults.map((vault) => vault.name);
     const duplicatedNames = names.filter((name, idx) => names.indexOf(name) !== idx);
     if (duplicatedNames.length > 0) {
       pushIssue(
@@ -293,7 +293,7 @@ export class CheckService {
     }
 
     for (const vault of vaults) {
-      if (vault.st !== 'Valid' && vault.st !== 'Protected') {
+      if (vault.status !== 'Valid' && vault.status !== 'Protected') {
         continue;
       }
 
@@ -303,7 +303,7 @@ export class CheckService {
           report.issues,
           'ERROR',
           'MISSING_VAULT_DIR',
-          `Vault ${vault.n}(${vault.id}) is active but directory is missing: ${dirPath}`,
+          `Vault ${vault.name}(${vault.id}) is active but directory is missing: ${dirPath}`,
         );
       }
     }

@@ -19,12 +19,12 @@ export class AuditLogger {
 
     const entry: LogEntry = {
       id,
-      oat: formatDateTime(now),
-      lv: level,
-      o: operation,
-      m: message,
-      ...(links?.aid !== undefined ? { aid: links.aid } : {}),
-      ...(links?.vid !== undefined ? { vid: links.vid } : {}),
+      operedAt: formatDateTime(now),
+      level: level,
+      oper: operation,
+      message: message,
+      ...(links?.aid !== undefined ? { archiveIds: links.aid } : {}),
+      ...(links?.vid !== undefined ? { vaultIds: links.vid } : {}),
     };
 
     const filePath = path.join(this.context.logsDir, `${year}.jsonl`);

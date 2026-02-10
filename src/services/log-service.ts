@@ -9,17 +9,17 @@ import { readJsonLinesFile } from '../utils/json.js';
 function normalizeLogEntry(raw: LogEntry): LogEntry {
   return {
     id: Number(raw.id),
-    oat: String(raw.oat ?? ''),
-    lv: raw.lv ?? 'INFO',
-    o: raw.o ?? { m: 'unknown' },
-    m: String(raw.m ?? ''),
-    ...(raw.aid !== undefined ? { aid: Number(raw.aid) } : {}),
-    ...(raw.vid !== undefined ? { vid: Number(raw.vid) } : {}),
+    operedAt: String(raw.operedAt ?? ''),
+    level: raw.level ?? 'INFO',
+    oper: raw.oper ?? { main: 'unknown' },
+    message: String(raw.message ?? ''),
+    ...(raw.archiveIds !== undefined ? { archiveIds: Number(raw.archiveIds) } : {}),
+    ...(raw.vaultIds !== undefined ? { vaultIds: Number(raw.vaultIds) } : {}),
   };
 }
 
 function monthFromLog(entry: LogEntry): string {
-  const source = entry.oat;
+  const source = entry.operedAt;
   const normalized = source.replace(/[-:\sT]/g, '');
   return normalized.slice(0, 6);
 }
@@ -62,14 +62,14 @@ export class LogService {
 
     const detail: LogDetail = { log };
 
-    if (log.aid !== undefined) {
+    if (log.archiveIds !== undefined) {
       const list = await this.context.loadListEntries();
-      detail.archive = list.find((entry) => entry.id === log.aid);
+      detail.archive = list.find((entry) => entry.id === log.archiveIds);
     }
 
-    if (log.vid !== undefined) {
+    if (log.vaultIds !== undefined) {
       const vaults = await this.context.getVaults({ includeRemoved: true, withDefault: true });
-      detail.vault = vaults.find((vault) => vault.id === log.vid);
+      detail.vault = vaults.find((vault) => vault.id === log.vaultIds);
     }
 
     return detail;

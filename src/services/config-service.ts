@@ -11,42 +11,42 @@ export class ConfigService {
 
   async setUpdateCheck(value: 'on' | 'off'): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
-    config.update_check = value;
+    config.updateCheck = value;
     await this.context.saveConfig(config);
     return config;
   }
 
   async setVaultItemSeparator(separator: string): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
-    config.vault_item_sep = separator;
+    config.vaultItemSeparator = separator;
     await this.context.saveConfig(config);
     return config;
   }
 
   async setCurrentVault(vaultId: number): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
-    config.current_vault_id = vaultId;
+    config.currentVaultId = vaultId;
     await this.context.saveConfig(config);
     return config;
   }
 
   async addAlias(alias: string, targetPath: string): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
-    config.alias_map[alias] = path.resolve(targetPath);
+    config.aliasMap[alias] = path.resolve(targetPath);
     await this.context.saveConfig(config);
     return config;
   }
 
   async removeAlias(alias: string): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
-    delete config.alias_map[alias];
+    delete config.aliasMap[alias];
     await this.context.saveConfig(config);
     return config;
   }
 
   async updateLastCheck(timestampIso: string): Promise<void> {
     const config = await this.context.loadConfig();
-    config.last_update_check = timestampIso;
+    config.lastUpdateCheck = timestampIso;
     await this.context.saveConfig(config);
   }
 

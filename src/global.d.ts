@@ -16,24 +16,24 @@ export type VaultStatus = 'Valid' | 'Removed' | 'Protected';
 
 export interface Vault {
   id: number;
-  n: string;
-  r: string;
-  cat: string;
-  st: VaultStatus;
+  name: string;
+  remark: string;
+  createdAt: string;
+  status: VaultStatus;
 }
 
 export interface ArchiverConfig {
-  current_vault_id: number;
-  update_check: 'on' | 'off';
-  last_update_check: string;
-  alias_map: Record<string, string>;
-  vault_item_sep: string;
+  currentVaultId: number;
+  updateCheck: 'on' | 'off';
+  lastUpdateCheck: string;
+  aliasMap: Record<string, string>;
+  vaultItemSeparator: string;
 }
 
 export interface AutoIncrVars {
-  log_id: number;
-  vault_id: number;
-  archive_id: number;
+  logId: number;
+  vaultId: number;
+  archiveId: number;
 }
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
@@ -41,21 +41,21 @@ export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 export type OperationSource = 'u' | 's' | 't';
 
 export interface Operation {
-  m: string;
-  s?: string;
-  a?: string[];
-  opt?: Record<string, string | number | boolean>;
-  sc?: OperationSource;
+  main: string;
+  sub?: string;
+  args?: string[];
+  opts?: Record<string, string | number | boolean>;
+  source?: OperationSource;
 }
 
 export interface LogEntry {
   id: number;
-  oat: string;
-  lv: LogLevel;
-  o: Operation;
-  m: string;
-  aid?: number;
-  vid?: number;
+  operedAt: string;
+  level: LogLevel;
+  oper: Operation;
+  message: string;
+  archiveIds?: number;
+  vaultIds?: number;
 }
 
 export interface UpdateInfo {

@@ -55,12 +55,12 @@ function shellQuote(value: string): string {
 
 async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
   const config = await ctx.configService.getConfig();
-  if (config.update_check !== 'on') {
+  if (config.updateCheck !== 'on') {
     return;
   }
 
-  if (config.last_update_check) {
-    const last = new Date(config.last_update_check);
+  if (config.lastUpdateCheck) {
+    const last = new Date(config.lastUpdateCheck);
     if (!Number.isNaN(last.getTime())) {
       const diff = Date.now() - last.getTime();
       if (diff < UPDATE_CHECK_INTERVAL_MS) {
@@ -209,9 +209,9 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         await ctx.auditLogger.log(
           'INFO',
           {
-            m: 'cd',
-            a: [target],
-            sc: 'u',
+            main: 'cd',
+            args: [target],
+            source: 'u',
           },
           `Open archive slot ${resolved.vault.id}/${resolved.archiveId}`,
           { aid: resolved.archiveId, vid: resolved.vault.id },
@@ -252,12 +252,12 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     .action((nameOrId: string) =>
       runAction(async () => {
         const target = await ctx.vaultService.useVault(nameOrId);
-        success(`Current vault changed to ${target.n}(${target.id}).`);
+        success(`Current vault changed to ${target.name}(${target.id}).`);
 
         await ctx.auditLogger.log(
           'INFO',
-          { m: 'vault', s: 'use', a: [nameOrId], sc: 'u' },
-          `Switch current vault to ${target.n}(${target.id})`,
+          { main: 'vault', sub: 'use', args: [nameOrId], source: 'u' },
+          `Switch current vault to ${target.name}(${target.id})`,
           { vid: target.id },
         );
 
@@ -284,24 +284,24 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
           recovered = result.recovered;
           const actionText = recovered ? 'Recovered' : 'Created';
-          success(`${actionText} vault ${result.vault.n}(${result.vault.id}).`);
+          success(`${actionText} vault ${result.vault.name}(${result.vault.id}).`);
 
           if (options.activate) {
-            success(`Activated vault ${result.vault.n}(${result.vault.id}).`);
+            success(`Activated vault ${result.vault.name}(${result.vault.id}).`);
           }
 
           await ctx.auditLogger.log(
             'INFO',
             {
-              m: 'vault',
-              s: recovered ? 'recover' : 'create',
-              a: [name],
-              opt: {
+              main: 'vault',
+              sub: recovered ? 'recover' : 'create',
+              args: [name],
+              opts: {
                 activate: Boolean(options.activate),
               },
-              sc: 'u',
+              source: 'u',
             },
-            `${actionText} vault ${result.vault.n}(${result.vault.id})`,
+            `${actionText} vault ${result.vault.name}(${result.vault.id})`,
             { vid: result.vault.id },
           );
         };
@@ -347,20 +347,20 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         const result = await ctx.vaultService.removeVault(nameOrId);
 
-        success(`Vault ${result.vault.n}(${result.vault.id}) removed.`);
+        success(`Vault ${result.vault.name}(${result.vault.id}) removed.`);
         if (result.movedArchiveIds.length > 0) {
-          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${DEFAULT_VAULT.n}.`);
+          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${DEFAULT_VAULT.name}.`);
         }
 
         await ctx.auditLogger.log(
           'WARN',
           {
-            m: 'vault',
-            s: 'remove',
-            a: [nameOrId],
-            sc: 'u',
+            main: 'vault',
+            sub: 'remove',
+            args: [nameOrId],
+            source: 'u',
           },
-          `Removed vault ${result.vault.n}(${result.vault.id})`,
+          `Removed vault ${result.vault.name}(${result.vault.id})`,
           { vid: result.vault.id },
         );
 
@@ -375,17 +375,17 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     .action((nameOrId: string) =>
       runAction(async () => {
         const result = await ctx.vaultService.recoverVault(nameOrId);
-        success(`Recovered vault ${result.n}(${result.id}).`);
+        success(`Recovered vault ${result.name}(${result.id}).`);
 
         await ctx.auditLogger.log(
           'INFO',
           {
-            m: 'vault',
-            s: 'recover',
-            a: [nameOrId],
-            sc: 'u',
+            main: 'vault',
+            sub: 'recover',
+            args: [nameOrId],
+            source: 'u',
           },
-          `Recovered vault ${result.n}(${result.id})`,
+          `Recovered vault ${result.name}(${result.id})`,
           { vid: result.id },
         );
 
@@ -401,15 +401,15 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     .action((oldName: string, newName: string) =>
       runAction(async () => {
         const renamed = await ctx.vaultService.renameVault(oldName, newName);
-        success(`Renamed vault to ${renamed.n}(${renamed.id}).`);
+        success(`Renamed vault to ${renamed.name}(${renamed.id}).`);
 
         await ctx.auditLogger.log(
           'INFO',
           {
-            m: 'vault',
-            s: 'rename',
-            a: [oldName, newName],
-            sc: 'u',
+            main: 'vault',
+            sub: 'rename',
+            args: [oldName, newName],
+            source: 'u',
           },
           `Renamed vault ${oldName} to ${newName}`,
           { vid: renamed.id },
@@ -431,11 +431,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         const headers = ['ID', 'Name', 'Status', 'Created At', 'Remark', 'Current'];
         const rows = vaults.map((entry) => [
           String(entry.id),
-          entry.n,
-          styleVaultStatus(entry.st),
-          entry.cat,
-          entry.r,
-          config.current_vault_id === entry.id ? '*' : '',
+          entry.name,
+          styleVaultStatus(entry.status),
+          entry.createdAt,
+          entry.remark,
+          config.currentVaultId === entry.id ? '*' : '',
         ]);
 
         if (rows.length === 0) {
@@ -461,14 +461,22 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         const decorated = await ctx.archiveService.decorateEntries(entries);
         const config = await ctx.configService.getConfig();
 
-        const headers = ['ID', 'ST', `Vault${config.vault_item_sep}Item`, 'Path', 'Archived At', 'Message', 'Remark'];
+        const headers = [
+          'ID',
+          'ST',
+          `Vault${config.vaultItemSeparator}Item`,
+          'Path',
+          'Archived At',
+          'Message',
+          'Remark',
+        ];
 
         const rows = decorated.map((entry) => {
-          const dirDisplay = ctx.configService.renderPathWithAlias(entry.directory, config.alias_map);
+          const dirDisplay = ctx.configService.renderPathWithAlias(entry.directory, config.aliasMap);
           return [
             String(entry.id),
             styleArchiveStatus(entry.status),
-            `${entry.vaultName}${config.vault_item_sep}${entry.item}`,
+            `${entry.vaultName}${config.vaultItemSeparator}${entry.item}`,
             dirDisplay,
             entry.archivedAt,
             entry.message,
@@ -509,12 +517,12 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
               ['Field', 'Value'],
               [
                 ['id', String(detail.log.id)],
-                ['time', detail.log.oat],
-                ['level', styleLogLevel(detail.log.lv)],
-                ['operation', `${detail.log.o.m}${detail.log.o.s ? `/${detail.log.o.s}` : ''}`],
-                ['message', detail.log.m],
-                ['archive_id', detail.log.aid !== undefined ? String(detail.log.aid) : ''],
-                ['vault_id', detail.log.vid !== undefined ? String(detail.log.vid) : ''],
+                ['time', detail.log.operedAt],
+                ['level', styleLogLevel(detail.log.level)],
+                ['operation', `${detail.log.oper.main}${detail.log.oper.sub ? `/${detail.log.oper.sub}` : ''}`],
+                ['message', detail.log.message],
+                ['archive_id', detail.log.archiveIds !== undefined ? String(detail.log.archiveIds) : ''],
+                ['vault_id', detail.log.vaultIds !== undefined ? String(detail.log.vaultIds) : ''],
               ],
             ),
           );
@@ -542,7 +550,14 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
             console.log(
               renderTable(
                 ['id', 'name', 'status', 'remark'],
-                [[String(detail.vault.id), detail.vault.n, styleVaultStatus(detail.vault.st), detail.vault.r]],
+                [
+                  [
+                    String(detail.vault.id),
+                    detail.vault.name,
+                    styleVaultStatus(detail.vault.status),
+                    detail.vault.remark,
+                  ],
+                ],
               ),
             );
           }
@@ -560,12 +575,12 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         const rows = logs.map((entry) => [
           String(entry.id),
-          entry.oat,
-          styleLogLevel(entry.lv),
-          `${entry.o.m}${entry.o.s ? `/${entry.o.s}` : ''}`,
-          entry.m,
-          entry.aid !== undefined ? String(entry.aid) : '',
-          entry.vid !== undefined ? String(entry.vid) : '',
+          entry.operedAt,
+          styleLogLevel(entry.level),
+          `${entry.oper.main}${entry.oper.sub ? `/${entry.oper.sub}` : ''}`,
+          entry.message,
+          entry.archiveIds !== undefined ? String(entry.archiveIds) : '',
+          entry.vaultIds !== undefined ? String(entry.vaultIds) : '',
         ]);
 
         console.log(renderTable(['ID', 'Time', 'Level', 'Op', 'Message', 'AID', 'VID'], rows));
@@ -583,11 +598,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         const current = await ctx.configService.getConfig();
         if (options.comment) {
           const rows: string[][] = [
-            ['current_vault_id', String(current.current_vault_id), 'Current default vault id'],
-            ['update_check', current.update_check, 'Enable automatic update checks'],
-            ['last_update_check', current.last_update_check || '', 'Last auto-check timestamp (ISO)'],
-            ['alias_map', JSON.stringify(current.alias_map), 'Path alias map for display only'],
-            ['vault_item_sep', current.vault_item_sep, 'Separator shown between vault and item'],
+            ['current_vault_id', String(current.currentVaultId), 'Current default vault id'],
+            ['update_check', current.updateCheck, 'Enable automatic update checks'],
+            ['last_update_check', current.lastUpdateCheck || '', 'Last auto-check timestamp (ISO)'],
+            ['alias_map', JSON.stringify(current.aliasMap), 'Path alias map for display only'],
+            ['vault_item_sep', current.vaultItemSeparator, 'Separator shown between vault and item'],
           ];
           console.log(renderTable(['Key', 'Value', 'Comment'], rows));
         } else {
@@ -613,7 +628,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
           await ctx.auditLogger.log(
             'INFO',
-            { m: 'config', s: 'alias', a: [alias], opt: { remove: true }, sc: 'u' },
+            { main: 'config', sub: 'alias', args: [alias], opts: { remove: true }, source: 'u' },
             `Removed alias ${alias}`,
           );
         } else {
@@ -626,7 +641,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           await ctx.configService.addAlias(alias, targetPath);
           success(`Set alias ${alias}=${path.resolve(targetPath)}.`);
 
-          await ctx.auditLogger.log('INFO', { m: 'config', s: 'alias', a: [aliasPath], sc: 'u' }, `Set alias ${alias}`);
+          await ctx.auditLogger.log(
+            'INFO',
+            { main: 'config', sub: 'alias', args: [aliasPath], source: 'u' },
+            `Set alias ${alias}`,
+          );
         }
 
         await maybeAutoUpdateCheck(ctx);
@@ -649,7 +668,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         await ctx.auditLogger.log(
           'INFO',
-          { m: 'config', s: 'update-check', a: [normalized], sc: 'u' },
+          { main: 'config', sub: 'update-check', args: [normalized], source: 'u' },
           `Set update_check=${normalized}`,
         );
 
@@ -672,7 +691,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         await ctx.auditLogger.log(
           'INFO',
-          { m: 'config', s: 'vault-item-sep', a: [separator], sc: 'u' },
+          { main: 'config', sub: 'vault-item-sep', args: [separator], source: 'u' },
           `Set vault_item_sep=${separator}`,
         );
 
@@ -710,10 +729,10 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         await ctx.auditLogger.log(
           'INFO',
           {
-            m: 'update',
-            a: [],
-            opt: { repo },
-            sc: 'u',
+            main: 'update',
+            args: [],
+            opts: { repo },
+            source: 'u',
           },
           `Checked updates from ${repo}: latest=${update.latestVersion}, hasUpdate=${update.hasUpdate}`,
         );
@@ -739,10 +758,10 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           await ctx.auditLogger.log(
             'INFO',
             {
-              m: 'update',
-              s: 'install',
-              opt: { repo },
-              sc: 'u',
+              main: 'update',
+              sub: 'install',
+              opts: { repo },
+              source: 'u',
             },
             `Executed install script from latest release (${repo})`,
           );
@@ -773,7 +792,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         await ctx.auditLogger.log(
           errors.length > 0 ? 'ERROR' : warnings.length > 0 ? 'WARN' : 'INFO',
-          { m: 'check', sc: 'u' },
+          { main: 'check', source: 'u' },
           `Health check finished: ${errors.length} errors, ${warnings.length} warnings`,
         );
 

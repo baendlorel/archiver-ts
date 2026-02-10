@@ -104,12 +104,12 @@ export class ArchiveService {
         await this.logger.log(
           'INFO',
           {
-            m: 'put',
-            a: [item.input],
-            opt: {
+            main: 'put',
+            args: [item.input],
+            opts: {
               vault: options.vault ?? vault.id,
             },
-            sc: options.source ?? 'u',
+            source: options.source ?? 'u',
           },
           `Archived ${item.input}`,
           { aid: archiveId, vid: vault.id },
@@ -119,19 +119,19 @@ export class ArchiveService {
           id: archiveId,
           input: item.input,
           success: true,
-          message: `Archived to vault ${vault.n}(${vault.id})`,
+          message: `Archived to vault ${vault.name}(${vault.id})`,
         });
       } catch (error) {
         const message = (error as Error).message;
         await this.logger.log(
           'ERROR',
           {
-            m: 'put',
-            a: [item.input],
-            opt: {
+            main: 'put',
+            args: [item.input],
+            opts: {
               vault: options.vault ?? vault.id,
             },
-            sc: options.source ?? 'u',
+            source: options.source ?? 'u',
           },
           `Failed to archive ${item.input}: ${message}`,
         );
@@ -211,9 +211,9 @@ export class ArchiveService {
         await this.logger.log(
           'INFO',
           {
-            m: 'restore',
-            a: [String(id)],
-            sc: 'u',
+            main: 'restore',
+            args: [String(id)],
+            source: 'u',
           },
           `Restored archive id ${id}`,
           { aid: id, vid: entry.vaultId },
@@ -230,9 +230,9 @@ export class ArchiveService {
         await this.logger.log(
           'ERROR',
           {
-            m: 'restore',
-            a: [String(id)],
-            sc: 'u',
+            main: 'restore',
+            args: [String(id)],
+            source: 'u',
           },
           `Failed to restore archive id ${id}: ${message}`,
           { aid: id, vid: entry.vaultId },
@@ -283,7 +283,7 @@ export class ArchiveService {
         throw new Error(`Archive id ${id} has been restored and cannot be moved.`);
       }
       if (entry.vaultId === targetVault.id) {
-        throw new Error(`Archive id ${id} is already in vault ${targetVault.n}.`);
+        throw new Error(`Archive id ${id} is already in vault ${targetVault.name}.`);
       }
 
       const location = await this.context.resolveArchiveStorageLocation(entry);
@@ -343,10 +343,10 @@ export class ArchiveService {
         await this.logger.log(
           'INFO',
           {
-            m: 'move',
-            a: [String(id)],
-            opt: { to: targetVault.id },
-            sc: 'u',
+            main: 'move',
+            args: [String(id)],
+            opts: { to: targetVault.id },
+            source: 'u',
           },
           `Moved archive id ${id} from vault ${fromVaultId} to ${targetVault.id}`,
           { aid: id, vid: targetVault.id },
@@ -356,17 +356,17 @@ export class ArchiveService {
           id,
           input: String(id),
           success: true,
-          message: `Moved to vault ${targetVault.n}(${targetVault.id})`,
+          message: `Moved to vault ${targetVault.name}(${targetVault.id})`,
         });
       } catch (error) {
         const message = (error as Error).message;
         await this.logger.log(
           'ERROR',
           {
-            m: 'move',
-            a: [String(id)],
-            opt: { to: targetVault.id },
-            sc: 'u',
+            main: 'move',
+            args: [String(id)],
+            opts: { to: targetVault.id },
+            source: 'u',
           },
           `Failed to move archive id ${id}: ${message}`,
           { aid: id, vid: fromVaultId },
@@ -489,11 +489,11 @@ export class ArchiveService {
     return entries.map((entry) => {
       const vault = vaultMap.get(entry.vaultId);
       const fullPath = path.join(entry.directory, entry.item);
-      const displayPath = this.configService.renderPathWithAlias(fullPath, config.alias_map);
+      const displayPath = this.configService.renderPathWithAlias(fullPath, config.aliasMap);
 
       return {
         ...entry,
-        vaultName: vault ? `${vault.n}(${vault.id})` : `unknown(${entry.vaultId})`,
+        vaultName: vault ? `${vault.name}(${vault.id})` : `unknown(${entry.vaultId})`,
         displayPath,
       };
     });
@@ -510,8 +510,8 @@ export class ArchiveService {
       throw new Error(fallbackMessage);
     }
 
-    if (vault.st === 'Removed') {
-      throw new Error(`Vault ${vault.n} is removed.`);
+    if (vault.status === 'Removed') {
+      throw new Error(`Vault ${vault.name} is removed.`);
     }
 
     return vault;
@@ -586,7 +586,7 @@ export class ArchiveService {
     const auto = await this.context.loadAutoIncr();
 
     for (let index = 1; index <= count; index += 1) {
-      const predictedArchiveId = auto.archive_id + index;
+      const predictedArchiveId = auto.archiveId + index;
       const predictedPath = this.context.archivePath(vaultId, predictedArchiveId);
       if (await pathAccessible(predictedPath)) {
         throw new Error(`Archive slot is already occupied: ${predictedPath}`);

@@ -19,25 +19,25 @@ export const DEFAULT_VAULT_ID = 0;
 export const DEFAULT_VAULT_NAME = '@';
 
 export const DEFAULT_CONFIG: ArchiverConfig = {
-  current_vault_id: DEFAULT_VAULT_ID,
-  update_check: 'on',
-  last_update_check: '',
-  alias_map: {},
-  vault_item_sep: '::',
+  currentVaultId: DEFAULT_VAULT_ID,
+  updateCheck: 'on',
+  lastUpdateCheck: '',
+  aliasMap: {},
+  vaultItemSeparator: '::',
 };
 
 export const DEFAULT_AUTO_INCR: AutoIncrVars = {
-  log_id: 0,
-  vault_id: 0,
-  archive_id: 0,
+  logId: 0,
+  vaultId: 0,
+  archiveId: 0,
 };
 
 export const DEFAULT_VAULT: Vault = {
   id: DEFAULT_VAULT_ID,
-  n: DEFAULT_VAULT_NAME,
-  r: 'Default vault',
-  cat: 'system',
-  st: 'Protected',
+  name: DEFAULT_VAULT_NAME,
+  remark: 'Default vault',
+  createdAt: 'system',
+  status: 'Protected',
 };
 
 export const DEFAULT_LOG_TAIL = 15;

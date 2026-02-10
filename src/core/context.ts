@@ -19,25 +19,25 @@ import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJ
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
   return {
-    current_vault_id:
-      Number.isInteger(config.current_vault_id) && config.current_vault_id >= 0
-        ? config.current_vault_id
-        : DEFAULT_CONFIG.current_vault_id,
-    update_check: config.update_check === 'off' ? 'off' : 'on',
-    last_update_check: typeof config.last_update_check === 'string' ? config.last_update_check : '',
-    alias_map: typeof config.alias_map === 'object' && config.alias_map !== null ? config.alias_map : {},
-    vault_item_sep:
-      typeof config.vault_item_sep === 'string' && config.vault_item_sep.length > 0
-        ? config.vault_item_sep
-        : DEFAULT_CONFIG.vault_item_sep,
+    currentVaultId:
+      Number.isInteger(config.currentVaultId) && config.currentVaultId >= 0
+        ? config.currentVaultId
+        : DEFAULT_CONFIG.currentVaultId,
+    updateCheck: config.updateCheck === 'off' ? 'off' : 'on',
+    lastUpdateCheck: typeof config.lastUpdateCheck === 'string' ? config.lastUpdateCheck : '',
+    aliasMap: typeof config.aliasMap === 'object' && config.aliasMap !== null ? config.aliasMap : {},
+    vaultItemSeparator:
+      typeof config.vaultItemSeparator === 'string' && config.vaultItemSeparator.length > 0
+        ? config.vaultItemSeparator
+        : DEFAULT_CONFIG.vaultItemSeparator,
   };
 }
 
 function sanitizeAutoIncr(values: AutoIncrVars): AutoIncrVars {
   return {
-    log_id: Number.isInteger(values.log_id) && values.log_id >= 0 ? values.log_id : 0,
-    vault_id: Number.isInteger(values.vault_id) && values.vault_id >= 0 ? values.vault_id : 0,
-    archive_id: Number.isInteger(values.archive_id) && values.archive_id >= 0 ? values.archive_id : 0,
+    logId: Number.isInteger(values.logId) && values.logId >= 0 ? values.logId : 0,
+    vaultId: Number.isInteger(values.vaultId) && values.vaultId >= 0 ? values.vaultId : 0,
+    archiveId: Number.isInteger(values.archiveId) && values.archiveId >= 0 ? values.archiveId : 0,
   };
 }
 
@@ -58,13 +58,13 @@ function sanitizeListEntry(raw: ListEntry): ListEntry {
 }
 
 function sanitizeVault(raw: Vault): Vault {
-  const validStatus = raw.st === 'Removed' || raw.st === 'Protected' ? raw.st : 'Valid';
+  const validStatus = raw.status === 'Removed' || raw.status === 'Protected' ? raw.status : 'Valid';
   return {
     id: Number(raw.id),
-    n: String(raw.n ?? ''),
-    r: String(raw.r ?? ''),
-    cat: String(raw.cat ?? ''),
-    st: validStatus,
+    name: String(raw.name ?? ''),
+    remark: String(raw.remark ?? ''),
+    createdAt: String(raw.createdAt ?? ''),
+    status: validStatus,
   };
 }
 
@@ -102,11 +102,11 @@ export class ArchiverContext {
     await ensureFile(this.vaultsFile);
 
     const config = await this.loadConfig();
-    if (config.current_vault_id === 0 || (await pathAccessible(this.vaultDir(config.current_vault_id)))) {
+    if (config.currentVaultId === 0 || (await pathAccessible(this.vaultDir(config.currentVaultId)))) {
       return;
     }
 
-    config.current_vault_id = DEFAULT_VAULT.id;
+    config.currentVaultId = DEFAULT_VAULT.id;
     await this.saveConfig(config);
   }
 
@@ -207,7 +207,7 @@ export class ArchiverContext {
     const withDefault = options?.withDefault ?? true;
 
     const loaded = await this.loadVaults();
-    const filtered = includeRemoved ? loaded : loaded.filter((vault) => vault.st === 'Valid');
+    const filtered = includeRemoved ? loaded : loaded.filter((vault) => vault.status === 'Valid');
 
     if (!withDefault) {
       return filtered;
@@ -228,7 +228,7 @@ export class ArchiverContext {
     let targetRef = ref;
     if ((targetRef === undefined || targetRef === null || targetRef === '') && fallbackCurrent) {
       const config = await this.loadConfig();
-      targetRef = config.current_vault_id;
+      targetRef = config.currentVaultId;
     }
 
     if (targetRef === undefined || targetRef === null || targetRef === '') {
@@ -242,14 +242,14 @@ export class ArchiverContext {
       const asNumber = Number(targetRef);
       found = vaults.find((vault) => vault.id === asNumber);
     } else {
-      found = vaults.find((vault) => vault.n === targetRef);
+      found = vaults.find((vault) => vault.name === targetRef);
     }
 
     if (!found) {
       return undefined;
     }
 
-    if (!includeRemoved && found.st === 'Removed') {
+    if (!includeRemoved && found.status === 'Removed') {
       return undefined;
     }
 
