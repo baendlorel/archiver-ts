@@ -11,11 +11,11 @@ export function registerUpdateCommands(program: Command, ctx: CommandContext): v
     .alias('u')
     .alias('upd')
     .description('Check for updates from GitHub releases')
-    .option('--repo <owner/repo>', `GitHub repository (default: ${Update.REPO})`)
+    .option('--repo <owner/repo>', `GitHub repository (default: ${Update.Repo})`)
     .option('--install', 'Install by running release install script asset')
     .action((options: { repo?: string; install?: boolean }) =>
       runAction(async () => {
-        const repo = options.repo ?? Update.REPO;
+        const repo = options.repo ?? Update.Repo;
         const update = await ctx.updateService.checkLatest(repo);
 
         info(`Current version: ${update.currentVersion}`);

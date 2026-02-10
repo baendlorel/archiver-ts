@@ -57,9 +57,9 @@ export class CheckService {
 
   private async checkRequiredPaths(report: CheckReport): Promise<void> {
     const requiredPaths = [
-      ...Object.values(Paths.dir),
-      ...Object.values(Paths.file),
-      this.context.vaultDir(Defaults.vault.id),
+      ...Object.values(Paths.Dir),
+      ...Object.values(Paths.File),
+      this.context.vaultDir(Defaults.Vault.id),
     ];
 
     for (const target of requiredPaths) {
@@ -105,7 +105,7 @@ export class CheckService {
   }
 
   private checkVaultIds(report: CheckReport, vaults: Vault[], vaultAutoIncr: number): void {
-    const nonDefaultVaults = vaults.filter((vault) => vault.id !== Defaults.vault.id);
+    const nonDefaultVaults = vaults.filter((vault) => vault.id !== Defaults.Vault.id);
     const ids = nonDefaultVaults.map((vault) => vault.id);
     const duplicates = findDuplicates(ids);
     if (duplicates.length > 0) {
@@ -243,7 +243,7 @@ export class CheckService {
       entries.filter((entry) => entry.status === ArchiveStatus.Archived).map((entry) => `${entry.vaultId}/${entry.id}`),
     );
 
-    const vaultDirs = await listDirectories(Paths.dir.vaults);
+    const vaultDirs = await listDirectories(Paths.Dir.vaults);
 
     for (const dirName of vaultDirs) {
       if (!/^\d+$/.test(dirName)) {
@@ -251,7 +251,7 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'NON_NUMERIC_VAULT_DIR',
-          `Unexpected non-numeric vault directory: ${path.join(Paths.dir.vaults, dirName)}`,
+          `Unexpected non-numeric vault directory: ${path.join(Paths.Dir.vaults, dirName)}`,
         );
         continue;
       }
@@ -262,7 +262,7 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'ORPHAN_VAULT_DIR',
-          `Vault directory exists but no metadata: ${path.join(Paths.dir.vaults, dirName)}`,
+          `Vault directory exists but no metadata: ${path.join(Paths.Dir.vaults, dirName)}`,
         );
       }
 
@@ -319,7 +319,7 @@ export class CheckService {
   }
 
   private async checkLogConsistency(report: CheckReport, logAutoIncr: number): Promise<void> {
-    const yearFiles = await fs.readdir(Paths.dir.logs, { withFileTypes: true }).catch((error) => {
+    const yearFiles = await fs.readdir(Paths.Dir.logs, { withFileTypes: true }).catch((error) => {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
       }
@@ -331,7 +331,7 @@ export class CheckService {
       if (!file.isFile() || !/^\d{4}\.jsonl$/.test(file.name)) {
         continue;
       }
-      const rows = await readJsonLinesFile<LogEntry>(path.join(Paths.dir.logs, file.name));
+      const rows = await readJsonLinesFile<LogEntry>(path.join(Paths.Dir.logs, file.name));
       logs.push(...rows);
     }
 

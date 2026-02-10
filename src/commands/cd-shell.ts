@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { info, warn } from '../utils/terminal.js';
 import { shellQuote } from './command-utils.js';
+import { writeCwdHandoff } from './cwd-handoff.js';
 
 interface OpenSubshellAtPathOptions {
   print?: boolean;
@@ -11,6 +12,10 @@ export async function openSubshellAtPath(
   slotPath: string,
   options: OpenSubshellAtPathOptions = {},
 ): Promise<void> {
+  if (await writeCwdHandoff(slotPath)) {
+    return;
+  }
+
   if (options.print || !process.stdin.isTTY || !process.stdout.isTTY) {
     console.log(slotPath);
     return;

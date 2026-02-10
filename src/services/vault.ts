@@ -33,8 +33,8 @@ export class VaultService {
     if (!name) {
       throw new Error('Vault name cannot be empty.');
     }
-    if (name === Defaults.vault.name) {
-      throw new Error(`Vault name ${Defaults.vault.name} is reserved.`);
+    if (name === Defaults.Vault.name) {
+      throw new Error(`Vault name ${Defaults.Vault.name} is reserved.`);
     }
 
     const vaults = await this.context.loadVaults();
@@ -116,8 +116,8 @@ export class VaultService {
     if (!trimmed) {
       throw new Error('New vault name cannot be empty.');
     }
-    if (trimmed === Defaults.vault.name) {
-      throw new Error(`Vault name ${Defaults.vault.name} is reserved.`);
+    if (trimmed === Defaults.Vault.name) {
+      throw new Error(`Vault name ${Defaults.Vault.name} is reserved.`);
     }
 
     const vaults = await this.context.loadVaults();
@@ -149,7 +149,7 @@ export class VaultService {
       throw new Error(`Vault not found: ${nameOrId}`);
     }
 
-    if (vault.id === Defaults.vault.id || vault.status === VaultStatus.Protected) {
+    if (vault.id === Defaults.Vault.id || vault.status === VaultStatus.Protected) {
       throw new Error('Default vault cannot be removed.');
     }
 
@@ -160,17 +160,17 @@ export class VaultService {
     const entries = await this.context.loadListEntries();
     const archived = entries.filter((entry) => entry.vaultId === vault.id && entry.status === ArchiveStatus.Archived);
 
-    await this.context.ensureVaultDir(Defaults.vault.id);
+    await this.context.ensureVaultDir(Defaults.Vault.id);
 
     await this.validateMoveToDefault(archived);
 
     const movedArchiveIds: number[] = [];
     for (const entry of archived) {
       const from = this.context.archivePath(vault.id, entry.id);
-      const to = this.context.archivePath(Defaults.vault.id, entry.id);
+      const to = this.context.archivePath(Defaults.Vault.id, entry.id);
 
       await fs.rename(from, to);
-      entry.vaultId = Defaults.vault.id;
+      entry.vaultId = Defaults.Vault.id;
       movedArchiveIds.push(entry.id);
     }
 
@@ -186,7 +186,7 @@ export class VaultService {
 
     const config = await this.context.loadConfig();
     if (config.currentVaultId === vault.id) {
-      config.currentVaultId = Defaults.vault.id;
+      config.currentVaultId = Defaults.Vault.id;
       await this.context.saveConfig(config);
     }
 
@@ -196,7 +196,7 @@ export class VaultService {
   private async validateMoveToDefault(entries: ListEntry[]): Promise<void> {
     for (const entry of entries) {
       const from = this.context.archivePath(entry.vaultId, entry.id);
-      const to = this.context.archivePath(Defaults.vault.id, entry.id);
+      const to = this.context.archivePath(Defaults.Vault.id, entry.id);
 
       if (!(await pathAccessible(from))) {
         throw new Error(`Archived object is missing: ${from}`);
@@ -235,13 +235,13 @@ export class VaultService {
   }
 
   getVaultDisplay(vault: Vault): string {
-    if (vault.id === Defaults.vault.id) {
+    if (vault.id === Defaults.Vault.id) {
       return `${vault.name}(${vault.id})`;
     }
     return `${vault.name}(${vault.id})`;
   }
 
   vaultRoot(vault: Vault): string {
-    return path.join(Paths.dir.vaults, String(vault.id));
+    return path.join(Paths.Dir.vaults, String(vault.id));
   }
 }

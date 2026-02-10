@@ -112,7 +112,7 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
         success(`Vault ${result.vault.name}(${result.vault.id}) removed.`);
         if (result.movedArchiveIds.length > 0) {
-          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${Defaults.vault.name}.`);
+          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${Defaults.Vault.name}.`);
         }
 
         await ctx.auditLogger.log(

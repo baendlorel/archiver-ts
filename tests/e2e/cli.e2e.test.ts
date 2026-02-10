@@ -80,4 +80,23 @@ describe('cli e2e', () => {
     expect(output).toContain('Vault');
     expect(output).toContain('list-file.txt');
   });
+
+  it('writes cwd handoff file instead of opening subshell for cd', () => {
+    const projectDir = mkTempDir('archiver-e2e-cd-handoff-');
+    const filePath = path.join(projectDir, 'cd-file.txt');
+    const handoffFile = path.join(projectDir, 'handoff.txt');
+    fs.writeFileSync(filePath, 'cd data\n', 'utf8');
+
+    const env = {
+      NODE_ENV: 'development',
+      ARV_CWD_HANDOFF_FILE: handoffFile,
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['put', filePath], { cwd: projectDir, env });
+    const output = run(['cd', '1'], { cwd: projectDir, env });
+
+    expect(output.trim()).toBe('');
+    expect(fs.readFileSync(handoffFile, 'utf8').trim()).toBe(path.join(projectDir, '.archiver', 'vaults', '0', '1'));
+  });
 });

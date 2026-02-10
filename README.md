@@ -93,6 +93,7 @@ Aliases:
 
 - In interactive terminals, opens a subshell in the archive slot directory.
 - With `--print` (or non-interactive stdout), prints the slot path only.
+- If `ARV_CWD_HANDOFF_FILE` is set, writes the slot path into that file and exits (for shell wrappers that perform real `cd`).
 
 ### Vault Management
 
@@ -135,6 +136,24 @@ Aliases:
 - `Enter`: confirm selected action
 - `q` / `Esc`: cancel
 - Use `--no-interactive` to force plain-table output
+
+To make `Enter slot` switch your current shell directory (instead of opening a subshell), add this wrapper in `~/.bashrc` or `~/.zshrc`:
+
+```bash
+arv() {
+  local handoff
+  handoff="$(mktemp)"
+  ARV_CWD_HANDOFF_FILE="$handoff" command arv "$@"
+  local status=$?
+  if [ -s "$handoff" ]; then
+    local target
+    target="$(cat "$handoff")"
+    cd "$target" || status=$?
+  fi
+  rm -f "$handoff"
+  return $status
+}
+```
 
 ### Config
 

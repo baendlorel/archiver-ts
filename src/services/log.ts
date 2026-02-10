@@ -33,7 +33,7 @@ export interface LogDetail {
 export class LogService {
   constructor(private readonly context: ArchiverContext) {}
 
-  async getLogs(range: LogRange, tailCount: number = Defaults.logTail): Promise<LogEntry[]> {
+  async getLogs(range: LogRange, tailCount: number = Defaults.LogTail): Promise<LogEntry[]> {
     const allLogs = await this.loadAllLogs();
 
     if (range.mode === 'tail') {
@@ -80,7 +80,7 @@ export class LogService {
 
     const logs: LogEntry[] = [];
     for (const fileName of yearFiles) {
-      const filePath = path.join(Paths.dir.logs, fileName);
+      const filePath = path.join(Paths.Dir.logs, fileName);
       const rows = await readJsonLinesFile<LogEntry>(filePath);
       rows.forEach((row) => logs.push(normalizeLogEntry(row)));
     }
@@ -91,7 +91,7 @@ export class LogService {
 
   private async listYearFiles(): Promise<string[]> {
     try {
-      const entries = await fs.readdir(Paths.dir.logs, { withFileTypes: true });
+      const entries = await fs.readdir(Paths.Dir.logs, { withFileTypes: true });
       return entries
         .filter((entry) => entry.isFile() && /^\d{4}\.jsonl$/.test(entry.name))
         .map((entry) => entry.name)

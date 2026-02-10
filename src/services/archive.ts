@@ -532,7 +532,7 @@ export class ArchiveService {
     const prepared: PutPreparedItem[] = [];
     const seen = new Set<string>();
 
-    const archiverRootCanonical = await safeRealPath(Paths.dir.root);
+    const archiverRootCanonical = await safeRealPath(Paths.Dir.root);
 
     for (const item of items) {
       const resolvedPath = path.resolve(item);

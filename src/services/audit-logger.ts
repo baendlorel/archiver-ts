@@ -28,7 +28,7 @@ export class AuditLogger {
       ...(links?.vid !== undefined ? { vaultIds: links.vid } : {}),
     };
 
-    const filePath = path.join(Paths.dir.logs, `${year}.jsonl`);
+    const filePath = path.join(Paths.Dir.logs, `${year}.jsonl`);
     await appendJsonLine(filePath, entry);
 
     return entry;

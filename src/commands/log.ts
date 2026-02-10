@@ -79,7 +79,7 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
         }
 
         const parsedRange = parseLogRange(range);
-        const logs = await ctx.logService.getLogs(parsedRange, Defaults.logTail);
+        const logs = await ctx.logService.getLogs(parsedRange, Defaults.LogTail);
 
         if (logs.length === 0) {
           info('No logs found.');

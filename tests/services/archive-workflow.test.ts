@@ -11,8 +11,8 @@ import { ConfigService } from '../../src/services/config.js';
 import { VaultService } from '../../src/services/vault.js';
 
 type PathsSnapshot = {
-  dir: Record<keyof typeof Paths.dir, string>;
-  file: Record<keyof typeof Paths.file, string>;
+  dir: Record<keyof typeof Paths.Dir, string>;
+  file: Record<keyof typeof Paths.File, string>;
 };
 
 let snapshot: PathsSnapshot;
@@ -22,14 +22,14 @@ let workspaceDir: string;
 function applyPaths(rootDir: string): void {
   const coreDir = path.join(rootDir, 'core');
 
-  Object.assign(Paths.dir, {
+  Object.assign(Paths.Dir, {
     root: rootDir,
     core: coreDir,
     logs: path.join(rootDir, 'logs'),
     vaults: path.join(rootDir, 'vaults'),
   });
 
-  Object.assign(Paths.file, {
+  Object.assign(Paths.File, {
     config: path.join(coreDir, 'config.jsonc'),
     autoIncr: path.join(coreDir, 'auto-incr.json'),
     list: path.join(coreDir, 'list.json'),
@@ -68,8 +68,8 @@ async function createRuntime(): Promise<{
 
 beforeEach(async () => {
   snapshot = {
-    dir: { ...Paths.dir },
-    file: { ...Paths.file },
+    dir: { ...Paths.Dir },
+    file: { ...Paths.File },
   };
 
   sandboxRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'archiver-ts-test-'));
@@ -80,8 +80,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  Object.assign(Paths.dir, snapshot.dir);
-  Object.assign(Paths.file, snapshot.file);
+  Object.assign(Paths.Dir, snapshot.dir);
+  Object.assign(Paths.File, snapshot.file);
 
   if (sandboxRoot) {
     await fs.rm(sandboxRoot, { recursive: true, force: true });

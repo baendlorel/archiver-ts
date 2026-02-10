@@ -10,14 +10,14 @@ const root = getRoot();
 const core = join(root, 'core');
 
 export namespace Paths {
-  export const dir = {
+  export const Dir = {
     root,
     core,
     logs: join(root, 'logs'),
     vaults: join(root, 'vaults'),
   };
 
-  export const file = {
+  export const File = {
     config: join(core, 'config.jsonc'),
     autoIncr: join(core, 'auto-incr.json'),
     list: join(core, 'list.json'),

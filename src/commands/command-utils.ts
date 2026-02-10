@@ -21,7 +21,7 @@ export async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
     const last = new Date(config.lastUpdateCheck);
     if (!Number.isNaN(last.getTime())) {
       const diff = Date.now() - last.getTime();
-      if (diff < Update.CHECK_INTERVAL_MS) {
+      if (diff < Update.CheckInterval) {
         return;
       }
     }
