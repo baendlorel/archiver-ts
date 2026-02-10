@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import path from "node:path";
-import { Command } from "commander";
+import path from 'node:path';
+import { Command } from 'commander';
 import {
   APP_DESCRIPTION,
   APP_NAME,
@@ -8,18 +8,18 @@ import {
   DEFAULT_VAULT,
   UPDATE_CHECK_INTERVAL_MS,
   UPDATE_REPO,
-} from "./constants.js";
-import { ArchiverContext } from "./core/context.js";
-import { ArchiveService } from "./services/archive-service.js";
-import { AuditLogger } from "./services/audit-logger.js";
-import { CheckService } from "./services/check-service.js";
-import { ConfigService } from "./services/config-service.js";
-import { LogService } from "./services/log-service.js";
-import { readCurrentVersion, UpdateService } from "./services/update-service.js";
-import { VaultService } from "./services/vault-service.js";
-import { formatDateTime, nowIso } from "./utils/date.js";
-import { ask, confirm } from "./utils/prompt.js";
-import { parseIdList, parseLogRange } from "./utils/parse.js";
+} from './constants.js';
+import { ArchiverContext } from './core/context.js';
+import { ArchiveService } from './services/archive-service.js';
+import { AuditLogger } from './services/audit-logger.js';
+import { CheckService } from './services/check-service.js';
+import { ConfigService } from './services/config-service.js';
+import { LogService } from './services/log-service.js';
+import { readCurrentVersion, UpdateService } from './services/update-service.js';
+import { VaultService } from './services/vault-service.js';
+import { nowIso } from './utils/date.js';
+import { ask, confirm } from './utils/prompt.js';
+import { parseIdList, parseLogRange } from './utils/parse.js';
 import {
   error,
   info,
@@ -29,7 +29,7 @@ import {
   styleVaultStatus,
   success,
   warn,
-} from "./utils/terminal.js";
+} from './utils/terminal.js';
 
 interface CommandContext {
   context: ArchiverContext;
@@ -49,7 +49,7 @@ function summarizeBatch(operationName: string, result: { ok: unknown[]; failed: 
 
 async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
   const config = await ctx.configService.getConfig();
-  if (config.update_check !== "on") {
+  if (config.update_check !== 'on') {
     return;
   }
 
@@ -117,13 +117,13 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
   program.name(APP_NAME).description(APP_DESCRIPTION).version(ctx.version);
 
   program
-    .command("put")
-    .alias("p")
-    .description("Archive one or many files/directories")
-    .argument("<items...>", "Items to archive")
-    .option("-v, --vault <vault>", "Target vault name or id")
-    .option("-m, --message <message>", "Archive message")
-    .option("-r, --remark <remark>", "Archive remark")
+    .command('put')
+    .alias('p')
+    .description('Archive one or many files/directories')
+    .argument('<items...>', 'Items to archive')
+    .option('-v, --vault <vault>', 'Target vault name or id')
+    .option('-m, --message <message>', 'Archive message')
+    .option('-r, --remark <remark>', 'Archive remark')
     .action((items: string[], options: { vault?: string; message?: string; remark?: string }) =>
       runAction(async () => {
         const result = await ctx.archiveService.put(items, options);
@@ -132,21 +132,21 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           success(`[${item.id}] ${item.input} -> ${item.message}`);
         }
         for (const item of result.failed) {
-          error(`[${item.id ?? "-"}] ${item.input}: ${item.message}`);
+          error(`[${item.id ?? '-'}] ${item.input}: ${item.message}`);
         }
 
-        summarizeBatch("put", result);
+        summarizeBatch('put', result);
 
         await maybeAutoUpdateCheck(ctx);
       }),
     );
 
   program
-    .command("restore")
-    .alias("r")
-    .alias("rst")
-    .description("Restore archived entries by id")
-    .argument("<ids...>", "Archive ids")
+    .command('restore')
+    .alias('r')
+    .alias('rst')
+    .description('Restore archived entries by id')
+    .argument('<ids...>', 'Archive ids')
     .action((ids: string[]) =>
       runAction(async () => {
         const parsedIds = parseIdList(ids);
@@ -156,23 +156,23 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           success(`[${item.id}] restored: ${item.message}`);
         }
         for (const item of result.failed) {
-          error(`[${item.id ?? "-"}] restore failed: ${item.message}`);
+          error(`[${item.id ?? '-'}] restore failed: ${item.message}`);
         }
 
-        summarizeBatch("restore", result);
+        summarizeBatch('restore', result);
 
         await maybeAutoUpdateCheck(ctx);
       }),
     );
 
   program
-    .command("move")
-    .alias("m")
-    .alias("mv")
-    .alias("mov")
-    .description("Move archived entries to another vault")
-    .argument("<ids...>", "Archive ids")
-    .requiredOption("--to <vault>", "Destination vault name or id")
+    .command('move')
+    .alias('m')
+    .alias('mv')
+    .alias('mov')
+    .description('Move archived entries to another vault')
+    .argument('<ids...>', 'Archive ids')
+    .requiredOption('--to <vault>', 'Destination vault name or id')
     .action((ids: string[], options: { to: string }) =>
       runAction(async () => {
         const parsedIds = parseIdList(ids);
@@ -182,29 +182,29 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           success(`[${item.id}] moved: ${item.message}`);
         }
         for (const item of result.failed) {
-          error(`[${item.id ?? "-"}] move failed: ${item.message}`);
+          error(`[${item.id ?? '-'}] move failed: ${item.message}`);
         }
 
-        summarizeBatch("move", result);
+        summarizeBatch('move', result);
 
         await maybeAutoUpdateCheck(ctx);
       }),
     );
 
-  const vault = program.command("vault").alias("v").alias("vlt").description("Vault management");
+  const vault = program.command('vault').alias('v').alias('vlt').description('Vault management');
 
   vault
-    .command("use")
-    .description("Use a vault as the current vault")
-    .argument("<name-or-id>", "Vault name or id")
+    .command('use')
+    .description('Use a vault as the current vault')
+    .argument('<name-or-id>', 'Vault name or id')
     .action((nameOrId: string) =>
       runAction(async () => {
         const target = await ctx.vaultService.useVault(nameOrId);
         success(`Current vault changed to ${target.n}(${target.id}).`);
 
         await ctx.auditLogger.log(
-          "INFO",
-          { m: "vault", s: "use", a: [nameOrId], sc: "u" },
+          'INFO',
+          { m: 'vault', s: 'use', a: [nameOrId], sc: 'u' },
           `Switch current vault to ${target.n}(${target.id})`,
           { vid: target.id },
         );
@@ -214,11 +214,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   vault
-    .command("create")
-    .description("Create a vault")
-    .argument("<name>", "Vault name")
-    .option("-r, --remark <remark>", "Vault remark")
-    .option("-a, --activate", "Activate after creation")
+    .command('create')
+    .description('Create a vault')
+    .argument('<name>', 'Vault name')
+    .option('-r, --remark <remark>', 'Vault remark')
+    .option('-a, --activate', 'Activate after creation')
     .action((name: string, options: { remark?: string; activate?: boolean }) =>
       runAction(async () => {
         let recovered = false;
@@ -231,7 +231,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           });
 
           recovered = result.recovered;
-          const actionText = recovered ? "Recovered" : "Created";
+          const actionText = recovered ? 'Recovered' : 'Created';
           success(`${actionText} vault ${result.vault.n}(${result.vault.id}).`);
 
           if (options.activate) {
@@ -239,15 +239,15 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           }
 
           await ctx.auditLogger.log(
-            "INFO",
+            'INFO',
             {
-              m: "vault",
-              s: recovered ? "recover" : "create",
+              m: 'vault',
+              s: recovered ? 'recover' : 'create',
               a: [name],
               opt: {
                 activate: Boolean(options.activate),
               },
-              sc: "u",
+              sc: 'u',
             },
             `${actionText} vault ${result.vault.n}(${result.vault.id})`,
             { vid: result.vault.id },
@@ -258,12 +258,10 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           await createOrRecover(false);
         } catch (err) {
           const message = (err as Error).message;
-          if (message.includes("A removed vault named")) {
-            const shouldRecover = await confirm(
-              `A removed vault named ${name} exists. Recover it instead? [y/N] `,
-            );
+          if (message.includes('A removed vault named')) {
+            const shouldRecover = await confirm(`A removed vault named ${name} exists. Recover it instead? [y/N] `);
             if (!shouldRecover) {
-              warn("Operation cancelled.");
+              warn('Operation cancelled.');
               return;
             }
             await createOrRecover(true);
@@ -277,21 +275,21 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   vault
-    .command("remove")
-    .description("Remove a vault (moves archived entries to default vault @)")
-    .argument("<name-or-id>", "Vault name or id")
+    .command('remove')
+    .description('Remove a vault (moves archived entries to default vault @)')
+    .argument('<name-or-id>', 'Vault name or id')
     .action((nameOrId: string) =>
       runAction(async () => {
         const stepOne = await confirm(`Remove vault ${nameOrId}? This cannot be undone directly. [y/N] `);
         if (!stepOne) {
-          warn("Operation cancelled.");
+          warn('Operation cancelled.');
           return;
         }
 
         const verifyCode = Math.random().toString(36).slice(2, 8).toUpperCase();
         const typed = await ask(`Type verification code '${verifyCode}' to continue: `);
         if (typed !== verifyCode) {
-          warn("Verification code does not match. Operation cancelled.");
+          warn('Verification code does not match. Operation cancelled.');
           return;
         }
 
@@ -303,12 +301,12 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         }
 
         await ctx.auditLogger.log(
-          "WARN",
+          'WARN',
           {
-            m: "vault",
-            s: "remove",
+            m: 'vault',
+            s: 'remove',
             a: [nameOrId],
-            sc: "u",
+            sc: 'u',
           },
           `Removed vault ${result.vault.n}(${result.vault.id})`,
           { vid: result.vault.id },
@@ -319,21 +317,21 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   vault
-    .command("recover")
-    .description("Recover a removed vault")
-    .argument("<name-or-id>", "Vault name or id")
+    .command('recover')
+    .description('Recover a removed vault')
+    .argument('<name-or-id>', 'Vault name or id')
     .action((nameOrId: string) =>
       runAction(async () => {
         const result = await ctx.vaultService.recoverVault(nameOrId);
         success(`Recovered vault ${result.n}(${result.id}).`);
 
         await ctx.auditLogger.log(
-          "INFO",
+          'INFO',
           {
-            m: "vault",
-            s: "recover",
+            m: 'vault',
+            s: 'recover',
             a: [nameOrId],
-            sc: "u",
+            sc: 'u',
           },
           `Recovered vault ${result.n}(${result.id})`,
           { vid: result.id },
@@ -344,22 +342,22 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   vault
-    .command("rename")
-    .description("Rename a vault")
-    .argument("<old>", "Current vault name or id")
-    .argument("<new>", "New vault name")
+    .command('rename')
+    .description('Rename a vault')
+    .argument('<old>', 'Current vault name or id')
+    .argument('<new>', 'New vault name')
     .action((oldName: string, newName: string) =>
       runAction(async () => {
         const renamed = await ctx.vaultService.renameVault(oldName, newName);
         success(`Renamed vault to ${renamed.n}(${renamed.id}).`);
 
         await ctx.auditLogger.log(
-          "INFO",
+          'INFO',
           {
-            m: "vault",
-            s: "rename",
+            m: 'vault',
+            s: 'rename',
             a: [oldName, newName],
-            sc: "u",
+            sc: 'u',
           },
           `Renamed vault ${oldName} to ${newName}`,
           { vid: renamed.id },
@@ -370,26 +368,26 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   vault
-    .command("list")
-    .description("List vaults")
-    .option("-a, --all", "Show removed vaults")
+    .command('list')
+    .description('List vaults')
+    .option('-a, --all', 'Show removed vaults')
     .action((options: { all?: boolean }) =>
       runAction(async () => {
         const config = await ctx.configService.getConfig();
         const vaults = await ctx.vaultService.listVaults(Boolean(options.all));
 
-        const headers = ["ID", "Name", "Status", "Created At", "Remark", "Current"];
+        const headers = ['ID', 'Name', 'Status', 'Created At', 'Remark', 'Current'];
         const rows = vaults.map((entry) => [
           String(entry.id),
           entry.n,
           styleVaultStatus(entry.st),
           entry.cat,
           entry.r,
-          config.current_vault_id === entry.id ? "*" : "",
+          config.current_vault_id === entry.id ? '*' : '',
         ]);
 
         if (rows.length === 0) {
-          info("No vaults found.");
+          info('No vaults found.');
           return;
         }
 
@@ -398,20 +396,20 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   program
-    .command("list")
-    .alias("l")
-    .alias("ls")
-    .description("List archived entries")
-    .option("--restored", "Show only restored entries")
-    .option("--all", "Show all entries")
-    .option("--vault <vault>", "Filter by vault name or id")
+    .command('list')
+    .alias('l')
+    .alias('ls')
+    .description('List archived entries')
+    .option('--restored', 'Show only restored entries')
+    .option('--all', 'Show all entries')
+    .option('--vault <vault>', 'Filter by vault name or id')
     .action((options: { restored?: boolean; all?: boolean; vault?: string }) =>
       runAction(async () => {
         const entries = await ctx.archiveService.listEntries(options);
         const decorated = await ctx.archiveService.decorateEntries(entries);
         const config = await ctx.configService.getConfig();
 
-        const headers = ["ID", "ST", `Vault${config.vault_item_sep}Item`, "Path", "Archived At", "Message", "Remark"];
+        const headers = ['ID', 'ST', `Vault${config.vault_item_sep}Item`, 'Path', 'Archived At', 'Message', 'Remark'];
 
         const rows = decorated.map((entry) => {
           const dirDisplay = ctx.configService.renderPathWithAlias(entry.d, config.alias_map);
@@ -427,7 +425,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         });
 
         if (rows.length === 0) {
-          info("No entries matched.");
+          info('No entries matched.');
           return;
         }
 
@@ -436,11 +434,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   program
-    .command("log")
-    .alias("lg")
-    .description("Show operation logs")
-    .argument("[range]", "YYYYMM | YYYYMM-YYYYMM | all|*|a")
-    .option("--id <id>", "Show one log record by id")
+    .command('log')
+    .alias('lg')
+    .description('Show operation logs')
+    .argument('[range]', 'YYYYMM | YYYYMM-YYYYMM | all|*|a')
+    .option('--id <id>', 'Show one log record by id')
     .action((range: string | undefined, options: { id?: string }) =>
       runAction(async () => {
         if (options.id !== undefined) {
@@ -456,46 +454,43 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           info(`Log #${detail.log.id}`);
           console.log(
             renderTable(
-              ["Field", "Value"],
+              ['Field', 'Value'],
               [
-                ["id", String(detail.log.id)],
-                ["time", detail.log.oat],
-                ["level", styleLogLevel(detail.log.lv)],
-                ["operation", `${detail.log.o.m}${detail.log.o.s ? `/${detail.log.o.s}` : ""}`],
-                ["message", detail.log.m],
-                ["archive_id", detail.log.aid !== undefined ? String(detail.log.aid) : ""],
-                ["vault_id", detail.log.vid !== undefined ? String(detail.log.vid) : ""],
+                ['id', String(detail.log.id)],
+                ['time', detail.log.oat],
+                ['level', styleLogLevel(detail.log.lv)],
+                ['operation', `${detail.log.o.m}${detail.log.o.s ? `/${detail.log.o.s}` : ''}`],
+                ['message', detail.log.m],
+                ['archive_id', detail.log.aid !== undefined ? String(detail.log.aid) : ''],
+                ['vault_id', detail.log.vid !== undefined ? String(detail.log.vid) : ''],
               ],
             ),
           );
 
           if (detail.archive) {
-            info("Linked archive entry");
+            info('Linked archive entry');
             console.log(
               renderTable(
-                ["id", "status", "vault", "item", "dir"],
-                [[
-                  String(detail.archive.id),
-                  styleArchiveStatus(detail.archive.st),
-                  String(detail.archive.vid),
-                  detail.archive.i,
-                  detail.archive.d,
-                ]],
+                ['id', 'status', 'vault', 'item', 'dir'],
+                [
+                  [
+                    String(detail.archive.id),
+                    styleArchiveStatus(detail.archive.st),
+                    String(detail.archive.vid),
+                    detail.archive.i,
+                    detail.archive.d,
+                  ],
+                ],
               ),
             );
           }
 
           if (detail.vault) {
-            info("Linked vault");
+            info('Linked vault');
             console.log(
               renderTable(
-                ["id", "name", "status", "remark"],
-                [[
-                  String(detail.vault.id),
-                  detail.vault.n,
-                  styleVaultStatus(detail.vault.st),
-                  detail.vault.r,
-                ]],
+                ['id', 'name', 'status', 'remark'],
+                [[String(detail.vault.id), detail.vault.n, styleVaultStatus(detail.vault.st), detail.vault.r]],
               ),
             );
           }
@@ -507,7 +502,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         const logs = await ctx.logService.getLogs(parsedRange, DEFAULT_LOG_TAIL);
 
         if (logs.length === 0) {
-          info("No logs found.");
+          info('No logs found.');
           return;
         }
 
@@ -515,34 +510,34 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
           String(entry.id),
           entry.oat,
           styleLogLevel(entry.lv),
-          `${entry.o.m}${entry.o.s ? `/${entry.o.s}` : ""}`,
+          `${entry.o.m}${entry.o.s ? `/${entry.o.s}` : ''}`,
           entry.m,
-          entry.aid !== undefined ? String(entry.aid) : "",
-          entry.vid !== undefined ? String(entry.vid) : "",
+          entry.aid !== undefined ? String(entry.aid) : '',
+          entry.vid !== undefined ? String(entry.vid) : '',
         ]);
 
-        console.log(renderTable(["ID", "Time", "Level", "Op", "Message", "AID", "VID"], rows));
+        console.log(renderTable(['ID', 'Time', 'Level', 'Op', 'Message', 'AID', 'VID'], rows));
       }),
     );
 
-  const config = program.command("config").alias("c").alias("cfg").description("Manage config values");
+  const config = program.command('config').alias('c').alias('cfg').description('Manage config values');
 
   config
-    .command("list")
-    .description("Show current config")
-    .option("-c, --comment", "Show key comments")
+    .command('list')
+    .description('Show current config')
+    .option('-c, --comment', 'Show key comments')
     .action((options: { comment?: boolean }) =>
       runAction(async () => {
         const current = await ctx.configService.getConfig();
         if (options.comment) {
           const rows: string[][] = [
-            ["current_vault_id", String(current.current_vault_id), "Current default vault id"],
-            ["update_check", current.update_check, "Enable automatic update checks"],
-            ["last_update_check", current.last_update_check || "", "Last auto-check timestamp (ISO)"] ,
-            ["alias_map", JSON.stringify(current.alias_map), "Path alias map for display only"],
-            ["vault_item_sep", current.vault_item_sep, "Separator shown between vault and item"],
+            ['current_vault_id', String(current.current_vault_id), 'Current default vault id'],
+            ['update_check', current.update_check, 'Enable automatic update checks'],
+            ['last_update_check', current.last_update_check || '', 'Last auto-check timestamp (ISO)'],
+            ['alias_map', JSON.stringify(current.alias_map), 'Path alias map for display only'],
+            ['vault_item_sep', current.vault_item_sep, 'Separator shown between vault and item'],
           ];
-          console.log(renderTable(["Key", "Value", "Comment"], rows));
+          console.log(renderTable(['Key', 'Value', 'Comment'], rows));
         } else {
           console.log(JSON.stringify(current, null, 2));
         }
@@ -550,40 +545,36 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   config
-    .command("alias")
-    .description("Set or remove a display alias: <alias=path> [-r]")
-    .argument("<alias-path>", "Format: alias=/absolute/path")
-    .option("-r, --remove", "Remove alias")
+    .command('alias')
+    .description('Set or remove a display alias: <alias=path> [-r]')
+    .argument('<alias-path>', 'Format: alias=/absolute/path')
+    .option('-r, --remove', 'Remove alias')
     .action((aliasPath: string, options: { remove?: boolean }) =>
       runAction(async () => {
         if (options.remove) {
-          const alias = aliasPath.includes("=") ? aliasPath.split("=", 1)[0] : aliasPath;
+          const alias = aliasPath.includes('=') ? aliasPath.split('=', 1)[0] : aliasPath;
           if (!alias) {
-            throw new Error("Alias cannot be empty.");
+            throw new Error('Alias cannot be empty.');
           }
           await ctx.configService.removeAlias(alias);
           success(`Removed alias ${alias}.`);
 
           await ctx.auditLogger.log(
-            "INFO",
-            { m: "config", s: "alias", a: [alias], opt: { remove: true }, sc: "u" },
+            'INFO',
+            { m: 'config', s: 'alias', a: [alias], opt: { remove: true }, sc: 'u' },
             `Removed alias ${alias}`,
           );
         } else {
-          const split = aliasPath.split("=");
+          const split = aliasPath.split('=');
           if (split.length !== 2 || !split[0] || !split[1]) {
-            throw new Error("Alias format must be alias=path.");
+            throw new Error('Alias format must be alias=path.');
           }
           const alias = split[0].trim();
           const targetPath = split[1].trim();
           await ctx.configService.addAlias(alias, targetPath);
           success(`Set alias ${alias}=${path.resolve(targetPath)}.`);
 
-          await ctx.auditLogger.log(
-            "INFO",
-            { m: "config", s: "alias", a: [aliasPath], sc: "u" },
-            `Set alias ${alias}`,
-          );
+          await ctx.auditLogger.log('INFO', { m: 'config', s: 'alias', a: [aliasPath], sc: 'u' }, `Set alias ${alias}`);
         }
 
         await maybeAutoUpdateCheck(ctx);
@@ -591,22 +582,22 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   config
-    .command("update-check")
-    .description("Enable or disable auto update checks")
-    .argument("<state>", "on|off")
+    .command('update-check')
+    .description('Enable or disable auto update checks')
+    .argument('<state>', 'on|off')
     .action((state: string) =>
       runAction(async () => {
         const normalized = state.toLowerCase();
-        if (normalized !== "on" && normalized !== "off") {
-          throw new Error("State must be on or off.");
+        if (normalized !== 'on' && normalized !== 'off') {
+          throw new Error('State must be on or off.');
         }
 
         await ctx.configService.setUpdateCheck(normalized);
         success(`Auto update check is now ${normalized}.`);
 
         await ctx.auditLogger.log(
-          "INFO",
-          { m: "config", s: "update-check", a: [normalized], sc: "u" },
+          'INFO',
+          { m: 'config', s: 'update-check', a: [normalized], sc: 'u' },
           `Set update_check=${normalized}`,
         );
 
@@ -615,21 +606,21 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   config
-    .command("vault-item-sep")
-    .description("Set separator between vault and item in list output")
-    .argument("<sep>", "Separator string")
+    .command('vault-item-sep')
+    .description('Set separator between vault and item in list output')
+    .argument('<sep>', 'Separator string')
     .action((separator: string) =>
       runAction(async () => {
         if (!separator.trim()) {
-          throw new Error("Separator cannot be empty.");
+          throw new Error('Separator cannot be empty.');
         }
 
         await ctx.configService.setVaultItemSeparator(separator);
         success(`vault_item_sep updated to '${separator}'.`);
 
         await ctx.auditLogger.log(
-          "INFO",
-          { m: "config", s: "vault-item-sep", a: [separator], sc: "u" },
+          'INFO',
+          { m: 'config', s: 'vault-item-sep', a: [separator], sc: 'u' },
           `Set vault_item_sep=${separator}`,
         );
 
@@ -638,12 +629,12 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   program
-    .command("update")
-    .alias("u")
-    .alias("upd")
-    .description("Check for updates from GitHub releases")
-    .option("--repo <owner/repo>", `GitHub repository (default: ${UPDATE_REPO})`)
-    .option("--install", "Install by running release install script asset")
+    .command('update')
+    .alias('u')
+    .alias('upd')
+    .description('Check for updates from GitHub releases')
+    .option('--repo <owner/repo>', `GitHub repository (default: ${UPDATE_REPO})`)
+    .option('--install', 'Install by running release install script asset')
     .action((options: { repo?: string; install?: boolean }) =>
       runAction(async () => {
         const repo = options.repo ?? UPDATE_REPO;
@@ -653,9 +644,9 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         info(`Latest version : ${update.latestVersion}`);
 
         if (!update.hasUpdate) {
-          success("You are already on the latest version.");
+          success('You are already on the latest version.');
         } else {
-          warn("A new version is available.");
+          warn('A new version is available.');
           if (update.htmlUrl) {
             info(`Release page: ${update.htmlUrl}`);
           }
@@ -665,41 +656,41 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         }
 
         await ctx.auditLogger.log(
-          "INFO",
+          'INFO',
           {
-            m: "update",
+            m: 'update',
             a: [],
             opt: { repo },
-            sc: "u",
+            sc: 'u',
           },
           `Checked updates from ${repo}: latest=${update.latestVersion}, hasUpdate=${update.hasUpdate}`,
         );
 
         if (options.install) {
           if (!update.hasUpdate) {
-            info("Skip install because current version is latest.");
+            info('Skip install because current version is latest.');
             return;
           }
 
-          const shouldInstall = await confirm("Run release install script now? [y/N] ");
+          const shouldInstall = await confirm('Run release install script now? [y/N] ');
           if (!shouldInstall) {
-            warn("Installation cancelled.");
+            warn('Installation cancelled.');
             return;
           }
 
           const output = await ctx.updateService.installLatest(repo);
-          success("Install script executed.");
+          success('Install script executed.');
           if (output) {
             console.log(output);
           }
 
           await ctx.auditLogger.log(
-            "INFO",
+            'INFO',
             {
-              m: "update",
-              s: "install",
+              m: 'update',
+              s: 'install',
               opt: { repo },
-              sc: "u",
+              sc: 'u',
             },
             `Executed install script from latest release (${repo})`,
           );
@@ -708,29 +699,29 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     );
 
   program
-    .command("check")
-    .alias("chk")
-    .description("Check data consistency and health")
+    .command('check')
+    .alias('chk')
+    .description('Check data consistency and health')
     .action(() =>
       runAction(async () => {
         const report = await ctx.checkService.run();
 
-        const errors = report.issues.filter((issue) => issue.level === "ERROR");
-        const warnings = report.issues.filter((issue) => issue.level === "WARN");
+        const errors = report.issues.filter((issue) => issue.level === 'ERROR');
+        const warnings = report.issues.filter((issue) => issue.level === 'WARN');
 
         if (report.issues.length > 0) {
           const rows = report.issues.map((issue) => [issue.level, issue.code, issue.message]);
-          console.log(renderTable(["Level", "Code", "Message"], rows));
+          console.log(renderTable(['Level', 'Code', 'Message'], rows));
         } else {
-          success("No consistency issues found.");
+          success('No consistency issues found.');
         }
 
         report.info.forEach((line) => info(line));
         info(`Total issues: ${report.issues.length} (${errors.length} error, ${warnings.length} warning).`);
 
         await ctx.auditLogger.log(
-          errors.length > 0 ? "ERROR" : warnings.length > 0 ? "WARN" : "INFO",
-          { m: "check", sc: "u" },
+          errors.length > 0 ? 'ERROR' : warnings.length > 0 ? 'WARN' : 'INFO',
+          { m: 'check', sc: 'u' },
           `Health check finished: ${errors.length} errors, ${warnings.length} warnings`,
         );
 

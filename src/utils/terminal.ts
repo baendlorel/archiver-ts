@@ -1,6 +1,6 @@
-import chalk from "chalk";
-import stripAnsi from "strip-ansi";
-import wrapAnsi from "wrap-ansi";
+import chalk from 'chalk';
+import stripAnsi from 'strip-ansi';
+import wrapAnsi from 'wrap-ansi';
 
 const MIN_COLUMN_WIDTH = 6;
 
@@ -34,7 +34,7 @@ function padAnsi(value: string, width: number): string {
   if (missing <= 0) {
     return value;
   }
-  return `${value}${" ".repeat(missing)}`;
+  return `${value}${' '.repeat(missing)}`;
 }
 
 function wrapCell(value: string, width: number): string[] {
@@ -43,7 +43,7 @@ function wrapCell(value: string, width: number): string[] {
     trim: false,
     wordWrap: true,
   });
-  return wrapped.split("\n");
+  return wrapped.split('\n');
 }
 
 function computeColumnWidths(headers: string[], rows: string[][], maxWidth: number): number[] {
@@ -53,7 +53,7 @@ function computeColumnWidths(headers: string[], rows: string[][], maxWidth: numb
   for (let column = 0; column < colCount; column += 1) {
     widths[column] = Math.max(widths[column], visibleLength(headers[column]));
     for (const row of rows) {
-      widths[column] = Math.max(widths[column], visibleLength(row[column] ?? ""));
+      widths[column] = Math.max(widths[column], visibleLength(row[column] ?? ''));
     }
   }
 
@@ -89,21 +89,21 @@ function computeColumnWidths(headers: string[], rows: string[][], maxWidth: numb
 }
 
 function renderSeparator(widths: number[]): string {
-  const chunks = widths.map((width) => "-".repeat(width + 2));
-  return `+${chunks.join("+")}+`;
+  const chunks = widths.map((width) => '-'.repeat(width + 2));
+  return `+${chunks.join('+')}+`;
 }
 
 function renderRow(cells: string[], widths: number[]): string[] {
-  const wrappedCells = cells.map((cell, index) => wrapCell(cell ?? "", widths[index]));
+  const wrappedCells = cells.map((cell, index) => wrapCell(cell ?? '', widths[index]));
   const rowHeight = wrappedCells.reduce((max, lines) => Math.max(max, lines.length), 1);
 
   const lines: string[] = [];
   for (let lineIndex = 0; lineIndex < rowHeight; lineIndex += 1) {
     const chunks = wrappedCells.map((cellLines, colIndex) => {
-      const line = cellLines[lineIndex] ?? "";
+      const line = cellLines[lineIndex] ?? '';
       return ` ${padAnsi(line, widths[colIndex])} `;
     });
-    lines.push(`|${chunks.join("|")}|`);
+    lines.push(`|${chunks.join('|')}|`);
   }
 
   return lines;
@@ -111,7 +111,7 @@ function renderRow(cells: string[], widths: number[]): string[] {
 
 export function renderTable(headers: string[], rows: string[][]): string {
   if (headers.length === 0) {
-    return "";
+    return '';
   }
 
   const terminalWidth = Math.max(process.stdout.columns ?? 120, 80);
@@ -127,40 +127,40 @@ export function renderTable(headers: string[], rows: string[][]): string {
   }
 
   output.push(renderSeparator(widths));
-  return output.join("\n");
+  return output.join('\n');
 }
 
 export function styleArchiveStatus(status: string): string {
-  if (status === "A") {
+  if (status === 'A') {
     return chalk.green(status);
   }
-  if (status === "R") {
+  if (status === 'R') {
     return chalk.gray(status);
   }
   return status;
 }
 
 export function styleVaultStatus(status: string): string {
-  if (status === "Valid") {
+  if (status === 'Valid') {
     return chalk.green(status);
   }
-  if (status === "Removed") {
+  if (status === 'Removed') {
     return chalk.yellow(status);
   }
-  if (status === "Protected") {
+  if (status === 'Protected') {
     return chalk.cyan(status);
   }
   return status;
 }
 
 export function styleLogLevel(level: string): string {
-  if (level === "ERROR" || level === "FATAL") {
+  if (level === 'ERROR' || level === 'FATAL') {
     return chalk.red(level);
   }
-  if (level === "WARN") {
+  if (level === 'WARN') {
     return chalk.yellow(level);
   }
-  if (level === "INFO") {
+  if (level === 'INFO') {
     return chalk.cyan(level);
   }
   return level;

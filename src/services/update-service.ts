@@ -1,22 +1,22 @@
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { UPDATE_REPO, UPDATE_TIMEOUT_MS } from "../constants.js";
-import type { UpdateInfo } from "../types.js";
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { UPDATE_REPO, UPDATE_TIMEOUT_MS } from '../constants.js';
+import type { UpdateInfo } from '../global.js';
 
 const execFileAsync = promisify(execFile);
 
 function cleanVersion(version: string): string {
-  return version.trim().replace(/^v/i, "");
+  return version.trim().replace(/^v/i, '');
 }
 
 function parseVersion(version: string): number[] {
   return cleanVersion(version)
-    .split(".")
-    .map((part) => Number(part.replace(/[^0-9].*$/, "")))
+    .split('.')
+    .map((part) => Number(part.replace(/[^0-9].*$/, '')))
     .map((part) => (Number.isFinite(part) ? part : 0));
 }
 
@@ -71,12 +71,12 @@ export class UpdateService {
     const installAsset = release.assets?.find((asset) => /install.*\.sh$/i.test(asset.name));
 
     if (!installAsset) {
-      throw new Error("No install script asset (*.sh) found in the latest release.");
+      throw new Error('No install script asset (*.sh) found in the latest release.');
     }
 
     const response = await fetch(installAsset.browser_download_url, {
       headers: {
-        "user-agent": "archiver-ts",
+        'user-agent': 'archiver-ts',
       },
       signal: AbortSignal.timeout(UPDATE_TIMEOUT_MS),
     });
@@ -87,11 +87,11 @@ export class UpdateService {
 
     const script = await response.text();
     const tempPath = path.join(os.tmpdir(), `archiver-update-${Date.now()}.sh`);
-    await fs.writeFile(tempPath, script, { encoding: "utf8", mode: 0o755 });
+    await fs.writeFile(tempPath, script, { encoding: 'utf8', mode: 0o755 });
 
     try {
-      const output = await execFileAsync("bash", [tempPath], { maxBuffer: 1024 * 1024 * 4 });
-      return [output.stdout, output.stderr].filter(Boolean).join("\n").trim();
+      const output = await execFileAsync('bash', [tempPath], { maxBuffer: 1024 * 1024 * 4 });
+      return [output.stdout, output.stderr].filter(Boolean).join('\n').trim();
     } finally {
       await fs.rm(tempPath, { force: true });
     }
@@ -101,8 +101,8 @@ export class UpdateService {
     const url = `https://api.github.com/repos/${repo}/releases/latest`;
     const response = await fetch(url, {
       headers: {
-        accept: "application/vnd.github+json",
-        "user-agent": "archiver-ts",
+        accept: 'application/vnd.github+json',
+        'user-agent': 'archiver-ts',
       },
       signal: AbortSignal.timeout(UPDATE_TIMEOUT_MS),
     });
@@ -122,8 +122,8 @@ export class UpdateService {
 
 export async function readCurrentVersion(): Promise<string> {
   const currentFile = fileURLToPath(import.meta.url);
-  const packagePath = path.resolve(path.dirname(currentFile), "../../package.json");
-  const content = await fs.readFile(packagePath, "utf8");
+  const packagePath = path.resolve(path.dirname(currentFile), '../../package.json');
+  const content = await fs.readFile(packagePath, 'utf8');
   const parsed = JSON.parse(content) as { version?: string };
-  return cleanVersion(parsed.version ?? "0.0.0");
+  return cleanVersion(parsed.version ?? '0.0.0');
 }

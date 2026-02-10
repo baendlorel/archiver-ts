@@ -1,12 +1,12 @@
-import fs from "node:fs/promises";
-import { parse, printParseErrorCode, type ParseError } from "jsonc-parser";
+import fs from 'node:fs/promises';
+import { parse, printParseErrorCode, type ParseError } from 'jsonc-parser';
 
 function parseJsonc<T>(content: string, filePath: string): T {
   const errors: ParseError[] = [];
   const parsed = parse(content, errors, { allowTrailingComma: true });
 
   if (errors.length > 0) {
-    const lines = errors.map((item) => `${printParseErrorCode(item.error)}@${item.offset}`).join(", ");
+    const lines = errors.map((item) => `${printParseErrorCode(item.error)}@${item.offset}`).join(', ');
     throw new Error(`Cannot parse JSONC file ${filePath}: ${lines}`);
   }
 
@@ -15,13 +15,13 @@ function parseJsonc<T>(content: string, filePath: string): T {
 
 export async function readJsoncFile<T>(filePath: string, fallback: T): Promise<T> {
   try {
-    const content = await fs.readFile(filePath, "utf8");
+    const content = await fs.readFile(filePath, 'utf8');
     if (!content.trim()) {
       return fallback;
     }
     return parseJsonc<T>(content, filePath);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return fallback;
     }
     throw error;
@@ -30,12 +30,12 @@ export async function readJsoncFile<T>(filePath: string, fallback: T): Promise<T
 
 export async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
   const rendered = `${JSON.stringify(value, null, 2)}\n`;
-  await fs.writeFile(filePath, rendered, "utf8");
+  await fs.writeFile(filePath, rendered, 'utf8');
 }
 
 export async function readJsonLinesFile<T>(filePath: string): Promise<T[]> {
   try {
-    const content = await fs.readFile(filePath, "utf8");
+    const content = await fs.readFile(filePath, 'utf8');
     if (!content.trim()) {
       return [];
     }
@@ -53,7 +53,7 @@ export async function readJsonLinesFile<T>(filePath: string): Promise<T[]> {
       }
     });
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return [];
     }
     throw error;
@@ -61,10 +61,10 @@ export async function readJsonLinesFile<T>(filePath: string): Promise<T[]> {
 }
 
 export async function writeJsonLinesFile(filePath: string, rows: unknown[]): Promise<void> {
-  const content = rows.map((row) => JSON.stringify(row)).join("\n");
-  await fs.writeFile(filePath, content.length > 0 ? `${content}\n` : "", "utf8");
+  const content = rows.map((row) => JSON.stringify(row)).join('\n');
+  await fs.writeFile(filePath, content.length > 0 ? `${content}\n` : '', 'utf8');
 }
 
 export async function appendJsonLine(filePath: string, row: unknown): Promise<void> {
-  await fs.appendFile(filePath, `${JSON.stringify(row)}\n`, "utf8");
+  await fs.appendFile(filePath, `${JSON.stringify(row)}\n`, 'utf8');
 }

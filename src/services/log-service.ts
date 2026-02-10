@@ -1,18 +1,18 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { DEFAULT_LOG_TAIL } from "../constants.js";
-import { ArchiverContext } from "../core/context.js";
-import type { ListEntry, LogEntry, Vault } from "../types.js";
-import type { LogRange } from "../utils/parse.js";
-import { readJsonLinesFile } from "../utils/json.js";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { DEFAULT_LOG_TAIL } from '../constants.js';
+import { ArchiverContext } from '../core/context.js';
+import type { ListEntry, LogEntry, Vault } from '../global.js';
+import type { LogRange } from '../utils/parse.js';
+import { readJsonLinesFile } from '../utils/json.js';
 
 function normalizeLogEntry(raw: LogEntry): LogEntry {
   return {
     id: Number(raw.id),
-    oat: String(raw.oat ?? ""),
-    lv: raw.lv ?? "INFO",
-    o: raw.o ?? { m: "unknown" },
-    m: String(raw.m ?? ""),
+    oat: String(raw.oat ?? ''),
+    lv: raw.lv ?? 'INFO',
+    o: raw.o ?? { m: 'unknown' },
+    m: String(raw.m ?? ''),
     ...(raw.aid !== undefined ? { aid: Number(raw.aid) } : {}),
     ...(raw.vid !== undefined ? { vid: Number(raw.vid) } : {}),
   };
@@ -20,7 +20,7 @@ function normalizeLogEntry(raw: LogEntry): LogEntry {
 
 function monthFromLog(entry: LogEntry): string {
   const source = entry.oat;
-  const normalized = source.replace(/[-:\sT]/g, "");
+  const normalized = source.replace(/[-:\sT]/g, '');
   return normalized.slice(0, 6);
 }
 
@@ -36,11 +36,11 @@ export class LogService {
   async getLogs(range: LogRange, tailCount: number = DEFAULT_LOG_TAIL): Promise<LogEntry[]> {
     const allLogs = await this.loadAllLogs();
 
-    if (range.mode === "tail") {
+    if (range.mode === 'tail') {
       return allLogs.slice(-tailCount);
     }
 
-    if (range.mode === "all") {
+    if (range.mode === 'all') {
       return allLogs;
     }
 
@@ -97,7 +97,7 @@ export class LogService {
         .map((entry) => entry.name)
         .sort();
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
       }
       throw error;

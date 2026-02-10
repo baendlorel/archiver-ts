@@ -13,7 +13,7 @@ import {
   VAULT_DIR,
   VAULTS_FILE,
 } from '../constants.js';
-import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../types.js';
+import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
 import { ensureDir, ensureFile, pathAccessible } from '../utils/fs.js';
 import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';
 

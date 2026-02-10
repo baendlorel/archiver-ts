@@ -1,5 +1,5 @@
-import readline from "node:readline/promises";
-import { stdin as input, stdout as output } from "node:process";
+import readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 
 export async function ask(question: string): Promise<string> {
   const rl = readline.createInterface({ input, output });
@@ -16,5 +16,5 @@ export async function confirm(question: string, defaultNo: boolean = true): Prom
   if (!answer) {
     return !defaultNo;
   }
-  return ["y", "yes"].includes(answer);
+  return ['y', 'yes'].includes(answer);
 }

@@ -1,6 +1,6 @@
-import path from "node:path";
-import { ArchiverContext } from "../core/context.js";
-import type { ArchiverConfig } from "../types.js";
+import path from 'node:path';
+import { ArchiverContext } from '../core/context.js';
+import type { ArchiverConfig } from '../global.js';
 
 export class ConfigService {
   constructor(private readonly context: ArchiverContext) {}
@@ -9,7 +9,7 @@ export class ConfigService {
     return this.context.loadConfig();
   }
 
-  async setUpdateCheck(value: "on" | "off"): Promise<ArchiverConfig> {
+  async setUpdateCheck(value: 'on' | 'off'): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
     config.update_check = value;
     await this.context.saveConfig(config);
@@ -61,7 +61,7 @@ export class ConfigService {
       }
 
       const relative = path.relative(normalized, full);
-      if (relative.length > 0 && !relative.startsWith("..") && !path.isAbsolute(relative)) {
+      if (relative.length > 0 && !relative.startsWith('..') && !path.isAbsolute(relative)) {
         return path.join(alias, relative);
       }
     }

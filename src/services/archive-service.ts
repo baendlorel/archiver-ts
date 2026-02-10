@@ -3,7 +3,7 @@ import type { Stats } from 'node:fs';
 import path from 'node:path';
 import { ARCHIVER_ROOT } from '../constants.js';
 import { ArchiverContext } from '../core/context.js';
-import type { ListEntry, OperationSource, Vault } from '../types.js';
+import type { ListEntry, OperationSource, Vault } from '../global.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
 import { ConfigService } from './config-service.js';

@@ -1,8 +1,8 @@
-import { parseYearMonth } from "./date.js";
+import { parseYearMonth } from './date.js';
 
 export function parseIdList(values: string[]): number[] {
   if (values.length === 0) {
-    throw new Error("At least one id is required.");
+    throw new Error('At least one id is required.');
   }
 
   const ids = values.map((value) => {
@@ -14,24 +14,21 @@ export function parseIdList(values: string[]): number[] {
 
   const unique = new Set(ids);
   if (unique.size !== ids.length) {
-    throw new Error("Duplicated ids are not allowed.");
+    throw new Error('Duplicated ids are not allowed.');
   }
 
   return ids;
 }
 
-export type LogRange =
-  | { mode: "tail" }
-  | { mode: "all" }
-  | { mode: "month"; from: string; to: string };
+export type LogRange = { mode: 'tail' } | { mode: 'all' } | { mode: 'month'; from: string; to: string };
 
 export function parseLogRange(range?: string): LogRange {
   if (!range) {
-    return { mode: "tail" };
+    return { mode: 'tail' };
   }
 
-  if (["all", "*", "a"].includes(range.toLowerCase())) {
-    return { mode: "all" };
+  if (['all', '*', 'a'].includes(range.toLowerCase())) {
+    return { mode: 'all' };
   }
 
   if (/^\d{6}$/.test(range)) {
@@ -39,10 +36,10 @@ export function parseLogRange(range?: string): LogRange {
     if (!parsed) {
       throw new Error(`Invalid month range: ${range}`);
     }
-    return { mode: "month", from: range, to: range };
+    return { mode: 'month', from: range, to: range };
   }
 
-  const parts = range.split("-");
+  const parts = range.split('-');
   if (parts.length === 2 && /^\d{6}$/.test(parts[0]) && /^\d{6}$/.test(parts[1])) {
     const start = parseYearMonth(parts[0]);
     const end = parseYearMonth(parts[1]);
@@ -52,12 +49,10 @@ export function parseLogRange(range?: string): LogRange {
     if (parts[0] > parts[1]) {
       throw new Error(`Invalid range order: ${range}`);
     }
-    return { mode: "month", from: parts[0], to: parts[1] };
+    return { mode: 'month', from: parts[0], to: parts[1] };
   }
 
-  throw new Error(
-    `Invalid range format: ${range}. Use YYYYMM, YYYYMM-YYYYMM, all, *, or a.`,
-  );
+  throw new Error(`Invalid range format: ${range}. Use YYYYMM, YYYYMM-YYYYMM, all, *, or a.`);
 }
 
 export function parseVaultReference(value: string): { id?: number; name?: string } {

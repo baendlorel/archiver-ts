@@ -1,8 +1,8 @@
-import path from "node:path";
-import { ArchiverContext } from "../core/context.js";
-import type { LogEntry, LogLevel, Operation } from "../types.js";
-import { formatDateTime } from "../utils/date.js";
-import { appendJsonLine } from "../utils/json.js";
+import path from 'node:path';
+import { ArchiverContext } from '../core/context.js';
+import type { LogEntry, LogLevel, Operation } from '../global.js';
+import { formatDateTime } from '../utils/date.js';
+import { appendJsonLine } from '../utils/json.js';
 
 export class AuditLogger {
   constructor(private readonly context: ArchiverContext) {}
@@ -13,7 +13,7 @@ export class AuditLogger {
     message: string,
     links?: { aid?: number; vid?: number },
   ): Promise<LogEntry> {
-    const id = await this.context.nextAutoIncrement("log_id");
+    const id = await this.context.nextAutoIncrement('log_id');
     const now = new Date();
     const year = String(now.getFullYear());
 
