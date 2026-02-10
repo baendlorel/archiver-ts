@@ -5,6 +5,7 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import replace from '@rollup/plugin-replace';
+import alias from '@rollup/plugin-alias';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const deps = Object.keys(pkg.dependencies ?? {});
@@ -20,6 +21,9 @@ export default {
   },
   external: (id) => builtins.has(id) || deps.includes(id),
   plugins: [
+    alias({
+      entries: [{ find: /^@/, replacement: path.resolve(import.meta.dirname, 'src') }],
+    }),
     replace({
       preventAssignment: true,
       values: {

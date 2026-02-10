@@ -8,4 +8,9 @@ export default defineConfig({
     clearMocks: true,
     testTimeout: 30_000,
   },
+  resolve: {
+    alias: {
+      '@': 'src',
+    },
+  },
 });
