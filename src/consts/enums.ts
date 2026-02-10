@@ -1,9 +1,15 @@
 export enum VaultStatus {
   Valid = 'Valid',
-  Removed = 'Removedmoved',
+  Removed = 'Removed',
   Protected = 'Protected',
 }
 export enum ArchiveStatus {
   Archived = 'Archived',
-  Retrieved = 'Retrieved',
+  Restored = 'Restored',
+}
+
+export enum CheckIssueLevel {
+  Info = 'Info',
+  Warn = 'Warn',
+  Error = 'Error',
 }

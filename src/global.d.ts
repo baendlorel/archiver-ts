@@ -1,4 +1,4 @@
-import type { VaultStatus, ArchiveStatus } from './consts/enums.js';
+import type { VaultStatus, ArchiveStatus, CheckIssueLevel } from './consts/enums.js';
 
 export interface ListEntry {
   archivedAt: string;
@@ -65,7 +65,7 @@ export interface UpdateInfo {
 }
 
 export interface CheckIssue {
-  level: 'ERROR' | 'WARN';
+  level: CheckIssueLevel;
   code: string;
   message: string;
 }

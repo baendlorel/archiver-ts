@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
 import { DEFAULT_VAULT_ID } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
-import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
 import { listDirectories, pathAccessible, safeLstat } from '../utils/fs.js';
 import { readJsonLinesFile } from '../utils/json.js';
+import { ArchiveStatus, CheckIssueLevel, VaultStatus } from '../consts/enums.js';
 
 function findDuplicates(values: number[]): number[] {
   const seen = new Set<number>();
@@ -70,17 +71,17 @@ export class CheckService {
 
     for (const target of requiredPaths) {
       if (!(await pathAccessible(target))) {
-        pushIssue(report.issues, 'ERROR', 'MISSING_PATH', `Missing required path: ${target}`);
+        pushIssue(report.issues, CheckIssueLevel.Error, 'MISSING_PATH', `Missing required path: ${target}`);
       }
     }
   }
 
   private checkConfigVaultReference(report: CheckReport, currentVaultId: number, vaults: Vault[]): void {
-    const currentVault = vaults.find((vault) => vault.id === currentVaultId && vault.status !== 'Removed');
+    const currentVault = vaults.find((vault) => vault.id === currentVaultId && vault.status !== VaultStatus.Removed);
     if (!currentVault) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'INVALID_CURRENT_VAULT',
         `config.current_vault_id=${currentVaultId} is not a valid active vault.`,
       );
@@ -93,7 +94,7 @@ export class CheckService {
     if (duplicates.length > 0) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'DUPLICATE_ARCHIVE_ID',
         `Duplicated archive ids found: ${duplicates.join(', ')}`,
       );
@@ -103,7 +104,7 @@ export class CheckService {
     if (archiveAutoIncr < maxId) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'ARCHIVE_AUTO_INCR_TOO_SMALL',
         `auto-incr.archive_id=${archiveAutoIncr} but max archive id is ${maxId}.`,
       );
@@ -115,7 +116,12 @@ export class CheckService {
     const ids = nonDefaultVaults.map((vault) => vault.id);
     const duplicates = findDuplicates(ids);
     if (duplicates.length > 0) {
-      pushIssue(report.issues, 'ERROR', 'DUPLICATE_VAULT_ID', `Duplicated vault ids found: ${duplicates.join(', ')}`);
+      pushIssue(
+        report.issues,
+        CheckIssueLevel.Error,
+        'DUPLICATE_VAULT_ID',
+        `Duplicated vault ids found: ${duplicates.join(', ')}`,
+      );
     }
 
     const names = nonDefaultVaults.map((vault) => vault.name);
@@ -123,7 +129,7 @@ export class CheckService {
     if (duplicatedNames.length > 0) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'DUPLICATE_VAULT_NAME',
         `Duplicated vault names found: ${[...new Set(duplicatedNames)].join(', ')}`,
       );
@@ -133,7 +139,7 @@ export class CheckService {
     if (vaultAutoIncr < maxVaultId) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'VAULT_AUTO_INCR_TOO_SMALL',
         `auto-incr.vault_id=${vaultAutoIncr} but max vault id is ${maxVaultId}.`,
       );
@@ -148,7 +154,7 @@ export class CheckService {
       if (!vault) {
         pushIssue(
           report.issues,
-          'ERROR',
+          CheckIssueLevel.Error,
           'UNKNOWN_VAULT_REFERENCE',
           `Archive id ${entry.id} references unknown vault id ${entry.vaultId}.`,
         );
@@ -158,12 +164,12 @@ export class CheckService {
       const archivePath = this.context.archivePath(entry.vaultId, entry.id);
       const restorePath = path.join(entry.directory, entry.item);
 
-      if (entry.status === 'A') {
+      if (entry.status === ArchiveStatus.Archived) {
         const location = await this.context.resolveArchiveStorageLocation(entry);
         if (!location) {
           pushIssue(
             report.issues,
-            'ERROR',
+            CheckIssueLevel.Error,
             'MISSING_ARCHIVE_OBJECT',
             `Archive id ${entry.id} is marked archived but object is missing: ${archivePath}`,
           );
@@ -175,7 +181,7 @@ export class CheckService {
             if (actualIsDir !== expectedIsDir) {
               pushIssue(
                 report.issues,
-                'ERROR',
+                CheckIssueLevel.Error,
                 'TYPE_MISMATCH_ARCHIVED',
                 `Archive id ${entry.id} type mismatch (expected dir=${expectedIsDir}, actual dir=${actualIsDir}).`,
               );
@@ -186,16 +192,16 @@ export class CheckService {
         if (await pathAccessible(restorePath)) {
           pushIssue(
             report.issues,
-            'WARN',
+            CheckIssueLevel.Warn,
             'RESTORE_TARGET_ALREADY_EXISTS',
             `Archive id ${entry.id} has an existing restore path: ${restorePath}`,
           );
         }
-      } else if (entry.status === 'R') {
+      } else if (entry.status === ArchiveStatus.Restored) {
         if (await pathAccessible(archivePath)) {
           pushIssue(
             report.issues,
-            'WARN',
+            CheckIssueLevel.Warn,
             'RESTORED_BUT_ARCHIVE_EXISTS',
             `Archive id ${entry.id} is restored but archive object still exists: ${archivePath}`,
           );
@@ -209,7 +215,7 @@ export class CheckService {
             if (actualIsDir !== expectedIsDir) {
               pushIssue(
                 report.issues,
-                'WARN',
+                CheckIssueLevel.Warn,
                 'TYPE_MISMATCH_RESTORED',
                 `Restored path type mismatch for archive id ${entry.id} (expected dir=${expectedIsDir}, actual dir=${actualIsDir}).`,
               );
@@ -218,7 +224,7 @@ export class CheckService {
         } else {
           pushIssue(
             report.issues,
-            'WARN',
+            CheckIssueLevel.Warn,
             'RESTORED_TARGET_MISSING',
             `Archive id ${entry.id} is restored but restore path does not exist: ${restorePath}`,
           );
@@ -226,7 +232,7 @@ export class CheckService {
       } else {
         pushIssue(
           report.issues,
-          'ERROR',
+          CheckIssueLevel.Error,
           'INVALID_ARCHIVE_STATUS',
           `Archive id ${entry.id} has invalid status ${entry.status}.`,
         );
@@ -241,7 +247,7 @@ export class CheckService {
   ): Promise<void> {
     const knownVaultIds = new Set(vaults.map((vault) => vault.id));
     const expectedArchivedPairs = new Set(
-      entries.filter((entry) => entry.status === 'A').map((entry) => `${entry.vaultId}/${entry.id}`),
+      entries.filter((entry) => entry.status === ArchiveStatus.Archived).map((entry) => `${entry.vaultId}/${entry.id}`),
     );
 
     const vaultDirs = await listDirectories(this.context.vaultsDir);
@@ -250,7 +256,7 @@ export class CheckService {
       if (!/^\d+$/.test(dirName)) {
         pushIssue(
           report.issues,
-          'WARN',
+          CheckIssueLevel.Warn,
           'NON_NUMERIC_VAULT_DIR',
           `Unexpected non-numeric vault directory: ${path.join(this.context.vaultsDir, dirName)}`,
         );
@@ -261,7 +267,7 @@ export class CheckService {
       if (!knownVaultIds.has(vaultId)) {
         pushIssue(
           report.issues,
-          'WARN',
+          CheckIssueLevel.Warn,
           'ORPHAN_VAULT_DIR',
           `Vault directory exists but no metadata: ${path.join(this.context.vaultsDir, dirName)}`,
         );
@@ -273,7 +279,7 @@ export class CheckService {
         if (!/^[0-9]+$/.test(child.name)) {
           pushIssue(
             report.issues,
-            'WARN',
+            CheckIssueLevel.Warn,
             'NON_NUMERIC_ARCHIVE_OBJECT',
             `Vault ${vaultId} contains unexpected object name: ${child.name}`,
           );
@@ -284,7 +290,7 @@ export class CheckService {
         if (!expectedArchivedPairs.has(key)) {
           pushIssue(
             report.issues,
-            'WARN',
+            CheckIssueLevel.Warn,
             'ORPHAN_ARCHIVE_OBJECT',
             `Archive object ${key} exists on disk but not in list.jsonl as archived.`,
           );
@@ -301,7 +307,7 @@ export class CheckService {
       if (!(await pathAccessible(dirPath))) {
         pushIssue(
           report.issues,
-          'ERROR',
+          CheckIssueLevel.Error,
           'MISSING_VAULT_DIR',
           `Vault ${vault.name}(${vault.id}) is active but directory is missing: ${dirPath}`,
         );
@@ -329,14 +335,19 @@ export class CheckService {
     const ids = logs.map((row) => Number(row.id)).filter((id) => Number.isInteger(id));
     const duplicates = findDuplicates(ids);
     if (duplicates.length > 0) {
-      pushIssue(report.issues, 'ERROR', 'DUPLICATE_LOG_ID', `Duplicated log ids found: ${duplicates.join(', ')}`);
+      pushIssue(
+        report.issues,
+        CheckIssueLevel.Error,
+        'DUPLICATE_LOG_ID',
+        `Duplicated log ids found: ${duplicates.join(', ')}`,
+      );
     }
 
     const maxLogId = ids.length > 0 ? Math.max(...ids) : 0;
     if (logAutoIncr < maxLogId) {
       pushIssue(
         report.issues,
-        'ERROR',
+        CheckIssueLevel.Error,
         'LOG_AUTO_INCR_TOO_SMALL',
         `auto-incr.log_id=${logAutoIncr} but max log id is ${maxLogId}.`,
       );
