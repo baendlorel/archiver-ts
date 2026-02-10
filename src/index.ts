@@ -9,7 +9,7 @@ import { AuditLogger } from './services/audit-logger.js';
 import { CheckService } from './services/check.service.js';
 import { ConfigService } from './services/config.service.js';
 import { LogService } from './services/log.service.js';
-import { readCurrentVersion, UpdateService } from './services/update.service.js';
+import { UpdateService } from './services/update.service.js';
 import { VaultService } from './services/vault.service.js';
 import { nowIso } from './utils/date.js';
 import { ask, confirm } from './utils/prompt.js';
@@ -27,15 +27,15 @@ import {
 import { CheckIssueLevel } from './consts/enums.js';
 
 interface CommandContext {
-  context: ArchiverContext;
-  archiveService: ArchiveService;
-  vaultService: VaultService;
-  configService: ConfigService;
-  logService: LogService;
-  checkService: CheckService;
-  auditLogger: AuditLogger;
-  updateService: UpdateService;
-  version: string;
+  readonly context: ArchiverContext;
+  readonly archiveService: ArchiveService;
+  readonly vaultService: VaultService;
+  readonly configService: ConfigService;
+  readonly logService: LogService;
+  readonly checkService: CheckService;
+  readonly auditLogger: AuditLogger;
+  readonly updateService: UpdateService;
+  readonly version: string;
 }
 
 function summarizeBatch(operationName: string, result: { ok: unknown[]; failed: unknown[] }): void {
@@ -85,7 +85,7 @@ async function buildContext(): Promise<CommandContext> {
   const vaultService = new VaultService(context, configService);
   const logService = new LogService(context);
   const checkService = new CheckService(context);
-  const version = await readCurrentVersion();
+  const version = '__VERSION__';
   const updateService = new UpdateService(version);
 
   return {
@@ -117,7 +117,6 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
   program
     .command('put')
-    .alias('p')
     .description('Archive one or many files/directories')
     .argument('<items...>', 'Items to archive')
     .option('-v, --vault <vault>', 'Target vault name or id')
@@ -142,8 +141,6 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
   program
     .command('restore')
-    .alias('r')
-    .alias('rst')
     .description('Restore archived entries by id')
     .argument('<ids...>', 'Archive ids')
     .action((ids: string[]) =>
@@ -166,9 +163,6 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
   program
     .command('move')
-    .alias('m')
-    .alias('mv')
-    .alias('mov')
     .description('Move archived entries to another vault')
     .argument('<ids...>', 'Archive ids')
     .requiredOption('--to <vault>', 'Destination vault name or id')
@@ -236,7 +230,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
       }),
     );
 
-  const vault = program.command('vault').alias('v').alias('vlt').description('Vault management');
+  const vault = program.command('vault').description('Vault management');
 
   vault
     .command('use')

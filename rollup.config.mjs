@@ -28,6 +28,7 @@ export default {
       preventAssignment: true,
       values: {
         'process.env.NODE_ENV': `production`,
+        __VERSION__: JSON.stringify(pkg.version),
       },
     }),
     resolve({ preferBuiltins: true }),

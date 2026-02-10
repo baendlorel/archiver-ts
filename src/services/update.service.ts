@@ -119,11 +119,3 @@ export class UpdateService {
     return payload;
   }
 }
-
-export async function readCurrentVersion(): Promise<string> {
-  const currentFile = fileURLToPath(import.meta.url);
-  const packagePath = path.resolve(path.dirname(currentFile), '../../package.json');
-  const content = await fs.readFile(packagePath, 'utf8');
-  const parsed = JSON.parse(content) as { version?: string };
-  return cleanVersion(parsed.version ?? '0.0.0');
-}
