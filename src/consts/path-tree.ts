@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const root = join(homedir(), '.archiver');
+const root = join(process.env.ARCHIVER_DIR_PARENT ?? homedir(), '.archiver');
 const core = join(root, 'core');
 
 export namespace Paths {

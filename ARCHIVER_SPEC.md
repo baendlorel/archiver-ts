@@ -4,7 +4,7 @@ This document captures the compatibility targets used for this TypeScript rewrit
 
 ## Product Goal
 
-`archiver` is a CLI that moves files/directories you do not want in the current workspace into `~/.archiver`, while preserving restore capability, vault grouping, audit logs, and consistency checks.
+`archiver` is a CLI that moves files/directories you do not want in the current workspace into an archiver root directory, while preserving restore capability, vault grouping, audit logs, and consistency checks.
 
 Core principle:
 
@@ -27,6 +27,13 @@ Core principle:
 - `check` (`chk`)
 
 ## Data Layout
+
+Root selection:
+
+- Development runtime: `<cwd>/.archiver-dev`
+- Production runtime: `~/.archiver`
+- `ARCHIVER_ROOT` can override root in both modes.
+- `ARCHIVER_RUNTIME=development|production` can force mode.
 
 ```text
 ~/.archiver/

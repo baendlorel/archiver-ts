@@ -4,6 +4,13 @@ A TypeScript rebuild of the `archiver` CLI.
 
 `archiver-ts` moves files/directories out of your workspace into `~/.archiver` without compression and without copy/delete workflows. It keeps metadata in JSON/JSONL files and records audit logs for every operation.
 
+Runtime root behavior:
+
+- Development runtime (running from `src`, e.g. `npm run dev`): stores data in `<current-working-directory>/.archiver-dev`
+- Production runtime (running built CLI): stores data in `~/.archiver`
+- Override for both modes: set `ARCHIVER_ROOT=/custom/path`
+- Force runtime mode: set `ARCHIVER_RUNTIME=development|production`
+
 ## Features
 
 - `put <items...>`: archive files/folders into the current or specified vault

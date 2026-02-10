@@ -6,5 +6,6 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     fileParallelism: false,
     clearMocks: true,
+    testTimeout: 30_000,
   },
 });

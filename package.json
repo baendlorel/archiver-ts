@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "e2e": "vitest run tests/e2e",
     "build": "node .scripts/build.js",
     "pub": "node .scripts/publish.js"
   },
@@ -36,6 +37,7 @@
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^25.2.2",
     "rollup": "^4.46.2",
