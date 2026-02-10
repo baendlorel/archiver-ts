@@ -9,11 +9,10 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "rollup -c",
+    "build": "node .scripts/build.js",
     "start": "node dist/index.js",
     "check": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run"
   },
   "keywords": [
     "archiver",
@@ -33,12 +32,13 @@
     "wrap-ansi": "^9.0.2"
   },
   "devDependencies": {
-    "@types/node": "^25.2.2",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "^25.2.2",
     "rollup": "^4.46.2",
+    "tslib": "^2.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
