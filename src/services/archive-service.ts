@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 import type { Stats } from 'node:fs';
 import path from 'node:path';
-import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, OperationSource, Vault } from '../global.js';
+
+import { ArchiveStatus, Paths } from '../consts/index.js';
+import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
 import { ConfigService } from './config-service.js';
 import { AuditLogger } from './audit-logger.js';
-import { ArchiveStatus } from '../consts/enums.js';
-import { ArchiverTree } from '../consts/path-tree.js';
 
 interface PutPreparedItem {
   input: string;
@@ -532,7 +532,7 @@ export class ArchiveService {
     const prepared: PutPreparedItem[] = [];
     const seen = new Set<string>();
 
-    const archiverRootCanonical = await safeRealPath(ArchiverTree.directories.root);
+    const archiverRootCanonical = await safeRealPath(Paths.dir.root);
 
     for (const item of items) {
       const resolvedPath = path.resolve(item);

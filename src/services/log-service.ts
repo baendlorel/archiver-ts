@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { DEFAULT_LOG_TAIL } from '../consts/index.js';
+import { Defaults, Paths } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, LogEntry, Vault } from '../global.js';
 import type { LogRange } from '../utils/parse.js';
@@ -33,7 +33,7 @@ export interface LogDetail {
 export class LogService {
   constructor(private readonly context: ArchiverContext) {}
 
-  async getLogs(range: LogRange, tailCount: number = DEFAULT_LOG_TAIL): Promise<LogEntry[]> {
+  async getLogs(range: LogRange, tailCount: number = Defaults.logTail): Promise<LogEntry[]> {
     const allLogs = await this.loadAllLogs();
 
     if (range.mode === 'tail') {
@@ -80,7 +80,7 @@ export class LogService {
 
     const logs: LogEntry[] = [];
     for (const fileName of yearFiles) {
-      const filePath = path.join(this.context.logsDir, fileName);
+      const filePath = path.join(Paths.dir.logs, fileName);
       const rows = await readJsonLinesFile<LogEntry>(filePath);
       rows.forEach((row) => logs.push(normalizeLogEntry(row)));
     }
@@ -91,7 +91,7 @@ export class LogService {
 
   private async listYearFiles(): Promise<string[]> {
     try {
-      const entries = await fs.readdir(this.context.logsDir, { withFileTypes: true });
+      const entries = await fs.readdir(Paths.dir.logs, { withFileTypes: true });
       return entries
         .filter((entry) => entry.isFile() && /^\d{4}\.jsonl$/.test(entry.name))
         .map((entry) => entry.name)

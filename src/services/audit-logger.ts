@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { Paths } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { LogEntry, LogLevel, Operation } from '../global.js';
 import { formatDateTime } from '../utils/date.js';
@@ -27,7 +28,7 @@ export class AuditLogger {
       ...(links?.vid !== undefined ? { vaultIds: links.vid } : {}),
     };
 
-    const filePath = path.join(this.context.logsDir, `${year}.jsonl`);
+    const filePath = path.join(Paths.dir.logs, `${year}.jsonl`);
     await appendJsonLine(filePath, entry);
 
     return entry;

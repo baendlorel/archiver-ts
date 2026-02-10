@@ -1,11 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { Defaults } from '../consts/index.js';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
+import { Defaults, ArchiveStatus, VaultStatus, Paths } from '../consts/index.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import { appendJsonLine, readJsonLinesFile, readJsoncFile, writeJsonFile, writeJsonLinesFile } from '../utils/json.js';
-import { ArchiveStatus, VaultStatus } from '../consts/enums.js';
-import { ArchiverTree } from '../consts/path-tree.js';
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
   return {
@@ -66,17 +64,17 @@ export class ArchiverContext {
   private vaultCache?: Vault[];
 
   async init(): Promise<void> {
-    for (const dir of Object.values(ArchiverTree.directories)) {
+    for (const dir of Object.values(Paths.dir)) {
       await ensureDir(dir);
     }
     await ensureDir(this.vaultDir(Defaults.vault.id));
 
-    await writeJsonFile(ArchiverTree.files.config, Defaults.config);
+    await writeJsonFile(Paths.file.config, Defaults.config);
 
-    await writeJsonFile(ArchiverTree.files.autoIncr, Defaults.autoIncr);
+    await writeJsonFile(Paths.file.autoIncr, Defaults.autoIncr);
 
-    await ensureFile(ArchiverTree.files.list);
-    await ensureFile(ArchiverTree.files.vaults);
+    await ensureFile(Paths.file.list);
+    await ensureFile(Paths.file.vaults);
 
     const config = await this.loadConfig();
     if (config.currentVaultId === 0 || (await pathAccessible(this.vaultDir(config.currentVaultId)))) {
@@ -92,7 +90,7 @@ export class ArchiverContext {
       return this.configCache;
     }
 
-    const loaded = await readJsoncFile(ArchiverTree.files.config, Defaults.config);
+    const loaded = await readJsoncFile(Paths.file.config, Defaults.config);
     const merged = sanitizeConfig({ ...Defaults.config, ...loaded });
     this.configCache = merged;
     return merged;
@@ -100,7 +98,7 @@ export class ArchiverContext {
 
   async saveConfig(config: ArchiverConfig): Promise<void> {
     this.configCache = sanitizeConfig(config);
-    await writeJsonFile(ArchiverTree.files.config, this.configCache);
+    await writeJsonFile(Paths.file.config, this.configCache);
   }
 
   async loadAutoIncr(forceRefresh: boolean = false): Promise<AutoIncrVars> {
@@ -108,7 +106,7 @@ export class ArchiverContext {
       return this.autoIncrCache;
     }
 
-    const loaded = await readJsoncFile(ArchiverTree.files.autoIncr, Defaults.autoIncr);
+    const loaded = await readJsoncFile(Paths.file.autoIncr, Defaults.autoIncr);
     const merged = sanitizeAutoIncr({ ...Defaults.autoIncr, ...loaded });
     this.autoIncrCache = merged;
     return merged;
@@ -116,7 +114,7 @@ export class ArchiverContext {
 
   async saveAutoIncr(vars: AutoIncrVars): Promise<void> {
     this.autoIncrCache = sanitizeAutoIncr(vars);
-    await writeJsonFile(ArchiverTree.files.autoIncr, this.autoIncrCache);
+    await writeJsonFile(Paths.file.autoIncr, this.autoIncrCache);
   }
 
   async nextAutoIncrement(key: keyof AutoIncrVars): Promise<number> {
@@ -131,7 +129,7 @@ export class ArchiverContext {
       return this.listCache;
     }
 
-    const entries = await readJsonLinesFile<ListEntry>(ArchiverTree.files.list);
+    const entries = await readJsonLinesFile<ListEntry>(Paths.file.list);
     this.listCache = entries
       .map((entry) => sanitizeListEntry(entry))
       .filter((entry) => Number.isInteger(entry.id) && entry.id > 0);
@@ -142,7 +140,7 @@ export class ArchiverContext {
 
   async saveListEntries(entries: ListEntry[]): Promise<void> {
     this.listCache = [...entries].sort((a, b) => a.id - b.id);
-    await writeJsonLinesFile(ArchiverTree.files.list, this.listCache);
+    await writeJsonLinesFile(Paths.file.list, this.listCache);
   }
 
   async appendListEntry(entry: ListEntry): Promise<void> {
@@ -152,7 +150,7 @@ export class ArchiverContext {
     }
     this.listCache.push(sanitized);
     this.listCache.sort((a, b) => a.id - b.id);
-    await appendJsonLine(ArchiverTree.files.list, sanitized);
+    await appendJsonLine(Paths.file.list, sanitized);
   }
 
   async loadVaults(forceRefresh: boolean = false): Promise<Vault[]> {
@@ -160,7 +158,7 @@ export class ArchiverContext {
       return this.vaultCache;
     }
 
-    const rows = await readJsonLinesFile<Vault>(ArchiverTree.files.vaults);
+    const rows = await readJsonLinesFile<Vault>(Paths.file.vaults);
     this.vaultCache = rows
       .map((row) => sanitizeVault(row))
       .filter((vault) => Number.isInteger(vault.id) && vault.id > 0)
@@ -176,7 +174,7 @@ export class ArchiverContext {
       .sort((a, b) => a.id - b.id);
 
     this.vaultCache = normalized;
-    await writeJsonLinesFile(ArchiverTree.files.vaults, normalized);
+    await writeJsonLinesFile(Paths.file.vaults, normalized);
   }
 
   async getVaults(options?: { includeRemoved?: boolean; withDefault?: boolean }): Promise<Vault[]> {
@@ -234,7 +232,7 @@ export class ArchiverContext {
   }
 
   vaultDir(vaultId: number): string {
-    return path.join(ArchiverTree.directories.vaults, String(vaultId));
+    return path.join(Paths.dir.vaults, String(vaultId));
   }
 
   archivePath(vaultId: number, archiveId: number): string {

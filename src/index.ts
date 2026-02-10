@@ -3,14 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
 import { Command } from 'commander';
-import {
-  APP_DESCRIPTION,
-  APP_NAME,
-  DEFAULT_LOG_TAIL,
-  DEFAULT_VAULT,
-  UPDATE_CHECK_INTERVAL_MS,
-  UPDATE_REPO,
-} from './consts/index.js';
+import { APP_DESCRIPTION, APP_NAME, Defaults, Update } from './consts/index.js';
 import { ArchiverContext } from './core/context.js';
 import { ArchiveService } from './services/archive-service.js';
 import { AuditLogger } from './services/audit-logger.js';
@@ -32,6 +25,7 @@ import {
   success,
   warn,
 } from './utils/terminal.js';
+import { CheckIssueLevel } from './consts/enums.js';
 
 interface CommandContext {
   context: ArchiverContext;
@@ -63,7 +57,7 @@ async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
     const last = new Date(config.lastUpdateCheck);
     if (!Number.isNaN(last.getTime())) {
       const diff = Date.now() - last.getTime();
-      if (diff < UPDATE_CHECK_INTERVAL_MS) {
+      if (diff < Update.CHECK_INTERVAL_MS) {
         return;
       }
     }
@@ -349,7 +343,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
 
         success(`Vault ${result.vault.name}(${result.vault.id}) removed.`);
         if (result.movedArchiveIds.length > 0) {
-          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${DEFAULT_VAULT.name}.`);
+          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${Defaults.vault.name}.`);
         }
 
         await ctx.auditLogger.log(
@@ -566,7 +560,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         }
 
         const parsedRange = parseLogRange(range);
-        const logs = await ctx.logService.getLogs(parsedRange, DEFAULT_LOG_TAIL);
+        const logs = await ctx.logService.getLogs(parsedRange, Defaults.logTail);
 
         if (logs.length === 0) {
           info('No logs found.');
@@ -704,11 +698,11 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
     .alias('u')
     .alias('upd')
     .description('Check for updates from GitHub releases')
-    .option('--repo <owner/repo>', `GitHub repository (default: ${UPDATE_REPO})`)
+    .option('--repo <owner/repo>', `GitHub repository (default: ${Update.REPO})`)
     .option('--install', 'Install by running release install script asset')
     .action((options: { repo?: string; install?: boolean }) =>
       runAction(async () => {
-        const repo = options.repo ?? UPDATE_REPO;
+        const repo = options.repo ?? Update.REPO;
         const update = await ctx.updateService.checkLatest(repo);
 
         info(`Current version: ${update.currentVersion}`);
@@ -777,8 +771,8 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
       runAction(async () => {
         const report = await ctx.checkService.run();
 
-        const errors = report.issues.filter((issue) => issue.level === 'ERROR');
-        const warnings = report.issues.filter((issue) => issue.level === 'WARN');
+        const errors = report.issues.filter((issue) => issue.level === CheckIssueLevel.Error);
+        const warnings = report.issues.filter((issue) => issue.level === CheckIssueLevel.Warn);
 
         if (report.issues.length > 0) {
           const rows = report.issues.map((issue) => [issue.level, issue.code, issue.message]);

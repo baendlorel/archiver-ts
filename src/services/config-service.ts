@@ -1,6 +1,6 @@
 import path from 'node:path';
-import { ArchiverContext } from '../core/context.js';
 import type { ArchiverConfig } from '../global.js';
+import { ArchiverContext } from '../core/context.js';
 
 export class ConfigService {
   constructor(private readonly context: ArchiverContext) {}

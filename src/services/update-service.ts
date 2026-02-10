@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { UPDATE_REPO, UPDATE_TIMEOUT_MS } from '../consts/index.js';
 import type { UpdateInfo } from '../global.js';
+import { Update } from '../consts/update.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -53,7 +53,7 @@ export class UpdateService {
     this.currentVersion = cleanVersion(currentVersion);
   }
 
-  async checkLatest(repo: string = UPDATE_REPO): Promise<UpdateInfo> {
+  async checkLatest(repo: string = Update.REPO): Promise<UpdateInfo> {
     const release = await this.fetchLatestRelease(repo);
     const latestVersion = cleanVersion(release.tag_name);
 
@@ -66,7 +66,7 @@ export class UpdateService {
     };
   }
 
-  async installLatest(repo: string = UPDATE_REPO): Promise<string> {
+  async installLatest(repo: string = Update.REPO): Promise<string> {
     const release = await this.fetchLatestRelease(repo);
     const installAsset = release.assets?.find((asset) => /install.*\.sh$/i.test(asset.name));
 
@@ -78,7 +78,7 @@ export class UpdateService {
       headers: {
         'user-agent': 'archiver-ts',
       },
-      signal: AbortSignal.timeout(UPDATE_TIMEOUT_MS),
+      signal: AbortSignal.timeout(Update.TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -104,7 +104,7 @@ export class UpdateService {
         accept: 'application/vnd.github+json',
         'user-agent': 'archiver-ts',
       },
-      signal: AbortSignal.timeout(UPDATE_TIMEOUT_MS),
+      signal: AbortSignal.timeout(Update.TIMEOUT_MS),
     });
 
     if (!response.ok) {

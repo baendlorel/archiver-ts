@@ -1,9 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ListEntry, Vault } from '../global.js';
-import { Defaults } from '../consts/index.js';
-import { ArchiverTree } from '../consts/path-tree.js';
-import { ArchiveStatus, VaultStatus } from '../consts/enums.js';
+
+import { Defaults, Paths, ArchiveStatus, VaultStatus } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { pathAccessible } from '../utils/fs.js';
@@ -243,6 +242,6 @@ export class VaultService {
   }
 
   vaultRoot(vault: Vault): string {
-    return path.join(ArchiverTree.directories.vaults, String(vault.id));
+    return path.join(Paths.dir.vaults, String(vault.id));
   }
 }
