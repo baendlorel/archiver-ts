@@ -1,18 +1,18 @@
-export type ArchiveStatus = "A" | "R";
+export type ArchiveStatus = 'A' | 'R';
 
 export interface ListEntry {
-  aat: string;
-  st: ArchiveStatus;
-  is_d: 0 | 1;
-  vid: number;
+  archivedAt: string;
+  status: ArchiveStatus;
+  isDirectory: 0 | 1;
+  vaultId: number;
   id: number;
-  i: string;
-  d: string;
-  m: string;
-  r: string;
+  item: string;
+  directory: string;
+  message: string;
+  remark: string;
 }
 
-export type VaultStatus = "Valid" | "Removed" | "Protected";
+export type VaultStatus = 'Valid' | 'Removed' | 'Protected';
 
 export interface Vault {
   id: number;
@@ -24,7 +24,7 @@ export interface Vault {
 
 export interface ArchiverConfig {
   current_vault_id: number;
-  update_check: "on" | "off";
+  update_check: 'on' | 'off';
   last_update_check: string;
   alias_map: Record<string, string>;
   vault_item_sep: string;
@@ -36,9 +36,9 @@ export interface AutoIncrVars {
   archive_id: number;
 }
 
-export type LogLevel = "INFO" | "WARN" | "ERROR" | "FATAL";
+export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 
-export type OperationSource = "u" | "s" | "t";
+export type OperationSource = 'u' | 's' | 't';
 
 export interface Operation {
   m: string;
@@ -67,7 +67,7 @@ export interface UpdateInfo {
 }
 
 export interface CheckIssue {
-  level: "ERROR" | "WARN";
+  level: 'ERROR' | 'WARN';
   code: string;
   message: string;
 }

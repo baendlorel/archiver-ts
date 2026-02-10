@@ -144,21 +144,21 @@ export class CheckService {
     const vaultMap = new Map<number, Vault>(vaults.map((vault) => [vault.id, vault]));
 
     for (const entry of entries) {
-      const vault = vaultMap.get(entry.vid);
+      const vault = vaultMap.get(entry.vaultId);
       if (!vault) {
         pushIssue(
           report.issues,
           'ERROR',
           'UNKNOWN_VAULT_REFERENCE',
-          `Archive id ${entry.id} references unknown vault id ${entry.vid}.`,
+          `Archive id ${entry.id} references unknown vault id ${entry.vaultId}.`,
         );
         continue;
       }
 
-      const archivePath = this.context.archivePath(entry.vid, entry.id);
-      const restorePath = path.join(entry.d, entry.i);
+      const archivePath = this.context.archivePath(entry.vaultId, entry.id);
+      const restorePath = path.join(entry.directory, entry.item);
 
-      if (entry.st === 'A') {
+      if (entry.status === 'A') {
         const location = await this.context.resolveArchiveStorageLocation(entry);
         if (!location) {
           pushIssue(
@@ -171,7 +171,7 @@ export class CheckService {
           const archiveStats = await safeLstat(location.objectPath);
           if (archiveStats) {
             const actualIsDir = archiveStats.isDirectory();
-            const expectedIsDir = entry.is_d === 1;
+            const expectedIsDir = entry.isDirectory === 1;
             if (actualIsDir !== expectedIsDir) {
               pushIssue(
                 report.issues,
@@ -191,7 +191,7 @@ export class CheckService {
             `Archive id ${entry.id} has an existing restore path: ${restorePath}`,
           );
         }
-      } else if (entry.st === 'R') {
+      } else if (entry.status === 'R') {
         if (await pathAccessible(archivePath)) {
           pushIssue(
             report.issues,
@@ -205,7 +205,7 @@ export class CheckService {
           const restoreStats = await safeLstat(restorePath);
           if (restoreStats) {
             const actualIsDir = restoreStats.isDirectory();
-            const expectedIsDir = entry.is_d === 1;
+            const expectedIsDir = entry.isDirectory === 1;
             if (actualIsDir !== expectedIsDir) {
               pushIssue(
                 report.issues,
@@ -228,7 +228,7 @@ export class CheckService {
           report.issues,
           'ERROR',
           'INVALID_ARCHIVE_STATUS',
-          `Archive id ${entry.id} has invalid status ${entry.st}.`,
+          `Archive id ${entry.id} has invalid status ${entry.status}.`,
         );
       }
     }
@@ -241,7 +241,7 @@ export class CheckService {
   ): Promise<void> {
     const knownVaultIds = new Set(vaults.map((vault) => vault.id));
     const expectedArchivedPairs = new Set(
-      entries.filter((entry) => entry.st === 'A').map((entry) => `${entry.vid}/${entry.id}`),
+      entries.filter((entry) => entry.status === 'A').map((entry) => `${entry.vaultId}/${entry.id}`),
     );
 
     const vaultDirs = await listDirectories(this.context.vaultsDir);

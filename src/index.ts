@@ -225,7 +225,7 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         info(`Opening subshell in ${shellQuote(resolved.slotPath)}. Type 'exit' to return.`);
 
         const shell =
-          process.env.SHELL ?? (process.platform === 'win32' ? process.env.COMSPEC ?? 'cmd.exe' : '/bin/bash');
+          process.env.SHELL ?? (process.platform === 'win32' ? (process.env.COMSPEC ?? 'cmd.exe') : '/bin/bash');
 
         const child = spawn(shell, {
           cwd: resolved.slotPath,
@@ -464,15 +464,15 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
         const headers = ['ID', 'ST', `Vault${config.vault_item_sep}Item`, 'Path', 'Archived At', 'Message', 'Remark'];
 
         const rows = decorated.map((entry) => {
-          const dirDisplay = ctx.configService.renderPathWithAlias(entry.d, config.alias_map);
+          const dirDisplay = ctx.configService.renderPathWithAlias(entry.directory, config.alias_map);
           return [
             String(entry.id),
-            styleArchiveStatus(entry.st),
-            `${entry.vaultName}${config.vault_item_sep}${entry.i}`,
+            styleArchiveStatus(entry.status),
+            `${entry.vaultName}${config.vault_item_sep}${entry.item}`,
             dirDisplay,
-            entry.aat,
-            entry.m,
-            entry.r,
+            entry.archivedAt,
+            entry.message,
+            entry.remark,
           ];
         });
 
@@ -527,10 +527,10 @@ async function createProgram(ctx: CommandContext): Promise<Command> {
                 [
                   [
                     String(detail.archive.id),
-                    styleArchiveStatus(detail.archive.st),
-                    String(detail.archive.vid),
-                    detail.archive.i,
-                    detail.archive.d,
+                    styleArchiveStatus(detail.archive.status),
+                    String(detail.archive.vaultId),
+                    detail.archive.item,
+                    detail.archive.directory,
                   ],
                 ],
               ),

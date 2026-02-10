@@ -73,15 +73,15 @@ export class ArchiveService {
       const archiveId = await this.context.nextAutoIncrement('archive_id');
       const archiveSlotPath = this.context.archivePath(vault.id, archiveId);
       const entry: ListEntry = {
-        aat: formatDateTime(),
-        st: 'A',
-        is_d: item.stats.isDirectory() ? 1 : 0,
-        vid: vault.id,
+        archivedAt: formatDateTime(),
+        status: 'A',
+        isDirectory: item.stats.isDirectory() ? 1 : 0,
+        vaultId: vault.id,
         id: archiveId,
-        i: path.basename(item.resolvedPath),
-        d: path.dirname(item.resolvedPath),
-        m: options.message ?? '',
-        r: options.remark ?? '',
+        item: path.basename(item.resolvedPath),
+        directory: path.dirname(item.resolvedPath),
+        message: options.message ?? '',
+        remark: options.remark ?? '',
       };
 
       try {
@@ -90,7 +90,7 @@ export class ArchiveService {
         }
 
         await fs.mkdir(archiveSlotPath, { recursive: false });
-        const archiveObjectPath = this.context.archiveObjectPath(vault.id, archiveId, entry.i);
+        const archiveObjectPath = this.context.archiveObjectPath(vault.id, archiveId, entry.item);
 
         try {
           await fs.rename(item.resolvedPath, archiveObjectPath);
@@ -161,7 +161,7 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.st !== 'A') {
+      if (entry.status !== 'A') {
         throw new Error(`Archive id ${id} is already restored.`);
       }
     }
@@ -181,18 +181,18 @@ export class ArchiveService {
       }
 
       const location = await this.context.resolveArchiveStorageLocation(entry);
-      const targetPath = path.join(entry.d, entry.i);
+      const targetPath = path.join(entry.directory, entry.item);
 
       try {
         if (!location) {
-          throw new Error(`Archive object is missing: ${this.context.archivePath(entry.vid, entry.id)}`);
+          throw new Error(`Archive object is missing: ${this.context.archivePath(entry.vaultId, entry.id)}`);
         }
 
         if (await pathAccessible(targetPath)) {
           throw new Error(`Restore target already exists: ${targetPath}`);
         }
 
-        await fs.mkdir(entry.d, { recursive: true });
+        await fs.mkdir(entry.directory, { recursive: true });
         await fs.rename(location.objectPath, targetPath);
 
         if (location.layout === 'slot') {
@@ -205,7 +205,7 @@ export class ArchiveService {
           });
         }
 
-        entry.st = 'R';
+        entry.status = 'R';
         changed = true;
 
         await this.logger.log(
@@ -216,7 +216,7 @@ export class ArchiveService {
             sc: 'u',
           },
           `Restored archive id ${id}`,
-          { aid: id, vid: entry.vid },
+          { aid: id, vid: entry.vaultId },
         );
 
         result.ok.push({
@@ -235,7 +235,7 @@ export class ArchiveService {
             sc: 'u',
           },
           `Failed to restore archive id ${id}: ${message}`,
-          { aid: id, vid: entry.vid },
+          { aid: id, vid: entry.vaultId },
         );
 
         result.failed.push({
@@ -279,15 +279,15 @@ export class ArchiveService {
       if (!entry) {
         throw new Error(`Archive id ${id} does not exist.`);
       }
-      if (entry.st !== 'A') {
+      if (entry.status !== 'A') {
         throw new Error(`Archive id ${id} has been restored and cannot be moved.`);
       }
-      if (entry.vid === targetVault.id) {
+      if (entry.vaultId === targetVault.id) {
         throw new Error(`Archive id ${id} is already in vault ${targetVault.n}.`);
       }
 
       const location = await this.context.resolveArchiveStorageLocation(entry);
-      const source = location?.slotPath ?? this.context.archivePath(entry.vid, entry.id);
+      const source = location?.slotPath ?? this.context.archivePath(entry.vaultId, entry.id);
       const target = this.context.archivePath(targetVault.id, entry.id);
       if (!location) {
         throw new Error(`Archive object is missing: ${source}`);
@@ -321,14 +321,14 @@ export class ArchiveService {
 
       const source = location.slotPath;
       const target = this.context.archivePath(targetVault.id, entry.id);
-      const fromVaultId = entry.vid;
+      const fromVaultId = entry.vaultId;
 
       try {
         if (location.layout === 'slot') {
           await fs.rename(source, target);
         } else {
           await fs.mkdir(target, { recursive: false });
-          const targetObjectPath = this.context.archiveObjectPath(targetVault.id, entry.id, entry.i);
+          const targetObjectPath = this.context.archiveObjectPath(targetVault.id, entry.id, entry.item);
           try {
             await fs.rename(location.objectPath, targetObjectPath);
           } catch (error) {
@@ -337,7 +337,7 @@ export class ArchiveService {
           }
         }
 
-        entry.vid = targetVault.id;
+        entry.vaultId = targetVault.id;
         changed = true;
 
         await this.logger.log(
@@ -402,7 +402,7 @@ export class ArchiveService {
       throw new Error(`Archive id ${archiveId} does not exist.`);
     }
 
-    if (entry.st !== 'A') {
+    if (entry.status !== 'A') {
       throw new Error(`Archive id ${archiveId} is restored and has no active slot.`);
     }
 
@@ -416,21 +416,21 @@ export class ArchiveService {
         throw new Error(`Vault not found: ${vaultRef}`);
       }
 
-      if (requestedVault.id !== entry.vid) {
-        throw new Error(`Archive id ${archiveId} is in vault ${entry.vid}, not ${requestedVault.id}.`);
+      if (requestedVault.id !== entry.vaultId) {
+        throw new Error(`Archive id ${archiveId} is in vault ${entry.vaultId}, not ${requestedVault.id}.`);
       }
     }
 
-    const vault = await this.context.resolveVault(entry.vid, {
+    const vault = await this.context.resolveVault(entry.vaultId, {
       includeRemoved: true,
       fallbackCurrent: false,
     });
 
     if (!vault) {
-      throw new Error(`Vault ${entry.vid} for archive id ${archiveId} does not exist.`);
+      throw new Error(`Vault ${entry.vaultId} for archive id ${archiveId} does not exist.`);
     }
 
-    const slotPath = this.context.archivePath(entry.vid, entry.id);
+    const slotPath = this.context.archivePath(entry.vaultId, entry.id);
     const stats = await safeLstat(slotPath);
     if (!stats) {
       throw new Error(`Archive slot is missing: ${slotPath}`);
@@ -452,9 +452,9 @@ export class ArchiveService {
     let filtered = entries;
     if (!options.all) {
       if (options.restored) {
-        filtered = filtered.filter((entry) => entry.st === 'R');
+        filtered = filtered.filter((entry) => entry.status === 'R');
       } else {
-        filtered = filtered.filter((entry) => entry.st === 'A');
+        filtered = filtered.filter((entry) => entry.status === 'A');
       }
     }
 
@@ -468,7 +468,7 @@ export class ArchiveService {
         throw new Error(`Vault not found: ${options.vault}`);
       }
 
-      filtered = filtered.filter((entry) => entry.vid === vault.id);
+      filtered = filtered.filter((entry) => entry.vaultId === vault.id);
     }
 
     return filtered.sort((a, b) => a.id - b.id);
@@ -487,13 +487,13 @@ export class ArchiveService {
     const config = await this.context.loadConfig();
 
     return entries.map((entry) => {
-      const vault = vaultMap.get(entry.vid);
-      const fullPath = path.join(entry.d, entry.i);
+      const vault = vaultMap.get(entry.vaultId);
+      const fullPath = path.join(entry.directory, entry.item);
       const displayPath = this.configService.renderPathWithAlias(fullPath, config.alias_map);
 
       return {
         ...entry,
-        vaultName: vault ? `${vault.n}(${vault.id})` : `unknown(${entry.vid})`,
+        vaultName: vault ? `${vault.n}(${vault.id})` : `unknown(${entry.vaultId})`,
         displayPath,
       };
     });

@@ -42,18 +42,18 @@ function sanitizeAutoIncr(values: AutoIncrVars): AutoIncrVars {
 }
 
 function sanitizeListEntry(raw: ListEntry): ListEntry {
-  const isDirectory = raw.is_d === 1 ? 1 : 0;
-  const status = raw.st === 'R' ? 'R' : 'A';
+  const isDirectory = raw.isDirectory === 1 ? 1 : 0;
+  const status = raw.status === 'R' ? 'R' : 'A';
   return {
-    aat: String(raw.aat ?? ''),
-    st: status,
-    is_d: isDirectory,
-    vid: Number(raw.vid ?? 0),
+    archivedAt: String(raw.archivedAt ?? ''),
+    status: status,
+    isDirectory: isDirectory,
+    vaultId: Number(raw.vaultId ?? 0),
     id: Number(raw.id),
-    i: String(raw.i ?? ''),
-    d: String(raw.d ?? ''),
-    m: String(raw.m ?? ''),
-    r: String(raw.r ?? ''),
+    item: String(raw.item ?? ''),
+    directory: String(raw.directory ?? ''),
+    message: String(raw.message ?? ''),
+    remark: String(raw.remark ?? ''),
   };
 }
 
@@ -268,7 +268,7 @@ export class ArchiverContext {
     return path.join(this.archivePath(vaultId, archiveId), itemName);
   }
 
-  async resolveArchiveStorageLocation(entry: Pick<ListEntry, 'vid' | 'id' | 'i'>): Promise<
+  async resolveArchiveStorageLocation(entry: Pick<ListEntry, 'vaultId' | 'id' | 'item'>): Promise<
     | {
         slotPath: string;
         objectPath: string;
@@ -276,7 +276,7 @@ export class ArchiverContext {
       }
     | undefined
   > {
-    const slotPath = this.archivePath(entry.vid, entry.id);
+    const slotPath = this.archivePath(entry.vaultId, entry.id);
     const slotStats = await safeLstat(slotPath);
     if (!slotStats) {
       return undefined;
@@ -290,7 +290,7 @@ export class ArchiverContext {
       };
     }
 
-    const expectedObjectPath = this.archiveObjectPath(entry.vid, entry.id, entry.i);
+    const expectedObjectPath = this.archiveObjectPath(entry.vaultId, entry.id, entry.item);
     if (await pathAccessible(expectedObjectPath)) {
       return {
         slotPath,

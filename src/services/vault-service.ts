@@ -157,7 +157,7 @@ export class VaultService {
     }
 
     const entries = await this.context.loadListEntries();
-    const archived = entries.filter((entry) => entry.vid === vault.id && entry.st === 'A');
+    const archived = entries.filter((entry) => entry.vaultId === vault.id && entry.status === 'A');
 
     await this.context.ensureVaultDir(DEFAULT_VAULT.id);
 
@@ -169,7 +169,7 @@ export class VaultService {
       const to = this.context.archivePath(DEFAULT_VAULT.id, entry.id);
 
       await fs.rename(from, to);
-      entry.vid = DEFAULT_VAULT.id;
+      entry.vaultId = DEFAULT_VAULT.id;
       movedArchiveIds.push(entry.id);
     }
 
@@ -194,7 +194,7 @@ export class VaultService {
 
   private async validateMoveToDefault(entries: ListEntry[]): Promise<void> {
     for (const entry of entries) {
-      const from = this.context.archivePath(entry.vid, entry.id);
+      const from = this.context.archivePath(entry.vaultId, entry.id);
       const to = this.context.archivePath(DEFAULT_VAULT.id, entry.id);
 
       if (!(await pathAccessible(from))) {
