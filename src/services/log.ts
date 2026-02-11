@@ -1,5 +1,3 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { Defaults, Paths } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { ListEntry, LogEntry, Vault } from '../global.js';
@@ -76,31 +74,10 @@ export class LogService {
   }
 
   private async loadAllLogs(): Promise<LogEntry[]> {
-    const yearFiles = await this.listYearFiles();
-
-    const logs: LogEntry[] = [];
-    for (const fileName of yearFiles) {
-      const filePath = path.join(Paths.Dir.logs, fileName);
-      const rows = await readJsonLinesFile<LogEntry>(filePath);
-      rows.forEach((row) => logs.push(normalizeLogEntry(row)));
-    }
+    const rows = await readJsonLinesFile<LogEntry>(Paths.File.log);
+    const logs = rows.map((row) => normalizeLogEntry(row));
 
     logs.sort((a, b) => a.id - b.id);
     return logs;
-  }
-
-  private async listYearFiles(): Promise<string[]> {
-    try {
-      const entries = await fs.readdir(Paths.Dir.logs, { withFileTypes: true });
-      return entries
-        .filter((entry) => entry.isFile() && /^\d{4}\.jsonl$/.test(entry.name))
-        .map((entry) => entry.name)
-        .sort();
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return [];
-      }
-      throw error;
-    }
   }
 }

@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { Paths } from '../consts/index.js';
 import { ArchiverContext } from '../core/context.js';
 import type { LogEntry, LogLevel, Operation } from '../global.js';
@@ -16,7 +15,6 @@ export class AuditLogger {
   ): Promise<LogEntry> {
     const id = await this.context.nextAutoIncrement('logId');
     const now = new Date();
-    const year = String(now.getFullYear());
 
     const entry: LogEntry = {
       id,
@@ -28,8 +26,7 @@ export class AuditLogger {
       ...(links?.vid !== undefined ? { vaultIds: links.vid } : {}),
     };
 
-    const filePath = path.join(Paths.Dir.logs, `${year}.jsonl`);
-    await appendJsonLine(filePath, entry);
+    await appendJsonLine(Paths.File.log, entry);
 
     return entry;
   }

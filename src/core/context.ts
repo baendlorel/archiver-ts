@@ -75,6 +75,7 @@ export class ArchiverContext {
 
     await ensureFile(Paths.File.list);
     await ensureFile(Paths.File.vaults);
+    await ensureFile(Paths.File.log);
 
     const config = await this.loadConfig();
     if (config.currentVaultId === 0 || (await pathAccessible(this.vaultDir(config.currentVaultId)))) {

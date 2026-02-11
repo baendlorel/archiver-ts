@@ -319,21 +319,7 @@ export class CheckService {
   }
 
   private async checkLogConsistency(report: CheckReport, logAutoIncr: number): Promise<void> {
-    const yearFiles = await fs.readdir(Paths.Dir.logs, { withFileTypes: true }).catch((error) => {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return [];
-      }
-      throw error;
-    });
-
-    const logs: LogEntry[] = [];
-    for (const file of yearFiles) {
-      if (!file.isFile() || !/^\d{4}\.jsonl$/.test(file.name)) {
-        continue;
-      }
-      const rows = await readJsonLinesFile<LogEntry>(path.join(Paths.Dir.logs, file.name));
-      logs.push(...rows);
-    }
+    const logs = await readJsonLinesFile<LogEntry>(Paths.File.log);
 
     const ids = logs.map((row) => Number(row.id)).filter((id) => Number.isInteger(id));
     const duplicates = findDuplicates(ids);

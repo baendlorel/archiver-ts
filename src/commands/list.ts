@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
-import { ArchiveStatus } from '../consts/index.js';
+import { ArchiveStatus, Defaults } from '../consts/index.js';
 import type { CommandContext } from '../services/context.js';
-import { error, styleArchiveStatus, info, renderTable, success } from '../utils/terminal.js';
+import { error, info, success } from '../utils/terminal.js';
 import { emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 import {
@@ -20,29 +20,22 @@ interface ListCommandOptions {
 
 type DecoratedListEntry = Awaited<ReturnType<CommandContext['archiveService']['decorateEntries']>>[number];
 
-function renderListTable(entries: DecoratedListEntry[], vaultItemSeparator: string): string {
-  const headers = ['ID', 'ST', `Vault${vaultItemSeparator}Item`, 'Path', 'Archived At', 'Message', 'Remark'];
+function formatListName(entry: DecoratedListEntry, vaultItemSeparator: string): string {
+  if (entry.vaultId === Defaults.Vault.id) {
+    return entry.item;
+  }
+  return `${entry.vaultName}${vaultItemSeparator}${entry.item}`;
+}
 
-  const rows = entries.map((entry) => {
-    return [
-      String(entry.id),
-      styleArchiveStatus(entry.status),
-      `${entry.vaultName}${vaultItemSeparator}${entry.item}`,
-      entry.displayPath,
-      entry.archivedAt,
-      entry.message,
-      entry.remark,
-    ];
-  });
-
-  return renderTable(headers, rows);
+function renderList(entries: DecoratedListEntry[], vaultItemSeparator: string): string {
+  return entries.map((entry) => formatListName(entry, vaultItemSeparator)).join('\n');
 }
 
 function toInteractiveEntries(entries: DecoratedListEntry[], vaultItemSeparator: string): InteractiveListEntry[] {
   return entries.map((entry) => ({
     id: entry.id,
     status: entry.status,
-    title: `${entry.vaultName}${vaultItemSeparator}${entry.item}`,
+    title: formatListName(entry, vaultItemSeparator),
     path: entry.displayPath,
   }));
 }
@@ -90,7 +83,7 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
     .option('--restored', 'Show only restored entries')
     .option('--all', 'Show all entries')
     .option('--vault <vault>', 'Filter by vault name or id')
-    .option('--no-interactive', 'Disable keyboard picker in TTY and print plain table only')
+    .option('--no-interactive', 'Disable keyboard picker in TTY and print plain list only')
     .action((options: ListCommandOptions) =>
       runAction(async () => {
         const entries = await ctx.archiveService.listEntries(options);
@@ -106,7 +99,7 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
         const hasArchivedEntry = decorated.some((entry) => entry.status === ArchiveStatus.Archived);
 
         if (!shouldUseInteractive || !hasArchivedEntry) {
-          console.log(renderListTable(decorated, config.vaultItemSeparator));
+          console.log(renderList(decorated, config.vaultItemSeparator));
           if (shouldUseInteractive && !hasArchivedEntry) {
             info('All visible entries are restored; interactive actions are unavailable.');
           }

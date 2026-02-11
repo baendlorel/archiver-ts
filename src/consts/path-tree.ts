@@ -7,20 +7,18 @@ const getRoot = () => {
 };
 
 const root = getRoot();
-const core = join(root, 'core');
 
 export namespace Paths {
   export const Dir = {
     root,
-    core,
-    logs: join(root, 'logs'),
     vaults: join(root, 'vaults'),
   };
 
   export const File = {
-    config: join(core, 'config.jsonc'),
-    autoIncr: join(core, 'auto-incr.jsonc'),
-    list: join(core, 'list.jsonl'),
-    vaults: join(core, 'vaults.jsonl'),
+    config: join(root, 'config.jsonc'),
+    autoIncr: join(root, 'auto-incr.jsonc'),
+    list: join(root, 'list.jsonl'),
+    vaults: join(root, 'vaults.jsonl'),
+    log: join(root, 'log.jsonl'),
   };
 }

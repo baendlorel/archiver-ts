@@ -20,20 +20,17 @@ let sandboxRoot: string;
 let workspaceDir: string;
 
 function applyPaths(rootDir: string): void {
-  const coreDir = path.join(rootDir, 'core');
-
   Object.assign(Paths.Dir, {
     root: rootDir,
-    core: coreDir,
-    logs: path.join(rootDir, 'logs'),
     vaults: path.join(rootDir, 'vaults'),
   });
 
   Object.assign(Paths.File, {
-    config: path.join(coreDir, 'config.jsonc'),
-    autoIncr: path.join(coreDir, 'auto-incr.json'),
-    list: path.join(coreDir, 'list.json'),
-    vaults: path.join(coreDir, 'vaults.json'),
+    config: path.join(rootDir, 'config.jsonc'),
+    autoIncr: path.join(rootDir, 'auto-incr.json'),
+    list: path.join(rootDir, 'list.json'),
+    vaults: path.join(rootDir, 'vaults.json'),
+    log: path.join(rootDir, 'log.jsonl'),
   });
 }
 
@@ -107,6 +104,8 @@ describe('archive workflow', () => {
     expect(await pathExists(sourceFile)).toBe(false);
     expect(await pathExists(slotPath)).toBe(true);
     expect(await pathExists(archivedObjectPath)).toBe(true);
+    expect(await pathExists(Paths.File.log)).toBe(true);
+    expect(await pathExists(path.join(Paths.Dir.root, 'logs'))).toBe(false);
 
     const entriesAfterPut = await runtime.context.loadListEntries(true);
     expect(entriesAfterPut).toHaveLength(1);
