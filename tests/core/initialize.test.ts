@@ -38,8 +38,6 @@ describe('shell wrapper initialize', () => {
     expect(content).toContain('# >>> archiver arv wrapper >>>');
     expect(content).toContain('arv() {');
     expect(content).toContain('command arv "$@"');
-    expect(content).toContain('__ARCHIVER_CD_BACK__');
-    expect(content).toContain('ARCHIVER_PREV_CWD');
     expect(content).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
 
@@ -88,7 +86,6 @@ arv() {
 
     expect(result.installed).toBe(true);
     const content = await fs.readFile(rcPath, 'utf8');
-    expect(content).toContain('__ARCHIVER_CD_BACK__');
     expect(content).not.toContain('legacy wrapper');
     const markerCount = (content.match(/# >>> archiver arv wrapper >>>/g) ?? []).length;
     expect(markerCount).toBe(1);
@@ -134,8 +131,6 @@ arv() {
     const fishFunction = await fs.readFile(path.join(homeDir, '.config', 'fish', 'functions', 'arv.fish'), 'utf8');
     expect(fishFunction).toContain('function arv');
     expect(fishFunction).toContain('__ARCHIVER_CD__:');
-    expect(fishFunction).toContain('__ARCHIVER_CD_BACK__');
-    expect(fishFunction).toContain('ARCHIVER_PREV_CWD');
     expect(fishFunction).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
 
@@ -161,8 +156,6 @@ arv() {
     const profileContent = await fs.readFile(absoluteProfilePath, 'utf8');
     expect(profileContent).toContain('function arv');
     expect(profileContent).toContain('__ARCHIVER_CD__:');
-    expect(profileContent).toContain('__ARCHIVER_CD_BACK__');
-    expect(profileContent).toContain('ARCHIVER_PREV_CWD');
     expect(profileContent).toContain('$env:ARCHIVER_FORCE_INTERACTIVE = "1"');
   });
 });

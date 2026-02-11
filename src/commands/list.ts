@@ -16,6 +16,7 @@ interface ListCommandOptions {
   all?: boolean;
   vault?: string;
   interactive?: boolean;
+  plain?: boolean;
 }
 
 type DecoratedListEntry = Awaited<ReturnType<CommandContext['archiveService']['decorateEntries']>>[number];
@@ -31,13 +32,23 @@ function formatListId(id: number): string {
   return String(id).padStart(4, '0');
 }
 
+function toStatusCode(entry: DecoratedListEntry): 'A' | 'R' {
+  return entry.status === ArchiveStatus.Archived ? 'A' : 'R';
+}
+
 function formatListLine(entry: DecoratedListEntry, vaultItemSeparator: string): string {
-  const statusText = styleArchiveStatus(entry.status === ArchiveStatus.Archived ? 'A' : 'R');
+  const statusText = styleArchiveStatus(toStatusCode(entry));
   return `[${formatListId(entry.id)}] ${statusText} ${formatListName(entry, vaultItemSeparator)}`;
 }
 
 function renderList(entries: DecoratedListEntry[], vaultItemSeparator: string): string {
   return entries.map((entry) => formatListLine(entry, vaultItemSeparator)).join('\n');
+}
+
+function renderPlainList(entries: DecoratedListEntry[], vaultItemSeparator: string): string {
+  return entries
+    .map((entry) => `${entry.id}\t${toStatusCode(entry)}\t${formatListName(entry, vaultItemSeparator)}`)
+    .join('\n');
 }
 
 function toInteractiveEntries(entries: DecoratedListEntry[], vaultItemSeparator: string): InteractiveListEntry[] {
@@ -89,10 +100,11 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
     .alias('l')
     .alias('ls')
     .description('List archived entries')
-    .option('--restored', 'Show only restored entries')
-    .option('--all', 'Show all entries')
-    .option('--vault <vault>', 'Filter by vault name or id')
-    .option('--no-interactive', 'Disable keyboard picker in TTY and print plain list only')
+    .option('-r, --restored', 'Show only restored entries')
+    .option('-a, --all', 'Show all entries')
+    .option('-v, --vault <vault>', 'Filter by vault name or id')
+    .option('--no-interactive', 'Disable keyboard picker in TTY and print standard list output')
+    .option('-p, --plain', 'Print grep-friendly output: id<TAB>status<TAB>name (always non-interactive)')
     .action((options: ListCommandOptions) =>
       runAction(async () => {
         const entries = await ctx.archiveService.listEntries(options);
@@ -100,7 +112,15 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
         const config = await ctx.configService.getConfig();
 
         if (decorated.length === 0) {
+          if (options.plain) {
+            return;
+          }
           info('No entries matched.');
+          return;
+        }
+
+        if (options.plain) {
+          console.log(renderPlainList(decorated, config.vaultItemSeparator));
           return;
         }
 

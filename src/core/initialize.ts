@@ -31,12 +31,10 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
   endMarker: '# <<< archiver arv wrapper <<<',
   functionPattern: /(^|\n)\s*(function\s+)?arv\s*(\(\))?\s*\{/m,
   body: `arv() {
-  local line target status go_back
+  local line target status
   while IFS= read -r line; do
     if [[ "$line" == *__ARCHIVER_CD__:* ]]; then
       target="\${line##*__ARCHIVER_CD__:}"
-    elif [[ "$line" == __ARCHIVER_CD_BACK__ ]]; then
-      go_back="1"
     elif [[ "$line" == __ARCHIVER_STATUS__:* ]]; then
       status="\${line#__ARCHIVER_STATUS__:}"
     else
@@ -49,16 +47,7 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
 
   status="\${status:-1}"
   if [[ -n "$target" ]]; then
-    export ARCHIVER_PREV_CWD="$PWD"
     cd -- "$target" || return $?
-  elif [[ "$go_back" == "1" ]]; then
-    if [[ -z "\${ARCHIVER_PREV_CWD:-}" ]]; then
-      printf '%s\\n' 'No previous arv cd directory.'
-      return 1
-    fi
-    local previous="$ARCHIVER_PREV_CWD"
-    export ARCHIVER_PREV_CWD="$PWD"
-    cd -- "$previous" || return $?
   fi
   return $status
 }`,
@@ -70,12 +59,9 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
   functionPattern: /(^|\n)\s*function\s+arv\b/m,
   body: `function arv
     set -l target_tmp (mktemp)
-    set -l back_tmp (mktemp)
     env ARCHIVER_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
         if string match -q "__ARCHIVER_CD__:*" -- $line
             echo (string replace "__ARCHIVER_CD__:" "" -- $line) > $target_tmp
-        else if test "$line" = "__ARCHIVER_CD_BACK__"
-            echo "1" > $back_tmp
         else
             echo $line
         end
@@ -84,26 +70,13 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
 
     if test -s $target_tmp
         set -l target (cat $target_tmp)
-        set -gx ARCHIVER_PREV_CWD $PWD
         cd -- $target; or begin
-            rm -f $target_tmp $back_tmp
-            return $status
-        end
-    else if test -s $back_tmp
-        if not set -q ARCHIVER_PREV_CWD
-            echo "No previous arv cd directory."
-            rm -f $target_tmp $back_tmp
-            return 1
-        end
-        set -l previous $ARCHIVER_PREV_CWD
-        set -gx ARCHIVER_PREV_CWD $PWD
-        cd -- $previous; or begin
-            rm -f $target_tmp $back_tmp
+            rm -f $target_tmp
             return $status
         end
     end
 
-    rm -f $target_tmp $back_tmp
+    rm -f $target_tmp
     return $status
 end`,
 };
@@ -119,7 +92,6 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     )
 
     $target = $null
-    $goBack = $false
     $status = 1
     $oldForce = $env:ARCHIVER_FORCE_INTERACTIVE
     $env:ARCHIVER_FORCE_INTERACTIVE = "1"
@@ -129,8 +101,6 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
         & $app.Source @argv | ForEach-Object {
             if ($_ -like "__ARCHIVER_CD__:*") {
                 $target = $_.Substring("__ARCHIVER_CD__:".Length)
-            } elseif ($_ -eq "__ARCHIVER_CD_BACK__") {
-                $goBack = $true
             } else {
                 Write-Output $_
             }
@@ -145,17 +115,7 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     }
 
     if ($target) {
-        $env:ARCHIVER_PREV_CWD = (Get-Location).Path
         Set-Location -Path $target
-    } elseif ($goBack) {
-        if (-not $env:ARCHIVER_PREV_CWD) {
-            Write-Output "No previous arv cd directory."
-            $global:LASTEXITCODE = 1
-            return
-        }
-        $previous = $env:ARCHIVER_PREV_CWD
-        $env:ARCHIVER_PREV_CWD = (Get-Location).Path
-        Set-Location -Path $previous
     }
 
     $global:LASTEXITCODE = $status

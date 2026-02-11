@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import stripAnsi from 'strip-ansi';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanDirs, mkTempDir, run } from './mock-cli.js';
 
@@ -26,9 +27,6 @@ describe('cli e2e', () => {
     const archivedObjectPath = path.join(rootDir, 'vaults', '0', '1', 'dev-file.txt');
     expect(fs.existsSync(archivedObjectPath)).toBe(true);
     expect(fs.existsSync(path.join(prodRoot, 'vaults', '0', '1', 'dev-file.txt'))).toBe(false);
-
-    const cdOutput = run(['cd', '1', '--print'], { cwd: projectDir, env });
-    expect(cdOutput.trim()).toBe(path.join(rootDir, 'vaults', '0', '1'));
 
     run(['restore', '1'], { cwd: projectDir, env });
     expect(fs.existsSync(filePath)).toBe(true);
@@ -58,12 +56,9 @@ describe('cli e2e', () => {
     expect(fs.existsSync(archivedObjectPath)).toBe(true);
     expect(fs.existsSync(devRoot)).toBe(false);
     expect(fs.existsSync(homeRoot)).toBe(false);
-
-    const cdOutput = run(['cd', '1', '--print'], { cwd: projectDir, env });
-    expect(cdOutput.trim()).toBe(path.join(customRoot, 'vaults', '0', '1'));
   });
 
-  it('prints id and status for list in non-interactive mode', () => {
+  it('prints id for list and supports grep-friendly --plain output', () => {
     const projectDir = mkTempDir('archiver-e2e-list-');
     const defaultFilePath = path.join(projectDir, 'list-file.txt');
     const vaultFilePath = path.join(projectDir, 'list-file-in-work.txt');
@@ -79,26 +74,14 @@ describe('cli e2e', () => {
     run(['vault', 'create', 'work'], { cwd: projectDir, env });
     run(['put', '--vault', 'work', vaultFilePath], { cwd: projectDir, env });
 
-    const output = run(['list'], { cwd: projectDir, env });
+    const output = stripAnsi(run(['list'], { cwd: projectDir, env }));
     expect(output).toContain('[0001] A list-file.txt');
     expect(output).toContain('[0002] A work(1)::list-file-in-work.txt');
     expect(output).not.toContain('@(0)');
-  });
 
-  it('emits cd marker instead of opening subshell for cd', () => {
-    const projectDir = mkTempDir('archiver-e2e-cd-marker-');
-    const filePath = path.join(projectDir, 'cd-file.txt');
-    fs.writeFileSync(filePath, 'cd data\n', 'utf8');
-
-    const env = {
-      NODE_ENV: 'development',
-    };
-
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
-    run(['put', filePath], { cwd: projectDir, env });
-    const output = run(['cd', '1'], { cwd: projectDir, env });
-
-    expect(output.trim()).toBe(`__ARCHIVER_CD__:${path.join(projectDir, '.archiver', 'vaults', '0', '1')}`);
+    const plainOutput = run(['list', '--plain'], { cwd: projectDir, env });
+    expect(plainOutput).toContain('1\tA\tlist-file.txt');
+    expect(plainOutput).toContain('2\tA\twork(1)::list-file-in-work.txt');
   });
 
   it('prints vault list as id and name only', () => {
@@ -117,31 +100,15 @@ describe('cli e2e', () => {
     expect(output).not.toContain('Created At');
   });
 
-  it('supports cd - marker and print mode for previous directory', () => {
-    const projectDir = mkTempDir('archiver-e2e-cd-back-');
-    const filePath = path.join(projectDir, 'cd-back-file.txt');
-    const previousDir = path.join(projectDir, 'before-slot');
-    fs.mkdirSync(previousDir, { recursive: true });
-    fs.writeFileSync(filePath, 'cd back data\n', 'utf8');
-
+  it('prints nothing in --plain mode when no entries match', () => {
+    const projectDir = mkTempDir('archiver-e2e-list-empty-');
     const env = {
       NODE_ENV: 'development',
     };
 
     run(['config', 'update-check', 'off'], { cwd: projectDir, env });
-    run(['put', filePath], { cwd: projectDir, env });
-
-    const markerOutput = run(['cd', '-'], { cwd: projectDir, env });
-    expect(markerOutput.trim()).toBe('__ARCHIVER_CD_BACK__');
-
-    const printOutput = run(['cd', '-', '--print'], {
-      cwd: projectDir,
-      env: {
-        ...env,
-        ARCHIVER_PREV_CWD: previousDir,
-      },
-    });
-    expect(printOutput.trim()).toBe(previousDir);
+    const output = run(['list', '--plain'], { cwd: projectDir, env });
+    expect(output).toBe('');
   });
 
 });

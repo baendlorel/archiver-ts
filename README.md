@@ -20,8 +20,6 @@ Archive / restore:
 arv put <items...> [-v|--vault <vault>] [-m|--message <msg>] [-r|--remark <remark>]
 arv restore <ids...>
 arv move <ids...> --to <vault>
-arv cd <archive-id | vault/archive-id> [--print]
-arv cd - [--print]
 ```
 
 Vault management:
@@ -38,7 +36,7 @@ arv vault list [-a|--all]
 Query and maintenance:
 
 ```bash
-arv list [--restored] [--all] [--vault <vault>] [--no-interactive]
+arv list [--restored] [--all] [--vault <vault>] [--no-interactive] [--plain]
 arv log [YYYYMM | YYYYMM-YYYYMM | all]
 arv log --id <log-id>
 arv config list [-c|--comment]
@@ -52,23 +50,32 @@ arv check
 
 ## List output behavior
 
-`arv list` plain mode prints one entry per line:
+`arv list` default non-interactive output is one line per entry:
 
 - format: `[<archiveId>] <A|R> <display-name>`
+- `<archiveId>` is zero-padded to 4 digits
 - default vault (`@`, id `0`): `<display-name>` is item name only
 - non-default vault: `<display-name>` is `<vaultName>(<vaultId>)<sep><item>`
 - `<sep>` comes from `config vault-item-sep` (default `::`)
 
-Example:
+Use `arv list --plain` for grep/script usage:
+
+- format: `<archiveId><TAB><A|R><TAB><display-name>`
+- always disables interactive picker
+- prints no extra hints/messages when no entries match
+
+Examples:
 
 ```text
 [0001] A todo.txt
 [0002] A work(1)::report.pdf
+1	A	todo.txt
+2	A	work(1)::report.pdf
 ```
 
 ## Shell wrapper note
 
-On interactive terminal startup, `arv` may auto-install a shell wrapper function so `cd` can move your shell to archive slot paths.
+On interactive terminal startup, `arv` may auto-install a shell wrapper function so `arv list` interactive `Enter slot` can move your shell to archive slot paths.
 
 Use project-prefixed env overrides when needed:
 
