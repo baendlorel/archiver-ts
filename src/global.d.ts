@@ -77,3 +77,7 @@ export interface CheckReport {
   issues: CheckIssue[];
   info: string[];
 }
+
+declare global {
+  const __VERSION__: string;
+}

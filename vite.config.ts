@@ -18,7 +18,6 @@ export default defineConfig({
     __VERSION__: JSON.stringify(pkg.version),
   },
   build: {
-    target: 'node20',
     outDir: 'dist',
     emptyOutDir: true,
     copyPublicDir: true,
