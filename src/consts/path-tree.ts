@@ -19,8 +19,8 @@ export namespace Paths {
 
   export const File = {
     config: join(core, 'config.jsonc'),
-    autoIncr: join(core, 'auto-incr.json'),
-    list: join(core, 'list.json'),
-    vaults: join(core, 'vaults.json'),
+    autoIncr: join(core, 'auto-incr.jsonc'),
+    list: join(core, 'list.jsonl'),
+    vaults: join(core, 'vaults.jsonl'),
   };
 }
