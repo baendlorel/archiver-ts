@@ -19,7 +19,10 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
         ? config.vaultItemSeparator
         : Defaults.Config.vaultItemSeparator,
     style: config.style === 'off' ? 'off' : 'on',
-    noCommandAction: config.noCommandAction === 'list' ? 'list' : 'help',
+    noCommandAction:
+      config.noCommandAction === 'help' || config.noCommandAction === 'list'
+        ? config.noCommandAction
+        : 'unknown',
   };
 }
 

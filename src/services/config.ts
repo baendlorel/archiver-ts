@@ -30,7 +30,7 @@ export class ConfigService {
     return config;
   }
 
-  async setNoCommandAction(value: 'help' | 'list'): Promise<ArchiverConfig> {
+  async setNoCommandAction(value: 'help' | 'list' | 'unknown'): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
     config.noCommandAction = value;
     await this.context.saveConfig(config);

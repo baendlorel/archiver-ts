@@ -1,0 +1,27 @@
+{
+  // 当前使用的 vault ID，默认为 0，表示默认 vault
+  // The currently active vault ID, default is 0 which represents the default vault
+  "currentVaultId": 0,
+
+  // 是否检查更新，默认为 "on"
+  // Whether to check for updates, default is "on"
+  "updateCheck": "on", // "on" | "off"
+
+  // 记录上一次检查更新的时间
+  // Records the last time updates were checked
+  "lastUpdateCheck": "",
+
+  "aliasMap": {},
+
+  // 开启后，控制台会输出彩色的、有样式的文字，更美观
+  // When turned on, the console will output colorful and styled text for better aesthetics
+  "style": "on", // "on" | "off"
+
+  // 在arv list 命令下，vault 中条目的分隔符，默认为 "::"
+  // The separator for items in the vault, default is "::"
+  "vaultItemSeparator": "::",
+
+  // 配置只输入arv，没有子命令的时候的行为
+  // Configures the behavior when only "arv" is entered without a subcommand
+  "noCommandAction": "unknown", // "unknown" | "help" | "default"
+}

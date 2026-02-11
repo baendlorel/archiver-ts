@@ -111,7 +111,7 @@ describe('cli e2e', () => {
     expect(output).toBe('');
   });
 
-  it('shows help text when no-command-action is help (default)', () => {
+  it('shows help text when no-command-action is unknown and stdin is not TTY', () => {
     const projectDir = mkTempDir('archiver-e2e-no-command-help-');
     const env = {
       NODE_ENV: 'development',
@@ -120,6 +120,19 @@ describe('cli e2e', () => {
     run(['config', 'update-check', 'off'], { cwd: projectDir, env });
     const output = run([], { cwd: projectDir, env });
     expect(output).toContain('Usage: archiver');
+  });
+
+  it('accepts no-command-action unknown in config', () => {
+    const projectDir = mkTempDir('archiver-e2e-no-command-unknown-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['config', 'no-command-action', 'unknown'], { cwd: projectDir, env });
+
+    const output = run(['config', 'list'], { cwd: projectDir, env });
+    expect(output).toContain('"noCommandAction": "unknown"');
   });
 
   it('runs list when no-command-action is list', () => {

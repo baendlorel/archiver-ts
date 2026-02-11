@@ -1,0 +1,7 @@
+// 各个实体的自增 ID，存储于此
+// This file stores the auto-incrementing IDs for various entities.
+{
+  "logId": 0,
+  "vaultId": 0,
+  "archiveId": 0,
+}

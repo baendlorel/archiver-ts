@@ -23,7 +23,11 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
             ['alias_map', JSON.stringify(current.aliasMap), 'Path alias map for display only'],
             ['vault_item_sep', current.vaultItemSeparator, 'Separator shown between vault and item'],
             ['style', current.style, 'Styled output: on or off'],
-            ['no_command_action', current.noCommandAction, 'Action when running arv without subcommand'],
+            [
+              'no_command_action',
+              current.noCommandAction,
+              'Action when running arv without subcommand (unknown asks in TTY)',
+            ],
           ];
           console.log(renderTable(['Key', 'Value', 'Comment'], rows));
         } else {
@@ -146,12 +150,12 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
   config
     .command('no-command-action')
     .description('Set action when running arv without any subcommand')
-    .argument('<action>', 'help|list')
+    .argument('<action>', 'help|list|unknown')
     .action((action: string) =>
       runAction(async () => {
         const normalized = action.toLowerCase();
-        if (normalized !== 'help' && normalized !== 'list') {
-          throw new Error('Action must be help or list.');
+        if (normalized !== 'help' && normalized !== 'list' && normalized !== 'unknown') {
+          throw new Error('Action must be help, list, or unknown.');
         }
 
         await ctx.configService.setNoCommandAction(normalized);

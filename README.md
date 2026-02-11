@@ -44,7 +44,7 @@ arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
 arv config style <on|off>
-arv config no-command-action <help|list>
+arv config no-command-action <help|list|unknown>
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
@@ -89,12 +89,16 @@ ARCHIVER_STYLE=off arv list
 
 When you run `arv` without any subcommand, behavior is controlled by config:
 
-- `help` (default): show help text
+- `unknown` (default): ask once (list/help) and save to config
+- `help`: show help text
 - `list`: run `arv list`
+
+If `no_command_action` is `unknown` and input is not TTY (e.g. piped/CI), `arv` falls back to help text for that run.
 
 Set it with:
 
 ```bash
+arv config no-command-action unknown
 arv config no-command-action help
 arv config no-command-action list
 ```
