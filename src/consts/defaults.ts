@@ -1,4 +1,4 @@
-import { ArchiverConfig, AutoIncrVars, Vault } from '../global.js';
+import type { ArchiverConfig, AutoIncrVars, Vault } from '../global.js';
 import { VaultStatus } from './enums.js';
 
 export namespace Defaults {

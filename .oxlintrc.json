@@ -20,6 +20,7 @@
     "typescript"
   ],
   "rules": {
+    "no-console": "off",
     "no-explicit-any": "off",
     "no-inferrable-types": "off",
     "prefer-for-of": "off",
@@ -38,7 +39,6 @@
       "fields"
     ],
     "no-debugger": "error",
-    "no-console": "warn",
     "no-var": "error",
     "prefer-const": "error",
     "eqeqeq": [

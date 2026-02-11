@@ -8,6 +8,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import replace from '@rollup/plugin-replace';
 import alias from '@rollup/plugin-alias';
+import terser from '@rollup/plugin-terser';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const deps = Object.keys(pkg.dependencies ?? {});
@@ -22,7 +23,7 @@ export default [
     output: {
       file: 'dist/index.js',
       format: 'esm',
-      sourcemap: true,
+      sourcemap: false,
       banner: '#!/usr/bin/env node',
     },
     external: (id) => builtins.has(id) || deps.includes(id),
@@ -41,6 +42,7 @@ export default [
       commonjs(),
       json(),
       typescript({ tsconfig: './tsconfig.json', declaration: false, declarationMap: false }),
+      terser({}),
     ],
   },
 ];
