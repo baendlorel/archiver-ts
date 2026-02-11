@@ -26,6 +26,7 @@ const ACTION_LABELS: Record<ListAction, string> = {
   enter: 'Enter slot',
   restore: 'Retrieve',
 };
+const ACTION_LABEL_WIDTH = Math.max(...Object.values(ACTION_LABELS).map((label) => label.length));
 
 export function canRunInteractiveList(): boolean {
   if (process.stdin.isTTY && process.stdout.isTTY) {
@@ -43,15 +44,20 @@ export function isActionAvailable(entry: InteractiveListEntry, action: ListActio
 
 function renderActionLabel(action: ListAction, selected: boolean, disabled: boolean): string {
   const label = ACTION_LABELS[action];
+  const paddedLabel = label.padEnd(ACTION_LABEL_WIDTH, ' ');
   const marker = disabled ? 'x' : selected ? '>' : ' ';
-  const content = `${marker} ${label}`;
+  const content = `${marker} ${paddedLabel}`;
   if (disabled) {
     return chalk.dim(`[${content}]`);
   }
   if (selected) {
-    return chalk.black.bgGreen(` [${content}] `);
+    return chalk.black.bgGreen(`[${content}]`);
   }
   return chalk.green(`[${content}]`);
+}
+
+function renderKeyHint(label: string): string {
+  return chalk.black.bgWhite(` ${label} `);
 }
 
 function moveAction(current: ListAction, direction: 'left' | 'right'): ListAction {
@@ -85,8 +91,10 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   const end = Math.min(start + maxListRows, entries.length);
 
   const lines: string[] = [];
-  lines.push(chalk.bold('arv list interactive'));
-  lines.push(chalk.dim('Up/Down choose entry  Left/Right choose action  Enter confirm  q/Esc cancel'));
+  lines.push(chalk.bold.green('arv list interactive'));
+  lines.push(
+    `${renderKeyHint('Up/Down')} choose entry  ${renderKeyHint('Left/Right')} choose action  ${renderKeyHint('Enter')} confirm  ${renderKeyHint('q/Esc')} cancel`,
+  );
   lines.push(
     `Action: ${renderActionLabel('enter', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
   );

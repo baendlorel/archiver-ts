@@ -4,24 +4,37 @@ import wrapAnsi from 'wrap-ansi';
 
 const MIN_COLUMN_WIDTH = 6;
 
+function styleBadge(label: string, color: 'green' | 'cyan' | 'yellow' | 'red'): string {
+  if (color === 'green') {
+    return chalk.black.bgGreen(` ${label} `);
+  }
+  if (color === 'cyan') {
+    return chalk.black.bgCyan(` ${label} `);
+  }
+  if (color === 'yellow') {
+    return chalk.black.bgYellow(` ${label} `);
+  }
+  return chalk.white.bgRed(` ${label} `);
+}
+
 export function success(message: string): void {
-  console.log(chalk.green(`[OK] ${message}`));
+  console.log(`${styleBadge('OK', 'green')} ${chalk.green(message)}`);
 }
 
 export function info(message: string): void {
-  console.log(chalk.cyan(`[INFO] ${message}`));
+  console.log(`${styleBadge('INFO', 'cyan')} ${chalk.cyan(message)}`);
 }
 
 export function warn(message: string): void {
-  console.log(chalk.yellow(`[WARN] ${message}`));
+  console.log(`${styleBadge('WARN', 'yellow')} ${chalk.yellow(message)}`);
 }
 
 export function error(message: string): void {
-  console.error(chalk.red(`[ERROR] ${message}`));
+  console.error(`${styleBadge('ERROR', 'red')} ${chalk.red(message)}`);
 }
 
 export function fatal(message: string): never {
-  console.error(chalk.bgRed.white(` FATAL `), chalk.red(message));
+  console.error(`${styleBadge('FATAL', 'red')} ${chalk.red(message)}`);
   process.exit(1);
 }
 
