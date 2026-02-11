@@ -23,6 +23,13 @@ export class ConfigService {
     return config;
   }
 
+  async setStyle(value: 'on' | 'off'): Promise<ArchiverConfig> {
+    const config = await this.context.loadConfig();
+    config.style = value;
+    await this.context.saveConfig(config);
+    return config;
+  }
+
   async setCurrentVault(vaultId: number): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
     config.currentVaultId = vaultId;

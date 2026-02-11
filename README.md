@@ -45,6 +45,7 @@ arv config list [-c|--comment]
 arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
+arv config style <on|off>
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
@@ -69,10 +70,11 @@ Example:
 
 On interactive terminal startup, `arv` may auto-install a shell wrapper function so `cd` can move your shell to archive slot paths.
 
-Disable this behavior if needed:
+Use project-prefixed env overrides when needed:
 
 ```bash
-ARV_DISABLE_SHELL_INIT=1 arv <command>
+ARCHIVER_DISABLE_SHELL_INIT=1 arv <command>
+ARCHIVER_STYLE=off arv list
 ```
 
 ## Useful aliases

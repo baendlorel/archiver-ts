@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import type { CommandContext } from '../services/context.js';
+import { applyStyleFromConfig } from '../utils/style.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
 import { renderTable, success } from '../utils/terminal.js';
 
@@ -21,6 +22,7 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
             ['last_update_check', current.lastUpdateCheck || '', 'Last auto-check timestamp (ISO)'],
             ['alias_map', JSON.stringify(current.aliasMap), 'Path alias map for display only'],
             ['vault_item_sep', current.vaultItemSeparator, 'Separator shown between vault and item'],
+            ['style', current.style, 'Styled output: on or off'],
           ];
           console.log(renderTable(['Key', 'Value', 'Comment'], rows));
         } else {
@@ -91,6 +93,29 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
         );
 
         await maybeAutoUpdateCheck(ctx);
+      }),
+    );
+
+  config
+    .command('style')
+    .description('Enable or disable styled output')
+    .argument('<state>', 'on|off')
+    .action((state: string) =>
+      runAction(async () => {
+        const normalized = state.toLowerCase();
+        if (normalized !== 'on' && normalized !== 'off') {
+          throw new Error('State must be on or off.');
+        }
+
+        const updated = await ctx.configService.setStyle(normalized);
+        applyStyleFromConfig(updated);
+        success(`Style output is now ${normalized}.`);
+
+        await ctx.auditLogger.log(
+          'INFO',
+          { main: 'config', sub: 'style', args: [normalized], source: 'u' },
+          `Set style=${normalized}`,
+        );
       }),
     );
 

@@ -12,7 +12,7 @@ function ensureSingleLine(value: string, label: string): void {
 }
 
 function readPreviousCdPath(): string {
-  const previous = process.env.ARV_PREV_CWD;
+  const previous = process.env.ARCHIVER_PREV_CWD;
   if (!previous) {
     throw new Error('No previous directory recorded for arv cd -.');
   }

@@ -26,6 +26,7 @@ export interface ArchiverConfig {
   lastUpdateCheck: string;
   aliasMap: Record<string, string>;
   vaultItemSeparator: string;
+  style: 'on' | 'off';
 }
 
 export interface AutoIncrVars {

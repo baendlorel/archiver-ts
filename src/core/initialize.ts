@@ -43,21 +43,21 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
       printf '%s\\n' "$line"
     fi
   done < <(
-    NO_COLOR= FORCE_COLOR="\${FORCE_COLOR:-1}" ARV_FORCE_INTERACTIVE=1 command arv "$@"
+    ARCHIVER_FORCE_INTERACTIVE=1 command arv "$@"
     printf '__ARCHIVER_STATUS__:%s\\n' "$?"
   )
 
   status="\${status:-1}"
   if [[ -n "$target" ]]; then
-    export ARV_PREV_CWD="$PWD"
+    export ARCHIVER_PREV_CWD="$PWD"
     cd -- "$target" || return $?
   elif [[ "$go_back" == "1" ]]; then
-    if [[ -z "\${ARV_PREV_CWD:-}" ]]; then
+    if [[ -z "\${ARCHIVER_PREV_CWD:-}" ]]; then
       printf '%s\\n' 'No previous arv cd directory.'
       return 1
     fi
-    local previous="$ARV_PREV_CWD"
-    export ARV_PREV_CWD="$PWD"
+    local previous="$ARCHIVER_PREV_CWD"
+    export ARCHIVER_PREV_CWD="$PWD"
     cd -- "$previous" || return $?
   fi
   return $status
@@ -71,7 +71,7 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
   body: `function arv
     set -l target_tmp (mktemp)
     set -l back_tmp (mktemp)
-    env NO_COLOR= FORCE_COLOR=1 ARV_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
+    env ARCHIVER_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
         if string match -q "__ARCHIVER_CD__:*" -- $line
             echo (string replace "__ARCHIVER_CD__:" "" -- $line) > $target_tmp
         else if test "$line" = "__ARCHIVER_CD_BACK__"
@@ -84,19 +84,19 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
 
     if test -s $target_tmp
         set -l target (cat $target_tmp)
-        set -gx ARV_PREV_CWD $PWD
+        set -gx ARCHIVER_PREV_CWD $PWD
         cd -- $target; or begin
             rm -f $target_tmp $back_tmp
             return $status
         end
     else if test -s $back_tmp
-        if not set -q ARV_PREV_CWD
+        if not set -q ARCHIVER_PREV_CWD
             echo "No previous arv cd directory."
             rm -f $target_tmp $back_tmp
             return 1
         end
-        set -l previous $ARV_PREV_CWD
-        set -gx ARV_PREV_CWD $PWD
+        set -l previous $ARCHIVER_PREV_CWD
+        set -gx ARCHIVER_PREV_CWD $PWD
         cd -- $previous; or begin
             rm -f $target_tmp $back_tmp
             return $status
@@ -121,12 +121,8 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     $target = $null
     $goBack = $false
     $status = 1
-    $oldForce = $env:ARV_FORCE_INTERACTIVE
-    $oldForceColor = $env:FORCE_COLOR
-    $oldNoColor = $env:NO_COLOR
-    $env:ARV_FORCE_INTERACTIVE = "1"
-    $env:FORCE_COLOR = "1"
-    Remove-Item Env:NO_COLOR -ErrorAction SilentlyContinue
+    $oldForce = $env:ARCHIVER_FORCE_INTERACTIVE
+    $env:ARCHIVER_FORCE_INTERACTIVE = "1"
 
     try {
         $app = Get-Command arv -CommandType Application -ErrorAction Stop | Select-Object -First 1
@@ -142,33 +138,23 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
         $status = $LASTEXITCODE
     } finally {
         if ($null -eq $oldForce) {
-            Remove-Item Env:ARV_FORCE_INTERACTIVE -ErrorAction SilentlyContinue
+            Remove-Item Env:ARCHIVER_FORCE_INTERACTIVE -ErrorAction SilentlyContinue
         } else {
-            $env:ARV_FORCE_INTERACTIVE = $oldForce
-        }
-        if ($null -eq $oldForceColor) {
-            Remove-Item Env:FORCE_COLOR -ErrorAction SilentlyContinue
-        } else {
-            $env:FORCE_COLOR = $oldForceColor
-        }
-        if ($null -eq $oldNoColor) {
-            Remove-Item Env:NO_COLOR -ErrorAction SilentlyContinue
-        } else {
-            $env:NO_COLOR = $oldNoColor
+            $env:ARCHIVER_FORCE_INTERACTIVE = $oldForce
         }
     }
 
     if ($target) {
-        $env:ARV_PREV_CWD = (Get-Location).Path
+        $env:ARCHIVER_PREV_CWD = (Get-Location).Path
         Set-Location -Path $target
     } elseif ($goBack) {
-        if (-not $env:ARV_PREV_CWD) {
+        if (-not $env:ARCHIVER_PREV_CWD) {
             Write-Output "No previous arv cd directory."
             $global:LASTEXITCODE = 1
             return
         }
-        $previous = $env:ARV_PREV_CWD
-        $env:ARV_PREV_CWD = (Get-Location).Path
+        $previous = $env:ARCHIVER_PREV_CWD
+        $env:ARCHIVER_PREV_CWD = (Get-Location).Path
         Set-Location -Path $previous
     }
 
@@ -326,7 +312,7 @@ function buildResult(shell: SupportedShell, profilePath: string, homeDir: string
 
 export async function ensureArvShellWrapper(options: InitializeOptions = {}): Promise<InitializeResult> {
   const env = options.env ?? process.env;
-  if (env.ARV_DISABLE_SHELL_INIT === '1') {
+  if (env.ARCHIVER_DISABLE_SHELL_INIT === '1') {
     return { installed: false };
   }
 

@@ -138,7 +138,7 @@ describe('cli e2e', () => {
       cwd: projectDir,
       env: {
         ...env,
-        ARV_PREV_CWD: previousDir,
+        ARCHIVER_PREV_CWD: previousDir,
       },
     });
     expect(printOutput.trim()).toBe(previousDir);

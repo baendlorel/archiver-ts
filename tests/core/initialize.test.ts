@@ -39,9 +39,8 @@ describe('shell wrapper initialize', () => {
     expect(content).toContain('arv() {');
     expect(content).toContain('command arv "$@"');
     expect(content).toContain('__ARCHIVER_CD_BACK__');
-    expect(content).toContain('ARV_PREV_CWD');
-    expect(content).toContain('FORCE_COLOR');
-    expect(content).toContain('NO_COLOR=');
+    expect(content).toContain('ARCHIVER_PREV_CWD');
+    expect(content).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
 
   it('does not duplicate managed wrapper block and skips second install', async () => {
@@ -136,9 +135,8 @@ arv() {
     expect(fishFunction).toContain('function arv');
     expect(fishFunction).toContain('__ARCHIVER_CD__:');
     expect(fishFunction).toContain('__ARCHIVER_CD_BACK__');
-    expect(fishFunction).toContain('ARV_PREV_CWD');
-    expect(fishFunction).toContain('FORCE_COLOR=1');
-    expect(fishFunction).toContain('NO_COLOR=');
+    expect(fishFunction).toContain('ARCHIVER_PREV_CWD');
+    expect(fishFunction).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
 
   it('creates powershell profile wrapper when missing', async () => {
@@ -164,8 +162,7 @@ arv() {
     expect(profileContent).toContain('function arv');
     expect(profileContent).toContain('__ARCHIVER_CD__:');
     expect(profileContent).toContain('__ARCHIVER_CD_BACK__');
-    expect(profileContent).toContain('ARV_PREV_CWD');
-    expect(profileContent).toContain('$env:FORCE_COLOR = "1"');
-    expect(profileContent).toContain('Remove-Item Env:NO_COLOR');
+    expect(profileContent).toContain('ARCHIVER_PREV_CWD');
+    expect(profileContent).toContain('$env:ARCHIVER_FORCE_INTERACTIVE = "1"');
   });
 });

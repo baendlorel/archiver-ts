@@ -18,6 +18,7 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
       typeof config.vaultItemSeparator === 'string' && config.vaultItemSeparator.length > 0
         ? config.vaultItemSeparator
         : Defaults.Config.vaultItemSeparator,
+    style: config.style === 'off' ? 'off' : 'on',
   };
 }
 

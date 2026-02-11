@@ -12,6 +12,7 @@ export namespace Defaults {
     lastUpdateCheck: '',
     aliasMap: {},
     vaultItemSeparator: '::',
+    style: 'on',
   };
 
   export const AutoIncr: AutoIncrVars = {
