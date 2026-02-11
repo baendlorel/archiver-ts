@@ -80,4 +80,5 @@ export interface CheckReport {
 
 declare global {
   const __VERSION__: string;
+  const __IS_PROD__: boolean;
 }

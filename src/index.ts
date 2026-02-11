@@ -1,11 +1,14 @@
+import './macros.js';
+
+import type { CommandContext } from './services/context.js';
+import type { ArchiverConfig } from './global.js';
+
 import { Defaults, Paths } from './consts/index.js';
 import { createProgram } from './commands/index.js';
 import { ensureArvShellWrapper } from './core/initialize.js';
-import type { CommandContext } from './services/context.js';
 import { createCommandContext } from './services/context.js';
 import { ask } from './utils/prompt.js';
 import { readJsonc } from './utils/jsonc.js';
-import type { ArchiverConfig } from './global.js';
 import { setLanguage, t } from './i18n/index.js';
 import { applyStyleFromConfig } from './utils/style.js';
 import { error, info, success } from './utils/terminal.js';

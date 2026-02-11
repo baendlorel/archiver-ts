@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const getRoot = () => {
   const prodHome = process.env.ARCHIVER_PATH ?? join(homedir(), '.archiver');
-  return process.env.NODE_ENV === 'production' ? prodHome : join(process.cwd(), '.archiver');
+  return __IS_PROD__ ? prodHome : join(process.cwd(), '.archiver');
 };
 
 const root = getRoot();
