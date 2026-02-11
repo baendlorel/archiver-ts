@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setLanguage } from '../../src/i18n/index.js';
 import { parseIdList, parseLogRange, parseVaultReference } from '../../src/utils/parse.js';
+
+beforeEach(() => {
+  setLanguage('en');
+});
 
 describe('parseIdList', () => {
   it('parses numeric ids and preserves order', () => {

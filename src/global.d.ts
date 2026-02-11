@@ -27,6 +27,7 @@ export interface ArchiverConfig {
   aliasMap: Record<string, string>;
   vaultItemSeparator: string;
   style: 'on' | 'off';
+  language: 'zh' | 'en';
   noCommandAction: 'help' | 'list' | 'unknown';
 }
 

@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { parseLogRange } from '../utils/parse.js';
 import { info, renderTable, styleArchiveStatus, styleLogLevel, styleVaultStatus } from '../utils/terminal.js';
@@ -8,42 +9,58 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
   program
     .command('log')
     .alias('lg')
-    .description('Show operation logs')
-    .argument('[range]', 'YYYYMM | YYYYMM-YYYYMM | all|*|a')
-    .option('--id <id>', 'Show one log record by id')
+    .description(t('command.log.description'))
+    .argument('[range]', t('command.log.argument.range'))
+    .option('--id <id>', t('command.log.option.id'))
     .action((range: string | undefined, options: { id?: string }) =>
       runAction(async () => {
         if (options.id !== undefined) {
           if (!/^\d+$/.test(options.id)) {
-            throw new Error(`Invalid log id: ${options.id}`);
+            throw new Error(t('command.log.error.invalid_id', { id: options.id }));
           }
           const logId = Number(options.id);
           const detail = await ctx.logService.getLogById(logId);
           if (!detail) {
-            throw new Error(`Log id ${logId} not found.`);
+            throw new Error(t('command.log.error.not_found', { id: logId }));
           }
 
-          info(`Log #${detail.log.id}`);
+          info(
+            t('command.log.detail.title', {
+              id: detail.log.id,
+            }),
+          );
           console.log(
             renderTable(
-              ['Field', 'Value'],
+              [t('command.log.detail.table.field'), t('command.log.detail.table.value')],
               [
-                ['id', String(detail.log.id)],
-                ['time', detail.log.operedAt],
-                ['level', styleLogLevel(detail.log.level)],
-                ['operation', `${detail.log.oper.main}${detail.log.oper.sub ? `/${detail.log.oper.sub}` : ''}`],
-                ['message', detail.log.message],
-                ['archive_id', detail.log.archiveIds !== undefined ? String(detail.log.archiveIds) : ''],
-                ['vault_id', detail.log.vaultIds !== undefined ? String(detail.log.vaultIds) : ''],
+                [t('command.log.detail.field.id'), String(detail.log.id)],
+                [t('command.log.detail.field.time'), detail.log.operedAt],
+                [t('command.log.detail.field.level'), styleLogLevel(detail.log.level)],
+                [
+                  t('command.log.detail.field.operation'),
+                  `${detail.log.oper.main}${detail.log.oper.sub ? `/${detail.log.oper.sub}` : ''}`,
+                ],
+                [t('command.log.detail.field.message'), detail.log.message],
+                [
+                  t('command.log.detail.field.archive_id'),
+                  detail.log.archiveIds !== undefined ? String(detail.log.archiveIds) : '',
+                ],
+                [t('command.log.detail.field.vault_id'), detail.log.vaultIds !== undefined ? String(detail.log.vaultIds) : ''],
               ],
             ),
           );
 
           if (detail.archive) {
-            info('Linked archive entry');
+            info(t('command.log.detail.linked_archive'));
             console.log(
               renderTable(
-                ['id', 'status', 'vault', 'item', 'dir'],
+                [
+                  t('command.log.detail.archive.table.id'),
+                  t('command.log.detail.archive.table.status'),
+                  t('command.log.detail.archive.table.vault'),
+                  t('command.log.detail.archive.table.item'),
+                  t('command.log.detail.archive.table.dir'),
+                ],
                 [
                   [
                     String(detail.archive.id),
@@ -58,10 +75,15 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
           }
 
           if (detail.vault) {
-            info('Linked vault');
+            info(t('command.log.detail.linked_vault'));
             console.log(
               renderTable(
-                ['id', 'name', 'status', 'remark'],
+                [
+                  t('command.log.detail.vault.table.id'),
+                  t('command.log.detail.vault.table.name'),
+                  t('command.log.detail.vault.table.status'),
+                  t('command.log.detail.vault.table.remark'),
+                ],
                 [
                   [
                     String(detail.vault.id),
@@ -81,7 +103,7 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
         const logs = await ctx.logService.getLogs(parsedRange);
 
         if (logs.length === 0) {
-          info('No logs found.');
+          info(t('command.log.empty'));
           return;
         }
 
@@ -95,7 +117,20 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
           entry.vaultIds !== undefined ? String(entry.vaultIds) : '',
         ]);
 
-        console.log(renderTable(['ID', 'Time', 'Level', 'Op', 'Message', 'AID', 'VID'], rows));
+        console.log(
+          renderTable(
+            [
+              t('command.log.table.id'),
+              t('command.log.table.time'),
+              t('command.log.table.level'),
+              t('command.log.table.op'),
+              t('command.log.table.message'),
+              t('command.log.table.aid'),
+              t('command.log.table.vid'),
+            ],
+            rows,
+          ),
+        );
       }),
     );
 }

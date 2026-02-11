@@ -1,5 +1,6 @@
 import type { Command } from 'commander';
 import { ArchiveStatus, Defaults } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { error, info, styleArchiveStatus, success } from '../utils/terminal.js';
 import { emitCdTarget } from './cd-shell.js';
@@ -67,10 +68,20 @@ async function runSelectionAction(ctx: CommandContext, selection: InteractiveLis
     const result = await ctx.archiveService.restore([archiveId]);
 
     for (const item of result.ok) {
-      success(`[${item.id}] restored: ${item.message}`);
+      success(
+        t('command.archive.result.restore.ok', {
+          id: item.id,
+          message: item.message,
+        }),
+      );
     }
     for (const item of result.failed) {
-      error(`[${item.id ?? '-'}] restore failed: ${item.message}`);
+      error(
+        t('command.archive.result.restore.failed', {
+          id: item.id ?? '-',
+          message: item.message,
+        }),
+      );
     }
 
     summarizeBatch('restore', result);
@@ -87,7 +98,10 @@ async function runSelectionAction(ctx: CommandContext, selection: InteractiveLis
       args: [String(archiveId)],
       source: 'u',
     },
-    `Open archive slot ${resolved.vault.id}/${resolved.archiveId} from list`,
+    t('command.list.audit.open_slot', {
+      vaultId: resolved.vault.id,
+      archiveId: resolved.archiveId,
+    }),
     { aid: resolved.archiveId, vid: resolved.vault.id },
   );
 
@@ -99,12 +113,12 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
     .command('list')
     .alias('l')
     .alias('ls')
-    .description('List archived entries')
-    .option('-r, --restored', 'Show only restored entries')
-    .option('-a, --all', 'Show all entries')
-    .option('-v, --vault <vault>', 'Filter by vault name or id')
-    .option('--no-interactive', 'Disable keyboard picker in TTY and print standard list output')
-    .option('-p, --plain', 'Print grep-friendly output: id<TAB>status<TAB>name (always non-interactive)')
+    .description(t('command.list.description'))
+    .option('-r, --restored', t('command.list.option.restored'))
+    .option('-a, --all', t('command.list.option.all'))
+    .option('-v, --vault <vault>', t('command.list.option.vault'))
+    .option('--no-interactive', t('command.list.option.no_interactive'))
+    .option('-p, --plain', t('command.list.option.plain'))
     .action((options: ListCommandOptions) =>
       runAction(async () => {
         const entries = await ctx.archiveService.listEntries(options);
@@ -115,7 +129,7 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
           if (options.plain) {
             return;
           }
-          info('No entries matched.');
+          info(t('command.list.empty'));
           return;
         }
 
@@ -130,14 +144,14 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
         if (!shouldUseInteractive || !hasArchivedEntry) {
           console.log(renderList(decorated, config.vaultItemSeparator));
           if (shouldUseInteractive && !hasArchivedEntry) {
-            info('All visible entries are restored; interactive actions are unavailable.');
+            info(t('command.list.restored_only_notice'));
           }
           return;
         }
 
         const selection = await pickInteractiveListAction(toInteractiveEntries(decorated, config.vaultItemSeparator));
         if (!selection) {
-          info('Cancelled.');
+          info(t('command.list.cancelled'));
           return;
         }
 

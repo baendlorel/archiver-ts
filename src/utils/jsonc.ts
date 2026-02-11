@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import { applyEdits, modify, parse, printParseErrorCode, type ParseError } from 'jsonc-parser';
+import { t } from '../i18n/index.js';
 
 function ensureTrailingNewline(content: string): string {
   return content.endsWith('\n') ? content : `${content}\n`;
@@ -22,7 +23,12 @@ export function parseJsoncText<T>(content: string, filePath: string): T {
 
   if (errors.length > 0) {
     const lines = errors.map((item) => `${printParseErrorCode(item.error)}@${item.offset}`).join(', ');
-    throw new Error(`Cannot parse JSONC file ${filePath}: ${lines}`);
+    throw new Error(
+      t('util.jsonc.error.parse_file', {
+        filePath,
+        details: lines,
+      }),
+    );
   }
 
   return parsed as T;

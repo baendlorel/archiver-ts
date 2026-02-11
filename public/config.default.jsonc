@@ -17,6 +17,10 @@
   // When turned on, the console will output colorful and styled text for better aesthetics
   "style": "on", // "on" | "off"
 
+  // 语言设置，默认中文
+  // UI language, default is Chinese
+  "language": "zh", // "zh" | "en"
+
   // 在arv list 命令下，vault 中条目的分隔符，默认为 "::"
   // The separator for items in the vault, default is "::"
   "vaultItemSeparator": "::",

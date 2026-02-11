@@ -7,6 +7,7 @@ import type { ConfigService } from './config.js';
 import type { AuditLogger } from './audit-logger.js';
 
 import { ArchiveStatus, Paths } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
 
@@ -59,7 +60,7 @@ export class ArchiveService {
 
   async put(items: string[], options: PutOptions): Promise<BatchResult> {
     if (items.length === 0) {
-      throw new Error('At least one item is required.');
+      throw new Error(t('service.archive.error.at_least_one_item'));
     }
 
     const vault = await this.resolveTargetVault(options.vault);
@@ -87,7 +88,11 @@ export class ArchiveService {
 
       try {
         if (await pathAccessible(archiveSlotPath)) {
-          throw new Error(`Archive slot already exists: ${archiveSlotPath}`);
+          throw new Error(
+            t('service.archive.error.slot_exists', {
+              path: archiveSlotPath,
+            }),
+          );
         }
 
         await fs.mkdir(archiveSlotPath, { recursive: false });
@@ -112,7 +117,9 @@ export class ArchiveService {
             },
             source: options.source ?? 'u',
           },
-          `Archived ${item.input}`,
+          t('service.archive.log.archived', {
+            input: item.input,
+          }),
           { aid: archiveId, vid: vault.id },
         );
 
@@ -120,7 +127,10 @@ export class ArchiveService {
           id: archiveId,
           input: item.input,
           success: true,
-          message: `Archived to vault ${vault.name}(${vault.id})`,
+          message: t('service.archive.result.archived_to_vault', {
+            name: vault.name,
+            id: vault.id,
+          }),
         });
       } catch (error) {
         const message = (error as Error).message;
@@ -134,7 +144,10 @@ export class ArchiveService {
             },
             source: options.source ?? 'u',
           },
-          `Failed to archive ${item.input}: ${message}`,
+          t('service.archive.log.archive_failed', {
+            input: item.input,
+            message,
+          }),
         );
 
         result.failed.push({
@@ -151,7 +164,7 @@ export class ArchiveService {
 
   async restore(ids: number[]): Promise<BatchResult> {
     if (ids.length === 0) {
-      throw new Error('At least one id is required.');
+      throw new Error(t('service.archive.error.at_least_one_id'));
     }
 
     const entries = await this.context.loadListEntries();
@@ -160,10 +173,18 @@ export class ArchiveService {
     for (const id of ids) {
       const entry = entryMap.get(id);
       if (!entry) {
-        throw new Error(`Archive id ${id} does not exist.`);
+        throw new Error(
+          t('service.archive.error.id_not_exists', {
+            id,
+          }),
+        );
       }
       if (entry.status !== ArchiveStatus.Archived) {
-        throw new Error(`Archive id ${id} is already restored.`);
+        throw new Error(
+          t('service.archive.error.id_already_restored', {
+            id,
+          }),
+        );
       }
     }
 
@@ -176,7 +197,7 @@ export class ArchiveService {
         result.failed.push({
           input: String(id),
           success: false,
-          message: 'Archive id not found.',
+          message: t('service.archive.error.id_not_found_short'),
         });
         continue;
       }
@@ -186,11 +207,19 @@ export class ArchiveService {
 
       try {
         if (!location) {
-          throw new Error(`Archive object is missing: ${this.context.archivePath(entry.vaultId, entry.id)}`);
+          throw new Error(
+            t('service.archive.error.object_missing', {
+              path: this.context.archivePath(entry.vaultId, entry.id),
+            }),
+          );
         }
 
         if (await pathAccessible(targetPath)) {
-          throw new Error(`Restore target already exists: ${targetPath}`);
+          throw new Error(
+            t('service.archive.error.restore_target_exists', {
+              path: targetPath,
+            }),
+          );
         }
 
         await fs.mkdir(entry.directory, { recursive: true });
@@ -214,7 +243,7 @@ export class ArchiveService {
             args: [String(id)],
             source: 'u',
           },
-          `Restored archive id ${id}`,
+          t('service.archive.log.restored', { id }),
           { aid: id, vid: entry.vaultId },
         );
 
@@ -222,7 +251,7 @@ export class ArchiveService {
           id,
           input: String(id),
           success: true,
-          message: `Restored to ${targetPath}`,
+          message: t('service.archive.result.restored_to', { path: targetPath }),
         });
       } catch (error) {
         const message = (error as Error).message;
@@ -233,7 +262,7 @@ export class ArchiveService {
             args: [String(id)],
             source: 'u',
           },
-          `Failed to restore archive id ${id}: ${message}`,
+          t('service.archive.log.restore_failed', { id, message }),
           { aid: id, vid: entry.vaultId },
         );
 
@@ -255,7 +284,7 @@ export class ArchiveService {
 
   async move(ids: number[], toVaultRef: string): Promise<BatchResult> {
     if (ids.length === 0) {
-      throw new Error('At least one id is required.');
+      throw new Error(t('service.archive.error.at_least_one_id'));
     }
 
     const targetVault = await this.context.resolveVault(toVaultRef, {
@@ -264,7 +293,11 @@ export class ArchiveService {
     });
 
     if (!targetVault) {
-      throw new Error(`Target vault not found: ${toVaultRef}`);
+      throw new Error(
+        t('service.archive.error.target_vault_not_found', {
+          vault: toVaultRef,
+        }),
+      );
     }
 
     await this.context.ensureVaultDir(targetVault.id);
@@ -276,23 +309,44 @@ export class ArchiveService {
     for (const id of ids) {
       const entry = entryMap.get(id);
       if (!entry) {
-        throw new Error(`Archive id ${id} does not exist.`);
+        throw new Error(
+          t('service.archive.error.id_not_exists', {
+            id,
+          }),
+        );
       }
       if (entry.status !== ArchiveStatus.Archived) {
-        throw new Error(`Archive id ${id} has been restored and cannot be moved.`);
+        throw new Error(
+          t('service.archive.error.id_restored_cannot_move', {
+            id,
+          }),
+        );
       }
       if (entry.vaultId === targetVault.id) {
-        throw new Error(`Archive id ${id} is already in vault ${targetVault.name}.`);
+        throw new Error(
+          t('service.archive.error.id_already_in_vault', {
+            id,
+            vault: targetVault.name,
+          }),
+        );
       }
 
       const location = await this.context.resolveArchiveStorageLocation(entry);
       const source = this.context.archivePath(entry.vaultId, entry.id);
       const target = this.context.archivePath(targetVault.id, entry.id);
       if (!location) {
-        throw new Error(`Archive object is missing: ${source}`);
+        throw new Error(
+          t('service.archive.error.object_missing', {
+            path: source,
+          }),
+        );
       }
       if (await pathAccessible(target)) {
-        throw new Error(`Target archive slot exists: ${target}`);
+        throw new Error(
+          t('service.archive.error.target_slot_exists', {
+            path: target,
+          }),
+        );
       }
 
       locationMap.set(id, location);
@@ -313,7 +367,7 @@ export class ArchiveService {
           id,
           input: String(id),
           success: false,
-          message: 'Archive object is missing.',
+          message: t('service.archive.error.object_missing_short'),
         });
         continue;
       }
@@ -335,7 +389,11 @@ export class ArchiveService {
             opts: { to: targetVault.id },
             source: 'u',
           },
-          `Moved archive id ${id} from vault ${fromVaultId} to ${targetVault.id}`,
+          t('service.archive.log.moved', {
+            id,
+            fromVaultId,
+            toVaultId: targetVault.id,
+          }),
           { aid: id, vid: targetVault.id },
         );
 
@@ -343,7 +401,10 @@ export class ArchiveService {
           id,
           input: String(id),
           success: true,
-          message: `Moved to vault ${targetVault.name}(${targetVault.id})`,
+          message: t('service.archive.result.moved_to_vault', {
+            name: targetVault.name,
+            id: targetVault.id,
+          }),
         });
       } catch (error) {
         const message = (error as Error).message;
@@ -355,7 +416,10 @@ export class ArchiveService {
             opts: { to: targetVault.id },
             source: 'u',
           },
-          `Failed to move archive id ${id}: ${message}`,
+          t('service.archive.log.move_failed', {
+            id,
+            message,
+          }),
           { aid: id, vid: fromVaultId },
         );
 
@@ -378,7 +442,7 @@ export class ArchiveService {
   async resolveCdTarget(target: string): Promise<ArchiveCdTarget> {
     const trimmed = target.trim();
     if (!trimmed) {
-      throw new Error('Target cannot be empty.');
+      throw new Error(t('service.archive.error.target_empty'));
     }
 
     const { vaultRef, archiveId } = this.parseCdTarget(trimmed);
@@ -386,11 +450,19 @@ export class ArchiveService {
     const entry = entries.find((item) => item.id === archiveId);
 
     if (!entry) {
-      throw new Error(`Archive id ${archiveId} does not exist.`);
+      throw new Error(
+        t('service.archive.error.id_not_exists', {
+          id: archiveId,
+        }),
+      );
     }
 
     if (entry.status !== ArchiveStatus.Archived) {
-      throw new Error(`Archive id ${archiveId} is restored and has no active slot.`);
+      throw new Error(
+        t('service.archive.error.id_restored_no_slot', {
+          id: archiveId,
+        }),
+      );
     }
 
     if (vaultRef !== undefined) {
@@ -400,11 +472,21 @@ export class ArchiveService {
       });
 
       if (!requestedVault) {
-        throw new Error(`Vault not found: ${vaultRef}`);
+        throw new Error(
+          t('service.archive.error.vault_not_found', {
+            vault: vaultRef,
+          }),
+        );
       }
 
       if (requestedVault.id !== entry.vaultId) {
-        throw new Error(`Archive id ${archiveId} is in vault ${entry.vaultId}, not ${requestedVault.id}.`);
+        throw new Error(
+          t('service.archive.error.id_vault_mismatch', {
+            id: archiveId,
+            actualVaultId: entry.vaultId,
+            requestedVaultId: requestedVault.id,
+          }),
+        );
       }
     }
 
@@ -414,12 +496,21 @@ export class ArchiveService {
     });
 
     if (!vault) {
-      throw new Error(`Vault ${entry.vaultId} for archive id ${archiveId} does not exist.`);
+      throw new Error(
+        t('service.archive.error.vault_for_archive_not_found', {
+          id: archiveId,
+          vaultId: entry.vaultId,
+        }),
+      );
     }
 
     const location = await this.context.resolveArchiveStorageLocation(entry);
     if (!location) {
-      throw new Error(`Archive slot is missing or invalid: ${this.context.archivePath(entry.vaultId, entry.id)}`);
+      throw new Error(
+        t('service.archive.error.slot_missing_invalid', {
+          path: this.context.archivePath(entry.vaultId, entry.id),
+        }),
+      );
     }
 
     return {
@@ -448,7 +539,11 @@ export class ArchiveService {
       });
 
       if (!vault) {
-        throw new Error(`Vault not found: ${options.vault}`);
+        throw new Error(
+          t('service.archive.error.vault_not_found', {
+            vault: options.vault,
+          }),
+        );
       }
 
       filtered = filtered.filter((entry) => entry.vaultId === vault.id);
@@ -476,7 +571,11 @@ export class ArchiveService {
 
       return {
         ...entry,
-        vaultName: vault ? `${vault.name}(${vault.id})` : `unknown(${entry.vaultId})`,
+        vaultName: vault
+          ? `${vault.name}(${vault.id})`
+          : t('service.archive.decorated.unknown_vault', {
+              vaultId: entry.vaultId,
+            }),
         displayPath,
       };
     });
@@ -489,12 +588,18 @@ export class ArchiveService {
     });
 
     if (!vault) {
-      const fallbackMessage = reference ? `Vault not found: ${reference}` : 'Current vault is invalid.';
+      const fallbackMessage = reference
+        ? t('service.archive.error.vault_not_found', { vault: reference })
+        : t('service.archive.error.current_vault_invalid');
       throw new Error(fallbackMessage);
     }
 
     if (vault.status === 'Removed') {
-      throw new Error(`Vault ${vault.name} is removed.`);
+      throw new Error(
+        t('service.archive.error.vault_removed', {
+          vault: vault.name,
+        }),
+      );
     }
 
     return vault;
@@ -504,7 +609,11 @@ export class ArchiveService {
     const slashIndex = target.lastIndexOf('/');
     if (slashIndex === -1) {
       if (!/^\d+$/.test(target)) {
-        throw new Error(`Invalid target '${target}'. Use '<archive-id>' or '<vault>/<archive-id>'.`);
+        throw new Error(
+          t('service.archive.error.invalid_target_format', {
+            target,
+          }),
+        );
       }
       return {
         archiveId: Number(target),
@@ -515,11 +624,19 @@ export class ArchiveService {
     const archiveIdText = target.slice(slashIndex + 1).trim();
 
     if (!vaultRef) {
-      throw new Error(`Invalid target '${target}'. Vault name or id cannot be empty.`);
+      throw new Error(
+        t('service.archive.error.invalid_target_no_vault', {
+          target,
+        }),
+      );
     }
 
     if (!/^\d+$/.test(archiveIdText)) {
-      throw new Error(`Invalid archive id in target '${target}'.`);
+      throw new Error(
+        t('service.archive.error.invalid_target_archive_id', {
+          target,
+        }),
+      );
     }
 
     return {
@@ -538,19 +655,29 @@ export class ArchiveService {
       const resolvedPath = path.resolve(item);
       const stats = await safeLstat(resolvedPath);
       if (!stats) {
-        throw new Error(`Path does not exist: ${item}`);
+        throw new Error(
+          t('service.archive.error.path_not_exists', {
+            path: item,
+          }),
+        );
       }
 
       const canonicalPath = await safeRealPath(resolvedPath);
 
       if (isParentOrSamePath(canonicalPath, archiverRootCanonical) || isSubPath(archiverRootCanonical, canonicalPath)) {
         throw new Error(
-          `Path ${item} is the archiver directory itself, inside it, or a parent of it. This is not allowed.`,
+          t('service.archive.error.path_forbidden_archiver_scope', {
+            path: item,
+          }),
         );
       }
 
       if (seen.has(canonicalPath)) {
-        throw new Error(`Duplicated input path: ${item}`);
+        throw new Error(
+          t('service.archive.error.duplicate_input_path', {
+            path: item,
+          }),
+        );
       }
       seen.add(canonicalPath);
 
@@ -572,7 +699,11 @@ export class ArchiveService {
       const predictedArchiveId = auto.archiveId + index;
       const predictedPath = this.context.archivePath(vaultId, predictedArchiveId);
       if (await pathAccessible(predictedPath)) {
-        throw new Error(`Archive slot is already occupied: ${predictedPath}`);
+        throw new Error(
+          t('service.archive.error.slot_already_occupied', {
+            path: predictedPath,
+          }),
+        );
       }
     }
   }

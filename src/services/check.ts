@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
 import { Defaults, ArchiveStatus, CheckIssueLevel, VaultStatus, Paths } from '../consts/index.js';
 import type { ArchiverContext } from '../core/context.js';
+import { t } from '../i18n/index.js';
 import { listDirectories, pathAccessible, safeLstat } from '../utils/fs.js';
 import { readJsonLinesFile } from '../utils/json.js';
 
@@ -49,8 +50,16 @@ export class CheckService {
     await this.checkVaultDirectoryConsistency(report, listEntries, vaults);
     await this.checkLogConsistency(report, auto.logId);
 
-    report.info.push(`Checked ${listEntries.length} archive entries.`);
-    report.info.push(`Checked ${vaults.length} vault definitions (including default).`);
+    report.info.push(
+      t('service.check.info.checked_entries', {
+        count: listEntries.length,
+      }),
+    );
+    report.info.push(
+      t('service.check.info.checked_vaults', {
+        count: vaults.length,
+      }),
+    );
 
     return report;
   }
@@ -64,7 +73,14 @@ export class CheckService {
 
     for (const target of requiredPaths) {
       if (!(await pathAccessible(target))) {
-        pushIssue(report.issues, CheckIssueLevel.Error, 'MISSING_PATH', `Missing required path: ${target}`);
+        pushIssue(
+          report.issues,
+          CheckIssueLevel.Error,
+          'MISSING_PATH',
+          t('service.check.issue.missing_path', {
+            path: target,
+          }),
+        );
       }
     }
   }
@@ -76,7 +92,9 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'INVALID_CURRENT_VAULT',
-        `config.current_vault_id=${currentVaultId} is not a valid active vault.`,
+        t('service.check.issue.invalid_current_vault', {
+          currentVaultId,
+        }),
       );
     }
   }
@@ -89,7 +107,9 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'DUPLICATE_ARCHIVE_ID',
-        `Duplicated archive ids found: ${duplicates.join(', ')}`,
+        t('service.check.issue.duplicate_archive_id', {
+          ids: duplicates.join(', '),
+        }),
       );
     }
 
@@ -99,7 +119,10 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'ARCHIVE_AUTO_INCR_TOO_SMALL',
-        `auto-incr.archive_id=${archiveAutoIncr} but max archive id is ${maxId}.`,
+        t('service.check.issue.archive_auto_incr_too_small', {
+          autoIncr: archiveAutoIncr,
+          maxId,
+        }),
       );
     }
   }
@@ -113,7 +136,9 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'DUPLICATE_VAULT_ID',
-        `Duplicated vault ids found: ${duplicates.join(', ')}`,
+        t('service.check.issue.duplicate_vault_id', {
+          ids: duplicates.join(', '),
+        }),
       );
     }
 
@@ -124,7 +149,9 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'DUPLICATE_VAULT_NAME',
-        `Duplicated vault names found: ${[...new Set(duplicatedNames)].join(', ')}`,
+        t('service.check.issue.duplicate_vault_name', {
+          names: [...new Set(duplicatedNames)].join(', '),
+        }),
       );
     }
 
@@ -134,7 +161,10 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'VAULT_AUTO_INCR_TOO_SMALL',
-        `auto-incr.vault_id=${vaultAutoIncr} but max vault id is ${maxVaultId}.`,
+        t('service.check.issue.vault_auto_incr_too_small', {
+          autoIncr: vaultAutoIncr,
+          maxId: maxVaultId,
+        }),
       );
     }
   }
@@ -149,7 +179,10 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Error,
           'UNKNOWN_VAULT_REFERENCE',
-          `Archive id ${entry.id} references unknown vault id ${entry.vaultId}.`,
+          t('service.check.issue.unknown_vault_reference', {
+            archiveId: entry.id,
+            vaultId: entry.vaultId,
+          }),
         );
         continue;
       }
@@ -164,7 +197,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Error,
             'MISSING_ARCHIVE_OBJECT',
-            `Archive id ${entry.id} is marked archived but object is missing: ${archivePath}`,
+            t('service.check.issue.missing_archive_object', {
+              archiveId: entry.id,
+              archivePath,
+            }),
           );
         } else {
           const archiveStats = await safeLstat(location.objectPath);
@@ -176,7 +212,11 @@ export class CheckService {
                 report.issues,
                 CheckIssueLevel.Error,
                 'TYPE_MISMATCH_ARCHIVED',
-                `Archive id ${entry.id} type mismatch (expected dir=${expectedIsDir}, actual dir=${actualIsDir}).`,
+                t('service.check.issue.type_mismatch_archived', {
+                  archiveId: entry.id,
+                  expectedIsDir,
+                  actualIsDir,
+                }),
               );
             }
           }
@@ -187,7 +227,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Warn,
             'RESTORE_TARGET_ALREADY_EXISTS',
-            `Archive id ${entry.id} has an existing restore path: ${restorePath}`,
+            t('service.check.issue.restore_target_exists', {
+              archiveId: entry.id,
+              restorePath,
+            }),
           );
         }
       } else if (entry.status === ArchiveStatus.Restored) {
@@ -196,7 +239,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Warn,
             'RESTORED_BUT_ARCHIVE_EXISTS',
-            `Archive id ${entry.id} is restored but archive object still exists: ${archivePath}`,
+            t('service.check.issue.restored_but_archive_exists', {
+              archiveId: entry.id,
+              archivePath,
+            }),
           );
         }
 
@@ -210,7 +256,11 @@ export class CheckService {
                 report.issues,
                 CheckIssueLevel.Warn,
                 'TYPE_MISMATCH_RESTORED',
-                `Restored path type mismatch for archive id ${entry.id} (expected dir=${expectedIsDir}, actual dir=${actualIsDir}).`,
+                t('service.check.issue.type_mismatch_restored', {
+                  archiveId: entry.id,
+                  expectedIsDir,
+                  actualIsDir,
+                }),
               );
             }
           }
@@ -219,7 +269,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Warn,
             'RESTORED_TARGET_MISSING',
-            `Archive id ${entry.id} is restored but restore path does not exist: ${restorePath}`,
+            t('service.check.issue.restored_target_missing', {
+              archiveId: entry.id,
+              restorePath,
+            }),
           );
         }
       } else {
@@ -227,7 +280,10 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Error,
           'INVALID_ARCHIVE_STATUS',
-          `Archive id ${entry.id} has invalid status ${entry.status}.`,
+          t('service.check.issue.invalid_archive_status', {
+            archiveId: entry.id,
+            status: entry.status,
+          }),
         );
       }
     }
@@ -251,7 +307,9 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'NON_NUMERIC_VAULT_DIR',
-          `Unexpected non-numeric vault directory: ${path.join(Paths.Dir.vaults, dirName)}`,
+          t('service.check.issue.non_numeric_vault_dir', {
+            path: path.join(Paths.Dir.vaults, dirName),
+          }),
         );
         continue;
       }
@@ -262,7 +320,9 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Warn,
           'ORPHAN_VAULT_DIR',
-          `Vault directory exists but no metadata: ${path.join(Paths.Dir.vaults, dirName)}`,
+          t('service.check.issue.orphan_vault_dir', {
+            path: path.join(Paths.Dir.vaults, dirName),
+          }),
         );
       }
 
@@ -274,7 +334,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Warn,
             'NON_NUMERIC_ARCHIVE_OBJECT',
-            `Vault ${vaultId} contains unexpected object name: ${child.name}`,
+            t('service.check.issue.non_numeric_archive_object', {
+              vaultId,
+              name: child.name,
+            }),
           );
           continue;
         }
@@ -284,7 +347,10 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Error,
             'INVALID_ARCHIVE_SLOT',
-            `Vault ${vaultId} archive slot ${child.name} must be a directory in the current layout.`,
+            t('service.check.issue.invalid_archive_slot', {
+              vaultId,
+              slotName: child.name,
+            }),
           );
           continue;
         }
@@ -295,7 +361,9 @@ export class CheckService {
             report.issues,
             CheckIssueLevel.Warn,
             'ORPHAN_ARCHIVE_OBJECT',
-            `Archive object ${key} exists on disk but not in list.jsonl as archived.`,
+            t('service.check.issue.orphan_archive_object', {
+              pairKey: key,
+            }),
           );
         }
       }
@@ -312,7 +380,11 @@ export class CheckService {
           report.issues,
           CheckIssueLevel.Error,
           'MISSING_VAULT_DIR',
-          `Vault ${vault.name}(${vault.id}) is active but directory is missing: ${dirPath}`,
+          t('service.check.issue.missing_vault_dir', {
+            vaultName: vault.name,
+            vaultId: vault.id,
+            path: dirPath,
+          }),
         );
       }
     }
@@ -328,7 +400,9 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'DUPLICATE_LOG_ID',
-        `Duplicated log ids found: ${duplicates.join(', ')}`,
+        t('service.check.issue.duplicate_log_id', {
+          ids: duplicates.join(', '),
+        }),
       );
     }
 
@@ -338,7 +412,10 @@ export class CheckService {
         report.issues,
         CheckIssueLevel.Error,
         'LOG_AUTO_INCR_TOO_SMALL',
-        `auto-incr.log_id=${logAutoIncr} but max log id is ${maxLogId}.`,
+        t('service.check.issue.log_auto_incr_too_small', {
+          autoIncr: logAutoIncr,
+          maxId: maxLogId,
+        }),
       );
     }
   }

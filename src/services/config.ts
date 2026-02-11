@@ -30,6 +30,13 @@ export class ConfigService {
     return config;
   }
 
+  async setLanguage(value: 'zh' | 'en'): Promise<ArchiverConfig> {
+    const config = await this.context.loadConfig();
+    config.language = value;
+    await this.context.saveConfig(config);
+    return config;
+  }
+
   async setNoCommandAction(value: 'help' | 'list' | 'unknown'): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
     config.noCommandAction = value;

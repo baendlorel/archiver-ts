@@ -1,6 +1,7 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
 import { ArchiveStatus } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 
 export type ListAction = 'enter' | 'restore';
 
@@ -22,11 +23,17 @@ interface Keypress {
 }
 
 const LIST_ACTIONS: ListAction[] = ['enter', 'restore'];
-const ACTION_LABELS: Record<ListAction, string> = {
-  enter: 'Enter slot',
-  restore: 'Retrieve',
-};
-const ACTION_LABEL_WIDTH = Math.max(...Object.values(ACTION_LABELS).map((label) => label.length));
+
+function getActionLabel(action: ListAction): string {
+  if (action === 'enter') {
+    return t('command.list.interactive.action.enter');
+  }
+  return t('command.list.interactive.action.restore');
+}
+
+function getActionLabelWidth(): number {
+  return Math.max(...LIST_ACTIONS.map((action) => getActionLabel(action).length));
+}
 
 export function canRunInteractiveList(): boolean {
   if (process.stdin.isTTY && process.stdout.isTTY) {
@@ -43,8 +50,8 @@ export function isActionAvailable(entry: InteractiveListEntry, action: ListActio
 }
 
 function renderActionLabel(action: ListAction, selected: boolean, disabled: boolean): string {
-  const label = ACTION_LABELS[action];
-  const paddedLabel = label.padEnd(ACTION_LABEL_WIDTH, ' ');
+  const label = getActionLabel(action);
+  const paddedLabel = label.padEnd(getActionLabelWidth(), ' ');
   const marker = disabled ? 'x' : selected ? '>' : ' ';
   const content = `${marker} ${paddedLabel}`;
   if (disabled) {
@@ -91,11 +98,14 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   const end = Math.min(start + maxListRows, entries.length);
 
   const lines: string[] = [];
+  lines.push(t('command.list.interactive.hint', {
+    upDown: renderKeyHint(t('command.list.interactive.key.up_down')),
+    leftRight: renderKeyHint(t('command.list.interactive.key.left_right')),
+    enter: renderKeyHint(t('command.list.interactive.key.enter')),
+    cancel: renderKeyHint(t('command.list.interactive.key.cancel')),
+  }));
   lines.push(
-    `${renderKeyHint('Up/Down')} choose entry  ${renderKeyHint('Left/Right')} choose action  ${renderKeyHint('Enter')} confirm  ${renderKeyHint('q/Esc')} cancel`,
-  );
-  lines.push(
-    `Action: ${renderActionLabel('enter', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
+    `${t('command.list.interactive.action_prefix')} ${renderActionLabel('enter', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
   );
   lines.push(note ? chalk.yellow(note) : chalk.dim(''));
   lines.push('');
@@ -122,7 +132,15 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   }
 
   lines.push('');
-  lines.push(chalk.dim(`Showing ${start + 1}-${end} of ${entries.length}`));
+  lines.push(
+    chalk.dim(
+      t('command.list.interactive.showing', {
+        start: start + 1,
+        end,
+        total: entries.length,
+      }),
+    ),
+  );
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
   process.stdout.write(`${lines.join('\n')}\n`);
@@ -195,7 +213,7 @@ export async function pickInteractiveListAction(
         }
 
         if (!isActionAvailable(entry, action)) {
-          note = 'This entry is restored; enter/restore actions are unavailable.';
+          note = t('command.list.interactive.note.restored_unavailable');
           renderScreen(entries, selectedIndex, action, note);
           return;
         }

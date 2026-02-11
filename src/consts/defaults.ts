@@ -8,11 +8,11 @@ export namespace Defaults {
 
   export const VaultName = '@';
 
-  export const Config = parseJsoncText<ArchiverConfig>(DEFAULT_CONFIG_JSONC_RAW, 'default-files/config.jsonc');
+  export const Config = parseJsoncText<ArchiverConfig>(DEFAULT_CONFIG_JSONC_RAW, 'default-files/config.default.jsonc');
 
   export const AutoIncr = parseJsoncText<AutoIncrVars>(
     DEFAULT_AUTO_INCR_JSONC_RAW,
-    'default-files/auto-incr.jsonc',
+    'default-files/auto-incr.default.jsonc',
   );
 
   export const Vault: Vault = {

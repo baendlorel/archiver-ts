@@ -1,20 +1,21 @@
 import { parseYearMonth } from './date.js';
+import { t } from '../i18n/index.js';
 
 export function parseIdList(values: string[]): number[] {
   if (values.length === 0) {
-    throw new Error('At least one id is required.');
+    throw new Error(t('util.parse.error.at_least_one_id'));
   }
 
   const ids = values.map((value) => {
     if (!/^\d+$/.test(value)) {
-      throw new Error(`Invalid id: ${value}`);
+      throw new Error(t('util.parse.error.invalid_id', { id: value }));
     }
     return Number(value);
   });
 
   const unique = new Set(ids);
   if (unique.size !== ids.length) {
-    throw new Error('Duplicated ids are not allowed.');
+    throw new Error(t('util.parse.error.duplicate_ids'));
   }
 
   return ids;
@@ -34,7 +35,7 @@ export function parseLogRange(range?: string): LogRange {
   if (/^\d{6}$/.test(range)) {
     const parsed = parseYearMonth(range);
     if (!parsed) {
-      throw new Error(`Invalid month range: ${range}`);
+      throw new Error(t('util.parse.error.invalid_month_range', { range }));
     }
     return { mode: 'month', from: range, to: range };
   }
@@ -44,15 +45,15 @@ export function parseLogRange(range?: string): LogRange {
     const start = parseYearMonth(parts[0]);
     const end = parseYearMonth(parts[1]);
     if (!start || !end) {
-      throw new Error(`Invalid range: ${range}`);
+      throw new Error(t('util.parse.error.invalid_range', { range }));
     }
     if (parts[0] > parts[1]) {
-      throw new Error(`Invalid range order: ${range}`);
+      throw new Error(t('util.parse.error.invalid_range_order', { range }));
     }
     return { mode: 'month', from: parts[0], to: parts[1] };
   }
 
-  throw new Error(`Invalid range format: ${range}. Use YYYYMM, YYYYMM-YYYYMM, all, *, or a.`);
+  throw new Error(t('util.parse.error.invalid_range_format', { range }));
 }
 
 export function parseVaultReference(value: string): { id?: number; name?: string } {

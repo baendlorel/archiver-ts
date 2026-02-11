@@ -135,6 +135,21 @@ describe('cli e2e', () => {
     expect(output).toContain('"noCommandAction": "unknown"');
   });
 
+  it('uses zh as default language and supports switching to en', () => {
+    const projectDir = mkTempDir('archiver-e2e-language-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    const before = run(['config', 'list'], { cwd: projectDir, env });
+    expect(before).toContain('"language": "zh"');
+
+    run(['config', 'language', 'en'], { cwd: projectDir, env });
+    const after = run(['config', 'list'], { cwd: projectDir, env });
+    expect(after).toContain('"language": "en"');
+  });
+
   it('runs list when no-command-action is list', () => {
     const projectDir = mkTempDir('archiver-e2e-no-command-list-');
     const filePath = path.join(projectDir, 'no-command.txt');

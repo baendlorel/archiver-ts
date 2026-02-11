@@ -5,6 +5,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { UpdateInfo } from '../global.js';
 import { Update } from '../consts/update.js';
+import { t } from '../i18n/index.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -70,7 +71,7 @@ export class UpdateService {
     const installAsset = release.assets?.find((asset) => /install.*\.sh$/i.test(asset.name));
 
     if (!installAsset) {
-      throw new Error('No install script asset (*.sh) found in the latest release.');
+      throw new Error(t('service.update.error.no_install_asset'));
     }
 
     const response = await fetch(installAsset.browser_download_url, {
@@ -81,7 +82,11 @@ export class UpdateService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to download install script: HTTP ${response.status}`);
+      throw new Error(
+        t('service.update.error.download_failed', {
+          status: response.status,
+        }),
+      );
     }
 
     const script = await response.text();
@@ -107,12 +112,21 @@ export class UpdateService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to query latest release from ${repo}: HTTP ${response.status}`);
+      throw new Error(
+        t('service.update.error.query_failed', {
+          repo,
+          status: response.status,
+        }),
+      );
     }
 
     const payload = (await response.json()) as GitHubRelease;
     if (!payload.tag_name) {
-      throw new Error(`Latest release response from ${repo} does not include tag_name.`);
+      throw new Error(
+        t('service.update.error.missing_tag_name', {
+          repo,
+        }),
+      );
     }
 
     return payload;

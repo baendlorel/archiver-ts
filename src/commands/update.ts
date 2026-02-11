@@ -1,5 +1,6 @@
 import type { Command } from 'commander';
 import { Update } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { confirm } from '../utils/prompt.js';
 import { info, success, warn } from '../utils/terminal.js';
@@ -10,26 +11,47 @@ export function registerUpdateCommands(program: Command, ctx: CommandContext): v
     .command('update')
     .alias('u')
     .alias('upd')
-    .description('Check for updates from GitHub releases')
-    .option('--repo <owner/repo>', `GitHub repository (default: ${Update.Repo})`)
-    .option('--install', 'Install by running release install script asset')
+    .description(t('command.update.description'))
+    .option(
+      '--repo <owner/repo>',
+      t('command.update.option.repo', {
+        repo: Update.Repo,
+      }),
+    )
+    .option('--install', t('command.update.option.install'))
     .action((options: { repo?: string; install?: boolean }) =>
       runAction(async () => {
         const repo = options.repo ?? Update.Repo;
         const update = await ctx.updateService.checkLatest(repo);
 
-        info(`Current version: ${update.currentVersion}`);
-        info(`Latest version : ${update.latestVersion}`);
+        info(
+          t('command.update.current_version', {
+            version: update.currentVersion,
+          }),
+        );
+        info(
+          t('command.update.latest_version', {
+            version: update.latestVersion,
+          }),
+        );
 
         if (!update.hasUpdate) {
-          success('You are already on the latest version.');
+          success(t('command.update.already_latest'));
         } else {
-          warn('A new version is available.');
+          warn(t('command.update.new_available'));
           if (update.htmlUrl) {
-            info(`Release page: ${update.htmlUrl}`);
+            info(
+              t('command.update.release_page', {
+                url: update.htmlUrl,
+              }),
+            );
           }
           if (update.publishedAt) {
-            info(`Published at: ${update.publishedAt}`);
+            info(
+              t('command.update.published_at', {
+                publishedAt: update.publishedAt,
+              }),
+            );
           }
         }
 
@@ -41,23 +63,27 @@ export function registerUpdateCommands(program: Command, ctx: CommandContext): v
             opts: { repo },
             source: 'u',
           },
-          `Checked updates from ${repo}: latest=${update.latestVersion}, hasUpdate=${update.hasUpdate}`,
+          t('command.update.audit.checked', {
+            repo,
+            latestVersion: update.latestVersion,
+            hasUpdate: update.hasUpdate,
+          }),
         );
 
         if (options.install) {
           if (!update.hasUpdate) {
-            info('Skip install because current version is latest.');
+            info(t('command.update.skip_install'));
             return;
           }
 
-          const shouldInstall = await confirm('Run release install script now? [y/N] ');
+          const shouldInstall = await confirm(t('command.update.confirm_install'));
           if (!shouldInstall) {
-            warn('Installation cancelled.');
+            warn(t('command.update.cancelled'));
             return;
           }
 
           const output = await ctx.updateService.installLatest(repo);
-          success('Install script executed.');
+          success(t('command.update.install_executed'));
           if (output) {
             console.log(output);
           }
@@ -70,7 +96,7 @@ export function registerUpdateCommands(program: Command, ctx: CommandContext): v
               opts: { repo },
               source: 'u',
             },
-            `Executed install script from latest release (${repo})`,
+            t('command.update.audit.installed', { repo }),
           );
         }
       }),

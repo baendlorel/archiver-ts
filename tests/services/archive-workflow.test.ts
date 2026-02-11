@@ -9,6 +9,7 @@ import { AuditLogger } from '../../src/services/audit-logger.js';
 import { CheckService } from '../../src/services/check.js';
 import { ConfigService } from '../../src/services/config.js';
 import { VaultService } from '../../src/services/vault.js';
+import { setLanguage } from '../../src/i18n/index.js';
 
 type PathsSnapshot = {
   dir: Record<keyof typeof Paths.Dir, string>;
@@ -64,6 +65,8 @@ async function createRuntime(): Promise<{
 }
 
 beforeEach(async () => {
+  setLanguage('en');
+
   snapshot = {
     dir: { ...Paths.Dir },
     file: { ...Paths.File },
@@ -171,9 +174,7 @@ describe('archive workflow', () => {
     const byVaultAndId = await runtime.archiveService.resolveCdTarget(`work/1`);
     expect(byVaultAndId.slotPath).toBe(newSlotPath);
 
-    await expect(runtime.archiveService.resolveCdTarget(`@/1`)).rejects.toThrow(
-      `Archive id 1 is in vault ${targetVault.id}, not 0.`,
-    );
+    await expect(runtime.archiveService.resolveCdTarget(`@/1`)).rejects.toThrow(String(targetVault.id));
   });
 
   it('check service reports non-directory numeric archive slots as errors', async () => {

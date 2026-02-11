@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { t } from '../i18n/index.js';
 
 export async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
   const rendered = `${JSON.stringify(value, null, 2)}\n`;
@@ -21,7 +22,12 @@ export async function readJsonLinesFile<T>(filePath: string): Promise<T[]> {
       try {
         return JSON.parse(line) as T;
       } catch {
-        throw new Error(`Invalid JSONL line ${index + 1} in ${filePath}`);
+        throw new Error(
+          t('util.json.error.invalid_jsonl_line', {
+            line: index + 1,
+            filePath,
+          }),
+        );
       }
     });
   } catch (error) {

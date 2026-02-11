@@ -1,26 +1,36 @@
 import type { Command } from 'commander';
 import { Defaults } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
+import { VaultRemovedExistsError } from '../services/vault.js';
 import { ask, confirm } from '../utils/prompt.js';
 import { info, success, warn } from '../utils/terminal.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
 
 export function registerVaultCommands(program: Command, ctx: CommandContext): void {
-  const vault = program.command('vault').description('Vault management');
+  const vault = program.command('vault').description(t('command.vault.description'));
 
   vault
     .command('use')
-    .description('Use a vault as the current vault')
-    .argument('<name-or-id>', 'Vault name or id')
+    .description(t('command.vault.use.description'))
+    .argument('<name-or-id>', t('command.vault.use.argument'))
     .action((nameOrId: string) =>
       runAction(async () => {
         const target = await ctx.vaultService.useVault(nameOrId);
-        success(`Current vault changed to ${target.name}(${target.id}).`);
+        success(
+          t('command.vault.use.updated', {
+            name: target.name,
+            id: target.id,
+          }),
+        );
 
         await ctx.auditLogger.log(
           'INFO',
           { main: 'vault', sub: 'use', args: [nameOrId], source: 'u' },
-          `Switch current vault to ${target.name}(${target.id})`,
+          t('command.vault.use.audit', {
+            name: target.name,
+            id: target.id,
+          }),
           { vid: target.id },
         );
 
@@ -30,10 +40,10 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
   vault
     .command('create')
-    .description('Create a vault')
-    .argument('<name>', 'Vault name')
-    .option('-r, --remark <remark>', 'Vault remark')
-    .option('-a, --activate', 'Activate after creation')
+    .description(t('command.vault.create.description'))
+    .argument('<name>', t('command.vault.create.argument'))
+    .option('-r, --remark <remark>', t('command.vault.create.option.remark'))
+    .option('-a, --activate', t('command.vault.create.option.activate'))
     .action((name: string, options: { remark?: string; activate?: boolean }) =>
       runAction(async () => {
         let recovered = false;
@@ -46,11 +56,20 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
           });
 
           recovered = result.recovered;
-          const actionText = recovered ? 'Recovered' : 'Created';
-          success(`${actionText} vault ${result.vault.name}(${result.vault.id}).`);
+          success(
+            t(recovered ? 'command.vault.create.recovered' : 'command.vault.create.created', {
+              name: result.vault.name,
+              id: result.vault.id,
+            }),
+          );
 
           if (options.activate) {
-            success(`Activated vault ${result.vault.name}(${result.vault.id}).`);
+            success(
+              t('command.vault.create.activated', {
+                name: result.vault.name,
+                id: result.vault.id,
+              }),
+            );
           }
 
           await ctx.auditLogger.log(
@@ -64,7 +83,10 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
               },
               source: 'u',
             },
-            `${actionText} vault ${result.vault.name}(${result.vault.id})`,
+            t(recovered ? 'command.vault.create.recovered' : 'command.vault.create.created', {
+              name: result.vault.name,
+              id: result.vault.id,
+            }),
             { vid: result.vault.id },
           );
         };
@@ -72,11 +94,14 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
         try {
           await createOrRecover(false);
         } catch (err) {
-          const message = (err as Error).message;
-          if (message.includes('A removed vault named')) {
-            const shouldRecover = await confirm(`A removed vault named ${name} exists. Recover it instead? [y/N] `);
+          if (err instanceof VaultRemovedExistsError) {
+            const shouldRecover = await confirm(
+              t('command.vault.create.confirm_recover', {
+                name,
+              }),
+            );
             if (!shouldRecover) {
-              warn('Operation cancelled.');
+              warn(t('command.vault.operation.cancelled'));
               return;
             }
             await createOrRecover(true);
@@ -91,28 +116,46 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
   vault
     .command('remove')
-    .description('Remove a vault (moves archived entries to default vault @)')
-    .argument('<name-or-id>', 'Vault name or id')
+    .description(t('command.vault.remove.description'))
+    .argument('<name-or-id>', t('command.vault.remove.argument'))
     .action((nameOrId: string) =>
       runAction(async () => {
-        const stepOne = await confirm(`Remove vault ${nameOrId}? This cannot be undone directly. [y/N] `);
+        const stepOne = await confirm(
+          t('command.vault.remove.confirm', {
+            nameOrId,
+          }),
+        );
         if (!stepOne) {
-          warn('Operation cancelled.');
+          warn(t('command.vault.operation.cancelled'));
           return;
         }
 
         const verifyCode = Math.random().toString(36).slice(2, 8).toUpperCase();
-        const typed = await ask(`Type verification code '${verifyCode}' to continue: `);
+        const typed = await ask(
+          t('command.vault.remove.verify_prompt', {
+            verifyCode,
+          }),
+        );
         if (typed !== verifyCode) {
-          warn('Verification code does not match. Operation cancelled.');
+          warn(t('command.vault.remove.verify_mismatch'));
           return;
         }
 
         const result = await ctx.vaultService.removeVault(nameOrId);
 
-        success(`Vault ${result.vault.name}(${result.vault.id}) removed.`);
+        success(
+          t('command.vault.remove.done', {
+            name: result.vault.name,
+            id: result.vault.id,
+          }),
+        );
         if (result.movedArchiveIds.length > 0) {
-          info(`Moved ${result.movedArchiveIds.length} archived objects to default vault ${Defaults.Vault.name}.`);
+          info(
+            t('command.vault.remove.moved_to_default', {
+              count: result.movedArchiveIds.length,
+              name: Defaults.Vault.name,
+            }),
+          );
         }
 
         await ctx.auditLogger.log(
@@ -123,7 +166,10 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
             args: [nameOrId],
             source: 'u',
           },
-          `Removed vault ${result.vault.name}(${result.vault.id})`,
+          t('command.vault.remove.done', {
+            name: result.vault.name,
+            id: result.vault.id,
+          }),
           { vid: result.vault.id },
         );
 
@@ -133,12 +179,17 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
   vault
     .command('recover')
-    .description('Recover a removed vault')
-    .argument('<name-or-id>', 'Vault name or id')
+    .description(t('command.vault.recover.description'))
+    .argument('<name-or-id>', t('command.vault.recover.argument'))
     .action((nameOrId: string) =>
       runAction(async () => {
         const result = await ctx.vaultService.recoverVault(nameOrId);
-        success(`Recovered vault ${result.name}(${result.id}).`);
+        success(
+          t('command.vault.recover.done', {
+            name: result.name,
+            id: result.id,
+          }),
+        );
 
         await ctx.auditLogger.log(
           'INFO',
@@ -148,7 +199,10 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
             args: [nameOrId],
             source: 'u',
           },
-          `Recovered vault ${result.name}(${result.id})`,
+          t('command.vault.recover.done', {
+            name: result.name,
+            id: result.id,
+          }),
           { vid: result.id },
         );
 
@@ -158,13 +212,18 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
   vault
     .command('rename')
-    .description('Rename a vault')
-    .argument('<old>', 'Current vault name or id')
-    .argument('<new>', 'New vault name')
+    .description(t('command.vault.rename.description'))
+    .argument('<old>', t('command.vault.rename.argument.old'))
+    .argument('<new>', t('command.vault.rename.argument.new'))
     .action((oldName: string, newName: string) =>
       runAction(async () => {
         const renamed = await ctx.vaultService.renameVault(oldName, newName);
-        success(`Renamed vault to ${renamed.name}(${renamed.id}).`);
+        success(
+          t('command.vault.rename.done', {
+            name: renamed.name,
+            id: renamed.id,
+          }),
+        );
 
         await ctx.auditLogger.log(
           'INFO',
@@ -174,7 +233,10 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
             args: [oldName, newName],
             source: 'u',
           },
-          `Renamed vault ${oldName} to ${newName}`,
+          t('command.vault.rename.done', {
+            name: renamed.name,
+            id: renamed.id,
+          }),
           { vid: renamed.id },
         );
 
@@ -184,14 +246,14 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
 
   vault
     .command('list')
-    .description('List vaults')
-    .option('-a, --all', 'Show removed vaults')
+    .description(t('command.vault.list.description'))
+    .option('-a, --all', t('command.vault.list.option.all'))
     .action((options: { all?: boolean }) =>
       runAction(async () => {
         const vaults = await ctx.vaultService.listVaults(Boolean(options.all));
 
         if (vaults.length === 0) {
-          info('No vaults found.');
+          info(t('command.vault.list.empty'));
           return;
         }
 

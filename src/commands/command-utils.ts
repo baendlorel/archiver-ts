@@ -1,10 +1,30 @@
 import { Update } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { nowIso } from '../utils/date.js';
 import { error, info } from '../utils/terminal.js';
 
+function resolveOperationLabel(operationName: string): string {
+  if (operationName === 'put') {
+    return t('command.batch.operation.put');
+  }
+  if (operationName === 'restore') {
+    return t('command.batch.operation.restore');
+  }
+  if (operationName === 'move') {
+    return t('command.batch.operation.move');
+  }
+  return operationName;
+}
+
 export function summarizeBatch(operationName: string, result: { ok: unknown[]; failed: unknown[] }): void {
-  info(`${operationName}: ${result.ok.length} succeeded, ${result.failed.length} failed.`);
+  info(
+    t('command.batch.summary', {
+      operation: resolveOperationLabel(operationName),
+      ok: result.ok.length,
+      failed: result.failed.length,
+    }),
+  );
 }
 
 export function shellQuote(value: string): string {
@@ -32,7 +52,10 @@ export async function maybeAutoUpdateCheck(ctx: CommandContext): Promise<void> {
     await ctx.configService.updateLastCheck(nowIso());
     if (updateInfo.hasUpdate) {
       info(
-        `New version available: ${updateInfo.latestVersion} (current ${updateInfo.currentVersion}). Run 'archiver update'.`,
+        t('command.auto_update.new_available', {
+          latestVersion: updateInfo.latestVersion,
+          currentVersion: updateInfo.currentVersion,
+        }),
       );
     }
   } catch {

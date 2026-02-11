@@ -1,35 +1,42 @@
 import path from 'node:path';
 import type { Command } from 'commander';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { applyStyleFromConfig } from '../utils/style.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
 import { renderTable, success } from '../utils/terminal.js';
 
 export function registerConfigCommands(program: Command, ctx: CommandContext): void {
-  const config = program.command('config').alias('c').alias('cfg').description('Manage config values');
+  const config = program.command('config').alias('c').alias('cfg').description(t('command.config.description'));
 
   config
     .command('list')
-    .description('Show current config')
-    .option('-c, --comment', 'Show key comments')
+    .description(t('command.config.list.description'))
+    .option('-c, --comment', t('command.config.list.option.comment'))
     .action((options: { comment?: boolean }) =>
       runAction(async () => {
         const current = await ctx.configService.getConfig();
         if (options.comment) {
           const rows: string[][] = [
-            ['current_vault_id', String(current.currentVaultId), 'Current default vault id'],
-            ['update_check', current.updateCheck, 'Enable automatic update checks'],
-            ['last_update_check', current.lastUpdateCheck || '', 'Last auto-check timestamp (ISO)'],
-            ['alias_map', JSON.stringify(current.aliasMap), 'Path alias map for display only'],
-            ['vault_item_sep', current.vaultItemSeparator, 'Separator shown between vault and item'],
-            ['style', current.style, 'Styled output: on or off'],
+            ['current_vault_id', String(current.currentVaultId), t('command.config.list.comment.current_vault_id')],
+            ['update_check', current.updateCheck, t('command.config.list.comment.update_check')],
+            ['last_update_check', current.lastUpdateCheck || '', t('command.config.list.comment.last_update_check')],
+            ['alias_map', JSON.stringify(current.aliasMap), t('command.config.list.comment.alias_map')],
+            ['vault_item_sep', current.vaultItemSeparator, t('command.config.list.comment.vault_item_sep')],
+            ['style', current.style, t('command.config.list.comment.style')],
+            ['language', current.language, t('command.config.list.comment.language')],
             [
               'no_command_action',
               current.noCommandAction,
-              'Action when running arv without subcommand (unknown asks in TTY)',
+              t('command.config.list.comment.no_command_action'),
             ],
           ];
-          console.log(renderTable(['Key', 'Value', 'Comment'], rows));
+          console.log(
+            renderTable(
+              [t('command.config.list.table.key'), t('command.config.list.table.value'), t('command.config.list.table.comment')],
+              rows,
+            ),
+          );
         } else {
           console.log(JSON.stringify(current, null, 2));
         }
@@ -38,38 +45,39 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
 
   config
     .command('alias')
-    .description('Set or remove a display alias: <alias=path> [-r]')
-    .argument('<alias-path>', 'Format: alias=/absolute/path')
-    .option('-r, --remove', 'Remove alias')
+    .description(t('command.config.alias.description'))
+    .argument('<alias-path>', t('command.config.alias.argument'))
+    .option('-r, --remove', t('command.config.alias.option.remove'))
     .action((aliasPath: string, options: { remove?: boolean }) =>
       runAction(async () => {
         if (options.remove) {
           const alias = aliasPath.includes('=') ? aliasPath.split('=', 1)[0] : aliasPath;
           if (!alias) {
-            throw new Error('Alias cannot be empty.');
+            throw new Error(t('command.config.alias.error.empty'));
           }
           await ctx.configService.removeAlias(alias);
-          success(`Removed alias ${alias}.`);
+          success(t('command.config.alias.removed', { alias }));
 
           await ctx.auditLogger.log(
             'INFO',
             { main: 'config', sub: 'alias', args: [alias], opts: { remove: true }, source: 'u' },
-            `Removed alias ${alias}`,
+            t('command.config.alias.removed', { alias }),
           );
         } else {
           const split = aliasPath.split('=');
           if (split.length !== 2 || !split[0] || !split[1]) {
-            throw new Error('Alias format must be alias=path.');
+            throw new Error(t('command.config.alias.error.format'));
           }
           const alias = split[0].trim();
           const targetPath = split[1].trim();
           await ctx.configService.addAlias(alias, targetPath);
-          success(`Set alias ${alias}=${path.resolve(targetPath)}.`);
+          const resolvedPath = path.resolve(targetPath);
+          success(t('command.config.alias.set', { alias, path: resolvedPath }));
 
           await ctx.auditLogger.log(
             'INFO',
             { main: 'config', sub: 'alias', args: [aliasPath], source: 'u' },
-            `Set alias ${alias}`,
+            t('command.config.alias.set', { alias, path: resolvedPath }),
           );
         }
 
@@ -79,22 +87,22 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
 
   config
     .command('update-check')
-    .description('Enable or disable auto update checks')
-    .argument('<state>', 'on|off')
+    .description(t('command.config.update_check.description'))
+    .argument('<state>', t('command.config.update_check.argument'))
     .action((state: string) =>
       runAction(async () => {
         const normalized = state.toLowerCase();
         if (normalized !== 'on' && normalized !== 'off') {
-          throw new Error('State must be on or off.');
+          throw new Error(t('command.config.state.error'));
         }
 
         await ctx.configService.setUpdateCheck(normalized);
-        success(`Auto update check is now ${normalized}.`);
+        success(t('command.config.update_check.updated', { state: normalized }));
 
         await ctx.auditLogger.log(
           'INFO',
           { main: 'config', sub: 'update-check', args: [normalized], source: 'u' },
-          `Set update_check=${normalized}`,
+          t('command.config.update_check.updated', { state: normalized }),
         );
 
         await maybeAutoUpdateCheck(ctx);
@@ -103,44 +111,50 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
 
   config
     .command('style')
-    .description('Enable or disable styled output')
-    .argument('<state>', 'on|off')
+    .description(t('command.config.style.description'))
+    .argument('<state>', t('command.config.style.argument'))
     .action((state: string) =>
       runAction(async () => {
         const normalized = state.toLowerCase();
         if (normalized !== 'on' && normalized !== 'off') {
-          throw new Error('State must be on or off.');
+          throw new Error(t('command.config.state.error'));
         }
 
         const updated = await ctx.configService.setStyle(normalized);
         applyStyleFromConfig(updated);
-        success(`Style output is now ${normalized}.`);
+        success(t('command.config.style.updated', { state: normalized }));
 
         await ctx.auditLogger.log(
           'INFO',
           { main: 'config', sub: 'style', args: [normalized], source: 'u' },
-          `Set style=${normalized}`,
+          t('command.config.style.updated', { state: normalized }),
         );
       }),
     );
 
   config
     .command('vault-item-sep')
-    .description('Set separator between vault and item in list output')
-    .argument('<sep>', 'Separator string')
+    .description(t('command.config.vault_item_sep.description'))
+    .argument('<sep>', t('command.config.vault_item_sep.argument'))
     .action((separator: string) =>
       runAction(async () => {
         if (!separator.trim()) {
-          throw new Error('Separator cannot be empty.');
+          throw new Error(t('command.config.vault_item_sep.error.empty'));
         }
 
         await ctx.configService.setVaultItemSeparator(separator);
-        success(`vault_item_sep updated to '${separator}'.`);
+        success(
+          t('command.config.vault_item_sep.updated', {
+            separator,
+          }),
+        );
 
         await ctx.auditLogger.log(
           'INFO',
           { main: 'config', sub: 'vault-item-sep', args: [separator], source: 'u' },
-          `Set vault_item_sep=${separator}`,
+          t('command.config.vault_item_sep.updated', {
+            separator,
+          }),
         );
 
         await maybeAutoUpdateCheck(ctx);
@@ -149,22 +163,44 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
 
   config
     .command('no-command-action')
-    .description('Set action when running arv without any subcommand')
-    .argument('<action>', 'help|list|unknown')
+    .description(t('command.config.no_command_action.description'))
+    .argument('<action>', t('command.config.no_command_action.argument'))
     .action((action: string) =>
       runAction(async () => {
         const normalized = action.toLowerCase();
         if (normalized !== 'help' && normalized !== 'list' && normalized !== 'unknown') {
-          throw new Error('Action must be help, list, or unknown.');
+          throw new Error(t('command.config.no_command_action.error.invalid'));
         }
 
         await ctx.configService.setNoCommandAction(normalized);
-        success(`No-command action is now ${normalized}.`);
+        success(t('command.config.no_command_action.updated', { action: normalized }));
 
         await ctx.auditLogger.log(
           'INFO',
           { main: 'config', sub: 'no-command-action', args: [normalized], source: 'u' },
-          `Set no_command_action=${normalized}`,
+          t('command.config.no_command_action.updated', { action: normalized }),
+        );
+      }),
+    );
+
+  config
+    .command('language')
+    .description(t('command.config.language.description'))
+    .argument('<language>', t('command.config.language.argument'))
+    .action((language: string) =>
+      runAction(async () => {
+        const normalized = language.toLowerCase();
+        if (normalized !== 'zh' && normalized !== 'en') {
+          throw new Error(t('command.config.language.error.invalid'));
+        }
+
+        await ctx.configService.setLanguage(normalized);
+        success(t('command.config.language.updated', { language: normalized }));
+
+        await ctx.auditLogger.log(
+          'INFO',
+          { main: 'config', sub: 'language', args: [normalized], source: 'u' },
+          t('command.config.language.updated', { language: normalized }),
         );
       }),
     );

@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
 import { Defaults, ArchiveStatus, VaultStatus, Paths } from '../consts/index.js';
 import { DEFAULT_AUTO_INCR_JSONC_RAW, DEFAULT_CONFIG_JSONC_RAW } from '../default-files/index.js';
+import { setLanguage, t } from '../i18n/index.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import { ensureJsonc, readJsonc, writeJsonc } from '../utils/jsonc.js';
 import { appendJsonLine, readJsonLinesFile, writeJsonLinesFile } from '../utils/json.js';
@@ -21,6 +22,7 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
         ? config.vaultItemSeparator
         : Defaults.Config.vaultItemSeparator,
     style: config.style === 'off' ? 'off' : 'on',
+    language: config.language === 'en' ? 'en' : 'zh',
     noCommandAction:
       config.noCommandAction === 'help' || config.noCommandAction === 'list' ? config.noCommandAction : 'unknown',
   };
@@ -96,12 +98,14 @@ export class ArchiverContext {
 
     const loaded = await readJsonc(Paths.File.config, Defaults.Config);
     const merged = sanitizeConfig({ ...Defaults.Config, ...loaded });
+    setLanguage(merged.language);
     this.configCache = merged;
     return merged;
   }
 
   async saveConfig(config: ArchiverConfig): Promise<void> {
     this.configCache = sanitizeConfig(config);
+    setLanguage(this.configCache.language);
     await writeJsonc(Paths.File.config, this.configCache, DEFAULT_CONFIG_JSONC_RAW);
   }
 
@@ -192,7 +196,13 @@ export class ArchiverContext {
       return filtered;
     }
 
-    return [Defaults.Vault, ...filtered];
+    return [
+      {
+        ...Defaults.Vault,
+        remark: t('defaults.vault.remark'),
+      },
+      ...filtered,
+    ];
   }
 
   async resolveVault(

@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { APP_DESCRIPTION, APP_NAME } from '../consts/index.js';
+import { APP_NAME } from '../consts/index.js';
+import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { registerArchiveCommands } from './archive.js';
 import { registerCheckCommands } from './check.js';
@@ -12,7 +13,7 @@ import { registerVaultCommands } from './vault.js';
 export function createProgram(ctx: CommandContext): Command {
   const program = new Command();
 
-  program.name(APP_NAME).description(APP_DESCRIPTION).version(ctx.version);
+  program.name(APP_NAME).description(t('app.description')).version(ctx.version);
 
   registerArchiveCommands(program, ctx);
   registerVaultCommands(program, ctx);

@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { t } from '../i18n/index.js';
 
 function styleBadge(label: string, color: 'green' | 'cyan' | 'yellow' | 'red'): string {
   if (color === 'green') {
@@ -14,23 +15,23 @@ function styleBadge(label: string, color: 'green' | 'cyan' | 'yellow' | 'red'): 
 }
 
 export function success(message: string): void {
-  console.log(`${styleBadge('OK', 'green')} ${chalk.green(message)}`);
+  console.log(`${styleBadge(t('terminal.badge.ok'), 'green')} ${chalk.green(message)}`);
 }
 
 export function info(message: string): void {
-  console.log(`${styleBadge('INFO', 'cyan')} ${chalk.cyan(message)}`);
+  console.log(`${styleBadge(t('terminal.badge.info'), 'cyan')} ${chalk.cyan(message)}`);
 }
 
 export function warn(message: string): void {
-  console.log(`${styleBadge('WARN', 'yellow')} ${chalk.yellow(message)}`);
+  console.log(`${styleBadge(t('terminal.badge.warn'), 'yellow')} ${chalk.yellow(message)}`);
 }
 
 export function error(message: string): void {
-  console.error(`${styleBadge('ERROR', 'red')} ${chalk.red(message)}`);
+  console.error(`${styleBadge(t('terminal.badge.error'), 'red')} ${chalk.red(message)}`);
 }
 
 export function fatal(message: string): never {
-  console.error(`${styleBadge('FATAL', 'red')} ${chalk.red(message)}`);
+  console.error(`${styleBadge(t('terminal.badge.fatal'), 'red')} ${chalk.red(message)}`);
   process.exit(1);
 }
 
@@ -58,36 +59,36 @@ export function renderTable(headers: string[], rows: string[][]): string {
 export function styleArchiveStatus(status: string): string {
   const normalized = status.toLowerCase();
   if (status === 'A' || normalized === 'archived') {
-    return chalk.green(status);
+    return status === 'A' ? chalk.green(status) : chalk.green(t('terminal.status.archive.archived'));
   }
   if (status === 'R' || normalized === 'restored') {
-    return chalk.gray(status);
+    return status === 'R' ? chalk.gray(status) : chalk.gray(t('terminal.status.archive.restored'));
   }
   return status;
 }
 
 export function styleVaultStatus(status: string): string {
   if (status === 'Valid') {
-    return chalk.green(status);
+    return chalk.green(t('terminal.status.vault.valid'));
   }
   if (status === 'Removed') {
-    return chalk.yellow(status);
+    return chalk.yellow(t('terminal.status.vault.removed'));
   }
   if (status === 'Protected') {
-    return chalk.cyan(status);
+    return chalk.cyan(t('terminal.status.vault.protected'));
   }
   return status;
 }
 
 export function styleLogLevel(level: string): string {
   if (level === 'ERROR' || level === 'FATAL') {
-    return chalk.red(level);
+    return chalk.red(level === 'ERROR' ? t('terminal.status.log.error') : t('terminal.status.log.fatal'));
   }
   if (level === 'WARN') {
-    return chalk.yellow(level);
+    return chalk.yellow(t('terminal.status.log.warn'));
   }
   if (level === 'INFO') {
-    return chalk.cyan(level);
+    return chalk.cyan(t('terminal.status.log.info'));
   }
   return level;
 }

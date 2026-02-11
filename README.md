@@ -44,6 +44,7 @@ arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
 arv config style <on|off>
+arv config language <zh|en>
 arv config no-command-action <help|list|unknown>
 arv update [--repo <owner/repo>] [--install]
 arv check
@@ -103,6 +104,16 @@ Set it with:
 arv config no-command-action unknown
 arv config no-command-action help
 arv config no-command-action list
+```
+
+## Language
+
+- default language is `zh`
+- switch language with:
+
+```bash
+arv config language zh
+arv config language en
 ```
 
 ## JSONC defaults and comments
