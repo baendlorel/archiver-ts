@@ -135,7 +135,7 @@ export async function pickInteractiveListAction(
       input.off('keypress', onKeypress);
       input.setRawMode(false);
       input.pause();
-      process.stdout.write('\x1B[2J\x1B[H\x1B[?25h');
+      process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(selection);
     };
 

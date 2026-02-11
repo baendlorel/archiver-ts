@@ -33,14 +33,19 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
   body: `arv() {
   local line target status
   while IFS= read -r line; do
-    if [[ "$line" == __ARCHIVER_CD__:* ]]; then
-      target="\${line#__ARCHIVER_CD__:}"
+    if [[ "$line" == *__ARCHIVER_CD__:* ]]; then
+      target="\${line##*__ARCHIVER_CD__:}"
+    elif [[ "$line" == __ARCHIVER_STATUS__:* ]]; then
+      status="\${line#__ARCHIVER_STATUS__:}"
     else
       printf '%s\\n' "$line"
     fi
-  done < <(ARV_FORCE_INTERACTIVE=1 command arv "$@")
-  status=\${PIPESTATUS[0]}
+  done < <(
+    ARV_FORCE_INTERACTIVE=1 command arv "$@"
+    printf '__ARCHIVER_STATUS__:%s\\n' "$?"
+  )
 
+  status="\${status:-1}"
   if [[ -n "$target" ]]; then
     cd -- "$target" || return $?
   fi
