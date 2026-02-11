@@ -69,9 +69,13 @@ export class ArchiverContext {
     }
     await ensureDir(this.vaultDir(Defaults.Vault.id));
 
-    await writeJsonFile(Paths.File.config, Defaults.Config);
+    if (!(await pathAccessible(Paths.File.config))) {
+      await writeJsonFile(Paths.File.config, Defaults.Config);
+    }
 
-    await writeJsonFile(Paths.File.autoIncr, Defaults.AutoIncr);
+    if (!(await pathAccessible(Paths.File.autoIncr))) {
+      await writeJsonFile(Paths.File.autoIncr, Defaults.AutoIncr);
+    }
 
     await ensureFile(Paths.File.list);
     await ensureFile(Paths.File.vaults);

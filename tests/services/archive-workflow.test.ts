@@ -122,6 +122,27 @@ describe('archive workflow', () => {
     expect(entriesAfterRestore[0]?.status).toBe(ArchiveStatus.Restored);
   });
 
+  it('keeps archive ids increasing across separate runtime initializations', async () => {
+    const firstRuntime = await createRuntime();
+    const firstFile = path.join(workspaceDir, 'first.txt');
+    await fs.writeFile(firstFile, 'first\n', 'utf8');
+
+    const firstPut = await firstRuntime.archiveService.put([firstFile], {});
+    expect(firstPut.failed).toHaveLength(0);
+    expect(firstPut.ok[0]?.id).toBe(1);
+
+    const secondRuntime = await createRuntime();
+    const secondFile = path.join(workspaceDir, 'second.txt');
+    await fs.writeFile(secondFile, 'second\n', 'utf8');
+
+    const secondPut = await secondRuntime.archiveService.put([secondFile], {});
+    expect(secondPut.failed).toHaveLength(0);
+    expect(secondPut.ok[0]?.id).toBe(2);
+
+    const ids = (await secondRuntime.context.loadListEntries(true)).map((entry) => entry.id);
+    expect(ids).toEqual([1, 2]);
+  });
+
   it('moves archive slots between vaults and resolves cd targets', async () => {
     const runtime = await createRuntime();
     const sourceFile = path.join(workspaceDir, 'move-me.txt');

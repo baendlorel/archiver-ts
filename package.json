@@ -1,6 +1,6 @@
 {
   "name": "archiver-ts",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A TypeScript rewrite of Archiver CLI",
   "type": "module",
   "main": "dist/index.js",
