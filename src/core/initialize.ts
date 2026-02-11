@@ -43,7 +43,7 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
       printf '%s\\n' "$line"
     fi
   done < <(
-    ARV_FORCE_INTERACTIVE=1 command arv "$@"
+    NO_COLOR= FORCE_COLOR="\${FORCE_COLOR:-1}" ARV_FORCE_INTERACTIVE=1 command arv "$@"
     printf '__ARCHIVER_STATUS__:%s\\n' "$?"
   )
 
@@ -71,7 +71,7 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
   body: `function arv
     set -l target_tmp (mktemp)
     set -l back_tmp (mktemp)
-    ARV_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
+    env NO_COLOR= FORCE_COLOR=1 ARV_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
         if string match -q "__ARCHIVER_CD__:*" -- $line
             echo (string replace "__ARCHIVER_CD__:" "" -- $line) > $target_tmp
         else if test "$line" = "__ARCHIVER_CD_BACK__"
@@ -122,7 +122,11 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     $goBack = $false
     $status = 1
     $oldForce = $env:ARV_FORCE_INTERACTIVE
+    $oldForceColor = $env:FORCE_COLOR
+    $oldNoColor = $env:NO_COLOR
     $env:ARV_FORCE_INTERACTIVE = "1"
+    $env:FORCE_COLOR = "1"
+    Remove-Item Env:NO_COLOR -ErrorAction SilentlyContinue
 
     try {
         $app = Get-Command arv -CommandType Application -ErrorAction Stop | Select-Object -First 1
@@ -141,6 +145,16 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
             Remove-Item Env:ARV_FORCE_INTERACTIVE -ErrorAction SilentlyContinue
         } else {
             $env:ARV_FORCE_INTERACTIVE = $oldForce
+        }
+        if ($null -eq $oldForceColor) {
+            Remove-Item Env:FORCE_COLOR -ErrorAction SilentlyContinue
+        } else {
+            $env:FORCE_COLOR = $oldForceColor
+        }
+        if ($null -eq $oldNoColor) {
+            Remove-Item Env:NO_COLOR -ErrorAction SilentlyContinue
+        } else {
+            $env:NO_COLOR = $oldNoColor
         }
     }
 

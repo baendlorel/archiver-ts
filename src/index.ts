@@ -1,9 +1,11 @@
+import chalk from 'chalk';
 import { createProgram } from './commands/index.js';
 import { ensureArvShellWrapper } from './core/initialize.js';
 import { createCommandContext } from './services/context.js';
 import { error, info } from './utils/terminal.js';
 
 async function main(): Promise<void> {
+  console.log(chalk.bold.green('Welcome to Archiver CLI!'));
   const initResult = await ensureArvShellWrapper();
   if (initResult.installed) {
     const where = initResult.profilePath ? ` at ${initResult.profilePath}` : '';
