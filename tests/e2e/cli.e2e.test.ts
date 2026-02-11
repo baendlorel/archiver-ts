@@ -101,4 +101,31 @@ describe('cli e2e', () => {
     expect(output.trim()).toBe(`__ARCHIVER_CD__:${path.join(projectDir, '.archiver', 'vaults', '0', '1')}`);
   });
 
+  it('supports cd - marker and print mode for previous directory', () => {
+    const projectDir = mkTempDir('archiver-e2e-cd-back-');
+    const filePath = path.join(projectDir, 'cd-back-file.txt');
+    const previousDir = path.join(projectDir, 'before-slot');
+    fs.mkdirSync(previousDir, { recursive: true });
+    fs.writeFileSync(filePath, 'cd back data\n', 'utf8');
+
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['put', filePath], { cwd: projectDir, env });
+
+    const markerOutput = run(['cd', '-'], { cwd: projectDir, env });
+    expect(markerOutput.trim()).toBe('__ARCHIVER_CD_BACK__');
+
+    const printOutput = run(['cd', '-', '--print'], {
+      cwd: projectDir,
+      env: {
+        ...env,
+        ARV_PREV_CWD: previousDir,
+      },
+    });
+    expect(printOutput.trim()).toBe(previousDir);
+  });
+
 });

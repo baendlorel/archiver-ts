@@ -21,6 +21,7 @@ arv put <items...> [-v|--vault <vault>] [-m|--message <msg>] [-r|--remark <remar
 arv restore <ids...>
 arv move <ids...> --to <vault>
 arv cd <archive-id | vault/archive-id> [--print]
+arv cd - [--print]
 ```
 
 Vault management:

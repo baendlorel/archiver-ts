@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import type { CommandContext } from '../services/context.js';
 import { parseIdList } from '../utils/parse.js';
 import { error, success } from '../utils/terminal.js';
-import { emitCdTarget } from './cd-shell.js';
+import { emitCdBackTarget, emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 
 export function registerArchiveCommands(program: Command, ctx: CommandContext): void {
@@ -77,18 +77,38 @@ export function registerArchiveCommands(program: Command, ctx: CommandContext): 
 
   program
     .command('cd')
-    .description('Emit archive slot path marker by <archive-id> or <vault>/<archive-id>')
-    .argument('<target>', 'Archive id, or vault/id')
+    .description('Emit archive slot path marker by <archive-id>, <vault>/<archive-id>, or "-"')
+    .argument('<target>', 'Archive id, vault/id, or "-" to return to previous arv cd directory')
     .option('-p, --print', 'Print slot path only')
     .action((target: string, options: { print?: boolean }) =>
       runAction(async () => {
-        const resolved = await ctx.archiveService.resolveCdTarget(target);
+        const normalizedTarget = target.trim();
+        if (!normalizedTarget) {
+          throw new Error('Target cannot be empty.');
+        }
+
+        if (normalizedTarget === '-') {
+          await ctx.auditLogger.log(
+            'INFO',
+            {
+              main: 'cd',
+              args: [normalizedTarget],
+              source: 'u',
+            },
+            'Return to previous arv cd directory',
+          );
+
+          await emitCdBackTarget({ print: options.print });
+          return;
+        }
+
+        const resolved = await ctx.archiveService.resolveCdTarget(normalizedTarget);
 
         await ctx.auditLogger.log(
           'INFO',
           {
             main: 'cd',
-            args: [target],
+            args: [normalizedTarget],
             source: 'u',
           },
           `Open archive slot ${resolved.vault.id}/${resolved.archiveId}`,

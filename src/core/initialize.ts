@@ -31,10 +31,12 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
   endMarker: '# <<< archiver arv wrapper <<<',
   functionPattern: /(^|\n)\s*(function\s+)?arv\s*(\(\))?\s*\{/m,
   body: `arv() {
-  local line target status
+  local line target status go_back
   while IFS= read -r line; do
     if [[ "$line" == *__ARCHIVER_CD__:* ]]; then
       target="\${line##*__ARCHIVER_CD__:}"
+    elif [[ "$line" == __ARCHIVER_CD_BACK__ ]]; then
+      go_back="1"
     elif [[ "$line" == __ARCHIVER_STATUS__:* ]]; then
       status="\${line#__ARCHIVER_STATUS__:}"
     else
@@ -47,7 +49,16 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
 
   status="\${status:-1}"
   if [[ -n "$target" ]]; then
+    export ARV_PREV_CWD="$PWD"
     cd -- "$target" || return $?
+  elif [[ "$go_back" == "1" ]]; then
+    if [[ -z "\${ARV_PREV_CWD:-}" ]]; then
+      printf '%s\\n' 'No previous arv cd directory.'
+      return 1
+    fi
+    local previous="$ARV_PREV_CWD"
+    export ARV_PREV_CWD="$PWD"
+    cd -- "$previous" || return $?
   fi
   return $status
 }`,
@@ -58,22 +69,41 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
   endMarker: '# <<< archiver arv wrapper <<<',
   functionPattern: /(^|\n)\s*function\s+arv\b/m,
   body: `function arv
-    set -l tmp (mktemp)
+    set -l target_tmp (mktemp)
+    set -l back_tmp (mktemp)
     ARV_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
         if string match -q "__ARCHIVER_CD__:*" -- $line
-            echo (string replace "__ARCHIVER_CD__:" "" -- $line) > $tmp
+            echo (string replace "__ARCHIVER_CD__:" "" -- $line) > $target_tmp
+        else if test "$line" = "__ARCHIVER_CD_BACK__"
+            echo "1" > $back_tmp
         else
             echo $line
         end
     end
     set -l status $pipestatus[1]
 
-    if test -s $tmp
-        set -l target (cat $tmp)
-        cd -- $target; or return $status
+    if test -s $target_tmp
+        set -l target (cat $target_tmp)
+        set -gx ARV_PREV_CWD $PWD
+        cd -- $target; or begin
+            rm -f $target_tmp $back_tmp
+            return $status
+        end
+    else if test -s $back_tmp
+        if not set -q ARV_PREV_CWD
+            echo "No previous arv cd directory."
+            rm -f $target_tmp $back_tmp
+            return 1
+        end
+        set -l previous $ARV_PREV_CWD
+        set -gx ARV_PREV_CWD $PWD
+        cd -- $previous; or begin
+            rm -f $target_tmp $back_tmp
+            return $status
+        end
     end
 
-    rm -f $tmp
+    rm -f $target_tmp $back_tmp
     return $status
 end`,
 };
@@ -89,6 +119,7 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     )
 
     $target = $null
+    $goBack = $false
     $status = 1
     $oldForce = $env:ARV_FORCE_INTERACTIVE
     $env:ARV_FORCE_INTERACTIVE = "1"
@@ -98,6 +129,8 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
         & $app.Source @argv | ForEach-Object {
             if ($_ -like "__ARCHIVER_CD__:*") {
                 $target = $_.Substring("__ARCHIVER_CD__:".Length)
+            } elseif ($_ -eq "__ARCHIVER_CD_BACK__") {
+                $goBack = $true
             } else {
                 Write-Output $_
             }
@@ -112,7 +145,17 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
     }
 
     if ($target) {
+        $env:ARV_PREV_CWD = (Get-Location).Path
         Set-Location -Path $target
+    } elseif ($goBack) {
+        if (-not $env:ARV_PREV_CWD) {
+            Write-Output "No previous arv cd directory."
+            $global:LASTEXITCODE = 1
+            return
+        }
+        $previous = $env:ARV_PREV_CWD
+        $env:ARV_PREV_CWD = (Get-Location).Path
+        Set-Location -Path $previous
     }
 
     $global:LASTEXITCODE = $status
@@ -144,10 +187,22 @@ function renderManagedBlock(template: ShellWrapperTemplate): string {
   return `${template.startMarker}\n${template.body}\n${template.endMarker}`;
 }
 
-function hasManagedBlock(content: string, template: ShellWrapperTemplate): boolean {
+function findManagedBlockRange(
+  content: string,
+  template: ShellWrapperTemplate,
+): { start: number; end: number } | undefined {
   const start = content.indexOf(template.startMarker);
-  const end = content.indexOf(template.endMarker);
-  return start !== -1 && end !== -1 && end > start;
+  if (start === -1) {
+    return undefined;
+  }
+  const endStart = content.indexOf(template.endMarker, start + template.startMarker.length);
+  if (endStart === -1 || endStart <= start) {
+    return undefined;
+  }
+  return {
+    start,
+    end: endStart + template.endMarker.length,
+  };
 }
 
 function appendManagedBlock(content: string, template: ShellWrapperTemplate): string {
@@ -174,7 +229,20 @@ async function ensureManagedFunction(filePath: string, template: ShellWrapperTem
   await ensureFile(filePath);
   const content = await fs.readFile(filePath, 'utf8');
 
-  if (hasManagedBlock(content, template) || template.functionPattern.test(content)) {
+  const managedRange = findManagedBlockRange(content, template);
+  if (managedRange) {
+    const currentBlock = content.slice(managedRange.start, managedRange.end);
+    const latestBlock = renderManagedBlock(template);
+    if (currentBlock === latestBlock) {
+      return false;
+    }
+
+    const updated = `${content.slice(0, managedRange.start)}${latestBlock}${content.slice(managedRange.end)}`;
+    await fs.writeFile(filePath, withTrailingNewline(updated), 'utf8');
+    return true;
+  }
+
+  if (template.functionPattern.test(content)) {
     return false;
   }
 

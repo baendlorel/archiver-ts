@@ -22,6 +22,10 @@ interface Keypress {
 }
 
 const LIST_ACTIONS: ListAction[] = ['enter', 'restore'];
+const ACTION_LABELS: Record<ListAction, string> = {
+  enter: 'Enter slot',
+  restore: 'Retrieve',
+};
 
 export function canRunInteractiveList(): boolean {
   if (process.stdin.isTTY && process.stdout.isTTY) {
@@ -37,14 +41,17 @@ export function isActionAvailable(entry: InteractiveListEntry, action: ListActio
   return false;
 }
 
-function renderActionLabel(label: string, selected: boolean, disabled: boolean): string {
+function renderActionLabel(action: ListAction, selected: boolean, disabled: boolean): string {
+  const label = ACTION_LABELS[action];
+  const marker = disabled ? 'x' : selected ? '>' : ' ';
+  const content = `${marker} ${label}`;
   if (disabled) {
-    return chalk.dim(`[${label}]`);
+    return chalk.dim(`[${content}]`);
   }
   if (selected) {
-    return chalk.black.bgGreen(` ${label} `);
+    return chalk.black.bgGreen(` [${content}] `);
   }
-  return chalk.green(label);
+  return chalk.green(`[${content}]`);
 }
 
 function moveAction(current: ListAction, direction: 'left' | 'right'): ListAction {
@@ -81,7 +88,7 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   lines.push(chalk.bold('arv list interactive'));
   lines.push(chalk.dim('Up/Down choose entry  Left/Right choose action  Enter confirm  q/Esc cancel'));
   lines.push(
-    `Action: ${renderActionLabel('Enter slot', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('Restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
+    `Action: ${renderActionLabel('enter', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
   );
   lines.push(note ? chalk.yellow(note) : chalk.dim(''));
   lines.push('');

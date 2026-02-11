@@ -38,6 +38,8 @@ describe('shell wrapper initialize', () => {
     expect(content).toContain('# >>> archiver arv wrapper >>>');
     expect(content).toContain('arv() {');
     expect(content).toContain('command arv "$@"');
+    expect(content).toContain('__ARCHIVER_CD_BACK__');
+    expect(content).toContain('ARV_PREV_CWD');
   });
 
   it('does not duplicate managed wrapper block and skips second install', async () => {
@@ -58,6 +60,35 @@ describe('shell wrapper initialize', () => {
     expect(first.installed).toBe(true);
     expect(second.installed).toBe(false);
     const content = await fs.readFile(path.join(homeDir, '.zshrc'), 'utf8');
+    const markerCount = (content.match(/# >>> archiver arv wrapper >>>/g) ?? []).length;
+    expect(markerCount).toBe(1);
+  });
+
+  it('updates existing managed wrapper block to latest template', async () => {
+    const homeDir = await makeHome();
+    const rcPath = path.join(homeDir, '.bashrc');
+    await fs.writeFile(
+      rcPath,
+      `# >>> archiver arv wrapper >>>
+arv() {
+  echo "legacy wrapper"
+}
+# <<< archiver arv wrapper <<<
+`,
+      'utf8',
+    );
+
+    const result = await ensureArvShellWrapper({
+      homeDir,
+      shellPath: '/bin/bash',
+      stdinIsTTY: true,
+      env: {},
+    });
+
+    expect(result.installed).toBe(true);
+    const content = await fs.readFile(rcPath, 'utf8');
+    expect(content).toContain('__ARCHIVER_CD_BACK__');
+    expect(content).not.toContain('legacy wrapper');
     const markerCount = (content.match(/# >>> archiver arv wrapper >>>/g) ?? []).length;
     expect(markerCount).toBe(1);
   });
@@ -102,6 +133,8 @@ arv() {
     const fishFunction = await fs.readFile(path.join(homeDir, '.config', 'fish', 'functions', 'arv.fish'), 'utf8');
     expect(fishFunction).toContain('function arv');
     expect(fishFunction).toContain('__ARCHIVER_CD__:');
+    expect(fishFunction).toContain('__ARCHIVER_CD_BACK__');
+    expect(fishFunction).toContain('ARV_PREV_CWD');
   });
 
   it('creates powershell profile wrapper when missing', async () => {
@@ -126,5 +159,7 @@ arv() {
     const profileContent = await fs.readFile(absoluteProfilePath, 'utf8');
     expect(profileContent).toContain('function arv');
     expect(profileContent).toContain('__ARCHIVER_CD__:');
+    expect(profileContent).toContain('__ARCHIVER_CD_BACK__');
+    expect(profileContent).toContain('ARV_PREV_CWD');
   });
 });
