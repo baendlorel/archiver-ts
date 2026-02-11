@@ -136,7 +136,18 @@ Aliases:
 - `q` / `Esc`: cancel
 - Use `--no-interactive` to force plain-table output
 
-To make `Enter slot` switch your current shell directory, add this wrapper in `~/.bashrc` or `~/.zshrc`:
+`arv` will auto-check shell integration on interactive startup and inject wrapper code if needed:
+
+- `bash`: `~/.bashrc` (fallback: `~/.bash_profile`, `~/.profile`)
+- `zsh`: `~/.zshrc`
+- `fish`: `~/.config/fish/functions/arv.fish`
+- `powershell` / `pwsh`: `~/.config/powershell/Microsoft.PowerShell_profile.ps1` (Windows uses `~/Documents/...`)
+
+When wrapper code is installed for the first time, `arv` exits immediately and prints reload guidance (reload profile or reopen terminal), then run your command again.
+
+Disable auto injection with `ARV_DISABLE_SHELL_INIT=1`.
+
+Manual wrapper example for `bash` / `zsh`:
 
 ```bash
 arv() {

@@ -96,4 +96,5 @@ describe('cli e2e', () => {
 
     expect(output.trim()).toBe(`__ARCHIVER_CD__:${path.join(projectDir, '.archiver', 'vaults', '0', '1')}`);
   });
+
 });

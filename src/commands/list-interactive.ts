@@ -128,11 +128,13 @@ export async function pickInteractiveListAction(
 
   readline.emitKeypressEvents(input);
   input.setRawMode(true);
+  input.resume();
 
   return new Promise<InteractiveListSelection | null>((resolve) => {
     const finalize = (selection: InteractiveListSelection | null): void => {
       input.off('keypress', onKeypress);
       input.setRawMode(false);
+      input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h');
       resolve(selection);
     };
