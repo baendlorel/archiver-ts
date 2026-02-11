@@ -1,7 +1,9 @@
 import type { ArchiverConfig, AutoIncrVars, Vault } from '../global.js';
-import { DEFAULT_AUTO_INCR_JSONC_RAW, DEFAULT_CONFIG_JSONC_RAW } from '../default-files/index.js';
 import { parseJsoncText } from '../utils/json.js';
 import { VaultStatus } from './enums.js';
+
+import DEFAULT_CONFIG from '../default-files/config.jsonc?raw';
+import DEFAULT_AUTO_INCR from '../default-files/auto-incr.jsonc?raw';
 
 export namespace Defaults {
   export const VaultId = 0;
@@ -15,11 +17,8 @@ export namespace Defaults {
     return fallback;
   };
 
-  const parsedConfig = parseJsoncText<Partial<ArchiverConfig>>(DEFAULT_CONFIG_JSONC_RAW, 'default-files/config.jsonc');
-  const parsedAutoIncr = parseJsoncText<Partial<AutoIncrVars>>(
-    DEFAULT_AUTO_INCR_JSONC_RAW,
-    'default-files/auto-incr.jsonc',
-  );
+  const parsedConfig = parseJsoncText<Partial<ArchiverConfig>>(DEFAULT_CONFIG, 'default-files/config.jsonc');
+  const parsedAutoIncr = parseJsoncText<Partial<AutoIncrVars>>(DEFAULT_AUTO_INCR, 'default-files/auto-incr.jsonc');
 
   export const Config: ArchiverConfig = {
     currentVaultId: toNonNegativeInt(parsedConfig.currentVaultId, VaultId),
