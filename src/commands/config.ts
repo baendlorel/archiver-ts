@@ -23,6 +23,7 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
             ['alias_map', JSON.stringify(current.aliasMap), 'Path alias map for display only'],
             ['vault_item_sep', current.vaultItemSeparator, 'Separator shown between vault and item'],
             ['style', current.style, 'Styled output: on or off'],
+            ['no_command_action', current.noCommandAction, 'Action when running arv without subcommand'],
           ];
           console.log(renderTable(['Key', 'Value', 'Comment'], rows));
         } else {
@@ -139,6 +140,28 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
         );
 
         await maybeAutoUpdateCheck(ctx);
+      }),
+    );
+
+  config
+    .command('no-command-action')
+    .description('Set action when running arv without any subcommand')
+    .argument('<action>', 'help|list')
+    .action((action: string) =>
+      runAction(async () => {
+        const normalized = action.toLowerCase();
+        if (normalized !== 'help' && normalized !== 'list') {
+          throw new Error('Action must be help or list.');
+        }
+
+        await ctx.configService.setNoCommandAction(normalized);
+        success(`No-command action is now ${normalized}.`);
+
+        await ctx.auditLogger.log(
+          'INFO',
+          { main: 'config', sub: 'no-command-action', args: [normalized], source: 'u' },
+          `Set no_command_action=${normalized}`,
+        );
       }),
     );
 }

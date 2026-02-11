@@ -27,6 +27,7 @@ export interface ArchiverConfig {
   aliasMap: Record<string, string>;
   vaultItemSeparator: string;
   style: 'on' | 'off';
+  noCommandAction: 'help' | 'list' | 'unknown';
 }
 
 export interface AutoIncrVars {

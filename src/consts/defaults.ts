@@ -13,6 +13,7 @@ export namespace Defaults {
     aliasMap: {},
     vaultItemSeparator: '::',
     style: 'on',
+    noCommandAction: 'unknown',
   };
 
   export const AutoIncr: AutoIncrVars = {

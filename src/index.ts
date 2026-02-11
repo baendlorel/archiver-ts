@@ -24,14 +24,20 @@ async function main(): Promise<void> {
   }
 
   const context = await createCommandContext();
-  applyStyleFromConfig(await context.configService.getConfig());
+  const config = await context.configService.getConfig();
+  applyStyleFromConfig(config);
   const program = createProgram(context);
 
-  await program.parseAsync(process.argv);
-
   if (process.argv.length <= 2) {
+    if (config.noCommandAction === 'list') {
+      await program.parseAsync([...process.argv, 'list']);
+      return;
+    }
     program.outputHelp();
+    return;
   }
+
+  await program.parseAsync(process.argv);
 }
 
 main().catch((e) => {

@@ -111,4 +111,32 @@ describe('cli e2e', () => {
     expect(output).toBe('');
   });
 
+  it('shows help text when no-command-action is help (default)', () => {
+    const projectDir = mkTempDir('archiver-e2e-no-command-help-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    const output = run([], { cwd: projectDir, env });
+    expect(output).toContain('Usage: archiver');
+  });
+
+  it('runs list when no-command-action is list', () => {
+    const projectDir = mkTempDir('archiver-e2e-no-command-list-');
+    const filePath = path.join(projectDir, 'no-command.txt');
+    fs.writeFileSync(filePath, 'no command data\n', 'utf8');
+
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['put', filePath], { cwd: projectDir, env });
+    run(['config', 'no-command-action', 'list'], { cwd: projectDir, env });
+
+    const output = stripAnsi(run([], { cwd: projectDir, env }));
+    expect(output).toContain('[0001] A no-command.txt');
+  });
+
 });

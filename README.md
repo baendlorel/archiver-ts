@@ -44,6 +44,7 @@ arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
 arv config style <on|off>
+arv config no-command-action <help|list>
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
@@ -82,6 +83,20 @@ Use project-prefixed env overrides when needed:
 ```bash
 ARCHIVER_DISABLE_SHELL_INIT=1 arv <command>
 ARCHIVER_STYLE=off arv list
+```
+
+## No-command behavior
+
+When you run `arv` without any subcommand, behavior is controlled by config:
+
+- `help` (default): show help text
+- `list`: run `arv list`
+
+Set it with:
+
+```bash
+arv config no-command-action help
+arv config no-command-action list
 ```
 
 ## Useful aliases

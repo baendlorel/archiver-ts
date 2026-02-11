@@ -30,6 +30,13 @@ export class ConfigService {
     return config;
   }
 
+  async setNoCommandAction(value: 'help' | 'list'): Promise<ArchiverConfig> {
+    const config = await this.context.loadConfig();
+    config.noCommandAction = value;
+    await this.context.saveConfig(config);
+    return config;
+  }
+
   async setCurrentVault(vaultId: number): Promise<ArchiverConfig> {
     const config = await this.context.loadConfig();
     config.currentVaultId = vaultId;
