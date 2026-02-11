@@ -1,12 +1,15 @@
 {
   "name": "archiver-ts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A TypeScript rewrite of Archiver CLI",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "arv": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "lines": "node .scripts/lines.js",
     "dev": "tsx src/index.ts",
