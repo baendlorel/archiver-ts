@@ -103,6 +103,12 @@ arv config no-command-action help
 arv config no-command-action list
 ```
 
+## JSONC defaults and comments
+
+- `config.jsonc` and `auto-incr.jsonc` are initialized from built-in JSONC templates in `src/default-files`.
+- These templates are embedded as raw text during build, so release bundle still ships as a single JS file.
+- Saving config/auto-incr updates values while preserving existing JSONC comments.
+
 ## Useful aliases
 
 - `list`: `l`, `ls`

@@ -11,6 +11,8 @@ import alias from '@rollup/plugin-alias';
 import terser from '@rollup/plugin-terser';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const defaultConfigJsoncRaw = readFileSync(new URL('./src/default-files/config.jsonc', import.meta.url), 'utf8');
+const defaultAutoIncrJsoncRaw = readFileSync(new URL('./src/default-files/auto-incr.jsonc', import.meta.url), 'utf8');
 const deps = Object.keys(pkg.dependencies ?? {});
 const builtins = new Set([...builtinModules, ...builtinModules.map((name) => `node:${name}`)]);
 
@@ -36,6 +38,8 @@ export default [
         values: {
           'process.env.NODE_ENV': JSON.stringify(`production`),
           __VERSION__: JSON.stringify(pkg.version),
+          __ARCHIVER_BUNDLED_CONFIG_JSONC_RAW__: JSON.stringify(defaultConfigJsoncRaw),
+          __ARCHIVER_BUNDLED_AUTO_INCR_JSONC_RAW__: JSON.stringify(defaultAutoIncrJsoncRaw),
         },
       }),
       resolve({ preferBuiltins: true }),

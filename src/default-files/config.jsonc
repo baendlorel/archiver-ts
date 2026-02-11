@@ -23,5 +23,5 @@
 
   // 配置只输入arv，没有子命令的时候的行为
   // Configures the behavior when only "arv" is entered without a subcommand
-  "noCommandAction": "unknown", // "unknown" | "help" | "default"
+  "noCommandAction": "unknown", // "unknown" | "help" | "list"
 }
