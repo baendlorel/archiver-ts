@@ -91,7 +91,6 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   const end = Math.min(start + maxListRows, entries.length);
 
   const lines: string[] = [];
-  lines.push(chalk.bold.green('arv list interactive'));
   lines.push(
     `${renderKeyHint('Up/Down')} choose entry  ${renderKeyHint('Left/Right')} choose action  ${renderKeyHint('Enter')} confirm  ${renderKeyHint('q/Esc')} cancel`,
   );
