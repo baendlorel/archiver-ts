@@ -1,219 +1,82 @@
-# archiver-ts
+# archiver
 
-A TypeScript rebuild of the `archiver` CLI.
+`archiver` (binary: `arv`) archives files/folders into a managed vault directory and lets you restore them later.
 
-`archiver-ts` moves files/directories out of your workspace into `~/.archiver` without compression and without copy/delete workflows. It keeps metadata in JSON/JSONL files and records audit logs for every operation.
+It uses filesystem move/rename semantics (no compression), keeps metadata in `.archiver`, and records audit logs.
 
-Runtime root behavior:
+## Quick start
 
-- Development runtime (running from `src`, e.g. `npm run dev`): stores data in `<current-working-directory>/.archiver-dev`
-- Production runtime (running built CLI): stores data in `~/.archiver`
-- Override for both modes: set `ARCHIVER_ROOT=/custom/path`
-- Force runtime mode: set `ARCHIVER_RUNTIME=development|production`
+Install dependencies and build:
 
-## Features
+```bash
+npm install -g archiver-ts
+```
 
-- `put <items...>`: archive files/folders into the current or specified vault
-- `restore <ids...>`: restore archived items back to original paths
-- `move <ids...> --to <vault>`: move archived objects between vaults
-- `cd <id | vault/id>`: jump to an archive slot folder for inspection
-- `vault`: manage vaults (`use`, `create`, `remove`, `recover`, `rename`, `list`)
-- `list`: query archive records by state and vault
-- `log`: inspect operation logs by range or log id
-- `config`: update alias map, update checks, and UI separator
-- `update`: check latest release from GitHub Releases API
-- `check`: run consistency validation for metadata and filesystem objects
+## Common commands
 
-## Compatibility Notes
+Archive / restore:
 
-The storage layout is intentionally compatible with the original behavior described in `TS_REWRITE_FEATURE_SUMMARY.md`:
+```bash
+arv put <items...> [-v|--vault <vault>] [-m|--message <msg>] [-r|--remark <remark>]
+arv restore <ids...>
+arv move <ids...> --to <vault>
+arv cd <archive-id | vault/archive-id> [--print]
+```
+
+Vault management:
+
+```bash
+arv vault use <name-or-id>
+arv vault create <name> [-r|--remark <remark>] [-a|--activate]
+arv vault remove <name-or-id>
+arv vault recover <name-or-id>
+arv vault rename <old> <new>
+arv vault list [-a|--all]
+```
+
+Query and maintenance:
+
+```bash
+arv list [--restored] [--all] [--vault <vault>] [--no-interactive]
+arv log [YYYYMM | YYYYMM-YYYYMM | all]
+arv log --id <log-id>
+arv config list [-c|--comment]
+arv config alias <alias=path> [-r|--remove]
+arv config update-check <on|off>
+arv config vault-item-sep <separator>
+arv update [--repo <owner/repo>] [--install]
+arv check
+```
+
+## List output behavior
+
+`arv list` plain mode prints names only (one per line):
+
+- default vault (`@`, id `0`): show item name only
+- non-default vault: show `<vaultName>(<vaultId>)<sep><item>`
+- `<sep>` comes from `config vault-item-sep` (default `::`)
+
+Example:
 
 ```text
-~/.archiver/
-  logs/
-    <year>.jsonl
-  core/
-    config.jsonc
-    auto-incr.jsonc
-    list.jsonl
-    vaults.jsonl
-  vaults/
-    <vaultId>/
-      <archiveId>/
-        <originalName>
+todo.txt
+work(1)::report.pdf
 ```
 
-Important compatibility points:
+## Shell wrapper note
 
-- Uses filesystem rename/move (no compression, no copy/delete fallback).
-- Supports only slot-based storage (`<archiveId>/<originalName>`); legacy direct-object layout is not handled.
-- Keeps compact field names in JSON/JSONL (`aat`, `st`, `is_d`, `vid`, `id`, etc.).
-- Keeps default vault `@` with id `0` as a runtime-injected protected vault.
-- Maintains auto increment behavior (`next` = increment first, then return).
-- Records operation source and related ids in logs.
+On interactive terminal startup, `arv` may auto-install a shell wrapper function so `cd` can move your shell to archive slot paths.
 
-## Install
+Disable this behavior if needed:
 
 ```bash
-npm install
-npm run build
+ARV_DISABLE_SHELL_INIT=1 arv <command>
 ```
 
-Run locally:
-
-```bash
-npm run dev -- --help
-```
-
-Or after build:
-
-```bash
-node dist/index.js --help
-```
-
-## Command Reference
-
-### Archive / Restore
-
-```bash
-archiver put <items...> [-v|--vault <vault>] [-m|--message <msg>] [-r|--remark <remark>]
-archiver restore <ids...>
-archiver move <ids...> --to <vault>
-archiver cd <archive-id | vault/archive-id> [--print]
-```
-
-Aliases:
-
-- `put`: `p`
-- `restore`: `r`, `rst`
-- `move`: `m`, `mv`, `mov`
-- `cd`: (no short alias)
-
-`cd` behavior:
-
-- Outputs `__ARCHIVER_CD__:<slot-path>` and exits (no subshell).
-- With `--print`, prints the slot path only.
-
-### Vault Management
-
-```bash
-archiver vault use <name-or-id>
-archiver vault create <name> [-r|--remark <remark>] [-a|--activate]
-archiver vault remove <name-or-id>
-archiver vault recover <name-or-id>
-archiver vault rename <old> <new>
-archiver vault list [-a|--all]
-```
-
-Aliases:
-
-- `vault`: `v`, `vlt`
-
-### Query & Logs
-
-```bash
-archiver list [--restored] [--all] [--vault <vault>] [--no-interactive]
-archiver log [range]
-archiver log --id <log-id>
-```
-
-`range` supports:
-
-- `YYYYMM`
-- `YYYYMM-YYYYMM`
-- `all`, `*`, `a`
-
-Aliases:
+## Useful aliases
 
 - `list`: `l`, `ls`
 - `log`: `lg`
-
-`list` interactive mode (TTY terminals):
-
-- `Up` / `Down`: select archive entry
-- `Left` / `Right`: choose action (`Enter slot` / `Restore`)
-- `Enter`: confirm selected action
-- `q` / `Esc`: cancel
-- Use `--no-interactive` to force plain-table output
-
-`arv` will auto-check shell integration on interactive startup and inject wrapper code if needed:
-
-- `bash`: `~/.bashrc` (fallback: `~/.bash_profile`, `~/.profile`)
-- `zsh`: `~/.zshrc`
-- `fish`: `~/.config/fish/functions/arv.fish`
-- `powershell` / `pwsh`: `~/.config/powershell/Microsoft.PowerShell_profile.ps1` (Windows uses `~/Documents/...`)
-
-When wrapper code is installed for the first time, `arv` exits immediately and prints reload guidance (reload profile or reopen terminal), then run your command again.
-
-Disable auto injection with `ARV_DISABLE_SHELL_INIT=1`.
-
-Manual wrapper example for `bash` / `zsh`:
-
-```bash
-arv() {
-  local line target status
-  while IFS= read -r line; do
-    if [[ "$line" == *__ARCHIVER_CD__:* ]]; then
-      target="${line##*__ARCHIVER_CD__:}"
-    elif [[ "$line" == __ARCHIVER_STATUS__:* ]]; then
-      status="${line#__ARCHIVER_STATUS__:}"
-    else
-      printf '%s\n' "$line"
-    fi
-  done < <(
-    ARV_FORCE_INTERACTIVE=1 command arv "$@"
-    printf '__ARCHIVER_STATUS__:%s\n' "$?"
-  )
-
-  status="${status:-1}"
-  if [[ -n "$target" ]]; then
-    cd -- "$target" || return $?
-  fi
-  return $status
-}
-```
-
-### Config
-
-```bash
-archiver config list [-c|--comment]
-archiver config alias <alias=path> [-r|--remove]
-archiver config update-check <on|off>
-archiver config vault-item-sep <separator>
-```
-
-Aliases:
-
 - `config`: `c`, `cfg`
-
-### Maintenance
-
-```bash
-archiver update [--repo <owner/repo>] [--install]
-archiver check
-```
-
-Aliases:
-
 - `update`: `u`, `upd`
 - `check`: `chk`
-
-## Update Checks
-
-Automatic update checks are enabled by default (`config.update_check = on`) and only run for non-display workflows. Display-only commands (`update`, `list`, `log`, `check`) do not trigger auto checks unless `list` executes a restore action in interactive mode.
-
-Set `ARCHIVER_GITHUB_REPO` to control release source for update checks.
-
-## Development
-
-```bash
-npm run check
-npm run build
-```
-
-The codebase is split into:
-
-- `src/core`: storage paths and persistence context
-- `src/services`: business logic (archive, vault, logs, check, update)
-- `src/utils`: parsing, JSONL helpers, prompts, terminal rendering
-- `src/index.ts`: CLI wiring and command handlers

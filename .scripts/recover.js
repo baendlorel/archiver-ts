@@ -55,7 +55,7 @@ function readJsonl(filePath) {
       try {
         return JSON.parse(line);
       } catch (error) {
-        throw new Error(`Invalid JSON at ${filePath}:${index + 1}: ${(error).message}`);
+        throw new Error(`Invalid JSON at ${filePath}:${index + 1}: ${error.message}`);
       }
     });
 }
@@ -79,8 +79,7 @@ function main() {
   const apply = hasFlag('--apply');
   const force = hasFlag('--force');
 
-  const rootFromArg = readOption('--root');
-  const rootPath = path.resolve(rootFromArg ?? process.env.ARCHIVER_RUST_ROOT ?? path.join(os.homedir(), '.archiver-rust'));
+  const rootPath = path.join(os.homedir(), '.archiver-rust');
 
   const rows = readListTable(rootPath);
   const entries = rows
@@ -139,7 +138,7 @@ function main() {
       restored += 1;
     } catch (error) {
       failed += 1;
-      console.error(`[FAIL][${entry.id}] ${(error).message}`);
+      console.error(`[FAIL][${entry.id}] ${error.message}`);
     }
   }
 
