@@ -1,5 +1,4 @@
 import type { Command } from 'commander';
-import { Defaults } from '../consts/index.js';
 import type { CommandContext } from '../services/context.js';
 import { parseLogRange } from '../utils/parse.js';
 import { info, renderTable, styleArchiveStatus, styleLogLevel, styleVaultStatus } from '../utils/terminal.js';
@@ -79,7 +78,7 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
         }
 
         const parsedRange = parseLogRange(range);
-        const logs = await ctx.logService.getLogs(parsedRange, Defaults.LogTail);
+        const logs = await ctx.logService.getLogs(parsedRange);
 
         if (logs.length === 0) {
           info('No logs found.');

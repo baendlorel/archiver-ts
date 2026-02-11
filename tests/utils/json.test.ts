@@ -7,7 +7,7 @@ import {
   parseJsoncText,
   readJsoncFile,
   writeJsoncFileKeepingComments,
-} from '../../src/utils/json.js';
+} from '../../src/utils/jsonc.js';
 
 const tempDirs: string[] = [];
 

@@ -49,6 +49,8 @@ arv update [--repo <owner/repo>] [--install]
 arv check
 ```
 
+`arv log` without range now prints all records by default (grep-friendly).
+
 ## List output behavior
 
 `arv list` default non-interactive output is one line per entry:
@@ -105,8 +107,8 @@ arv config no-command-action list
 
 ## JSONC defaults and comments
 
-- `config.jsonc` and `auto-incr.jsonc` are initialized from built-in JSONC templates in `src/default-files`.
-- These templates are embedded as raw text during build, so release bundle still ships as a single JS file.
+- `config.jsonc` and `auto-incr.jsonc` are initialized from `public/config.default.jsonc` and `public/auto-incr.default.jsonc`.
+- Build keeps these default JSONC files and copies them into `dist/` as-is.
 - Saving config/auto-incr updates values while preserving existing JSONC comments.
 
 ## Useful aliases

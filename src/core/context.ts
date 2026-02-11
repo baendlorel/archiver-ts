@@ -2,18 +2,18 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.js';
 import { Defaults, ArchiveStatus, VaultStatus, Paths } from '../consts/index.js';
+import { DEFAULT_AUTO_INCR_JSONC_RAW, DEFAULT_CONFIG_JSONC_RAW } from '../default-files/index.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
 import {
-  appendJsonLine,
   ensureJsoncFileWithTemplate,
-  readJsonLinesFile,
   readJsoncFile,
-  writeJsonLinesFile,
   writeJsoncFileKeepingComments,
+} from '../utils/jsonc.js';
+import {
+  appendJsonLine,
+  readJsonLinesFile,
+  writeJsonLinesFile,
 } from '../utils/json.js';
-
-import DEFAULT_CONFIG from '../default-files/config.jsonc?raw';
-import DEFAULT_AUTO_INCR from '../default-files/auto-incr.jsonc?raw';
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
   return {
@@ -81,8 +81,8 @@ export class ArchiverContext {
     }
     await ensureDir(this.vaultDir(Defaults.Vault.id));
 
-    await ensureJsoncFileWithTemplate(Paths.File.config, DEFAULT_CONFIG);
-    await ensureJsoncFileWithTemplate(Paths.File.autoIncr, DEFAULT_AUTO_INCR);
+    await ensureJsoncFileWithTemplate(Paths.File.config, DEFAULT_CONFIG_JSONC_RAW);
+    await ensureJsoncFileWithTemplate(Paths.File.autoIncr, DEFAULT_AUTO_INCR_JSONC_RAW);
 
     await ensureFile(Paths.File.list);
     await ensureFile(Paths.File.vaults);
@@ -110,7 +110,7 @@ export class ArchiverContext {
 
   async saveConfig(config: ArchiverConfig): Promise<void> {
     this.configCache = sanitizeConfig(config);
-    await writeJsoncFileKeepingComments(Paths.File.config, this.configCache, DEFAULT_CONFIG);
+    await writeJsoncFileKeepingComments(Paths.File.config, this.configCache, DEFAULT_CONFIG_JSONC_RAW);
   }
 
   async loadAutoIncr(forceRefresh: boolean = false): Promise<AutoIncrVars> {
@@ -126,7 +126,7 @@ export class ArchiverContext {
 
   async saveAutoIncr(vars: AutoIncrVars): Promise<void> {
     this.autoIncrCache = sanitizeAutoIncr(vars);
-    await writeJsoncFileKeepingComments(Paths.File.autoIncr, this.autoIncrCache, DEFAULT_AUTO_INCR);
+    await writeJsoncFileKeepingComments(Paths.File.autoIncr, this.autoIncrCache, DEFAULT_AUTO_INCR_JSONC_RAW);
   }
 
   async nextAutoIncrement(key: keyof AutoIncrVars): Promise<number> {

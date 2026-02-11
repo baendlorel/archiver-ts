@@ -1,7 +1,7 @@
 import type { ArchiverContext } from '../core/context.js';
 import type { ListEntry, LogEntry, Vault } from '../global.js';
 import type { LogRange } from '../utils/parse.js';
-import { Defaults, Paths } from '../consts/index.js';
+import { Paths } from '../consts/index.js';
 import { readJsonLinesFile } from '../utils/json.js';
 
 function normalizeLogEntry(raw: LogEntry): LogEntry {
@@ -31,12 +31,8 @@ export interface LogDetail {
 export class LogService {
   constructor(private readonly context: ArchiverContext) {}
 
-  async getLogs(range: LogRange, tailCount: number = Defaults.LogTail): Promise<LogEntry[]> {
+  async getLogs(range: LogRange): Promise<LogEntry[]> {
     const allLogs = await this.loadAllLogs();
-
-    if (range.mode === 'tail') {
-      return allLogs.slice(-tailCount);
-    }
 
     if (range.mode === 'all') {
       return allLogs;

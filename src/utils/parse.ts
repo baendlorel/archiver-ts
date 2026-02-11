@@ -20,11 +20,11 @@ export function parseIdList(values: string[]): number[] {
   return ids;
 }
 
-export type LogRange = { mode: 'tail' } | { mode: 'all' } | { mode: 'month'; from: string; to: string };
+export type LogRange = { mode: 'all' } | { mode: 'month'; from: string; to: string };
 
 export function parseLogRange(range?: string): LogRange {
   if (!range) {
-    return { mode: 'tail' };
+    return { mode: 'all' };
   }
 
   if (['all', '*', 'a'].includes(range.toLowerCase())) {

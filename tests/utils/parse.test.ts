@@ -17,7 +17,7 @@ describe('parseIdList', () => {
 
 describe('parseLogRange', () => {
   it('parses default and all ranges', () => {
-    expect(parseLogRange()).toEqual({ mode: 'tail' });
+    expect(parseLogRange()).toEqual({ mode: 'all' });
     expect(parseLogRange('all')).toEqual({ mode: 'all' });
     expect(parseLogRange('*')).toEqual({ mode: 'all' });
   });

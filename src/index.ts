@@ -4,7 +4,7 @@ import { ensureArvShellWrapper } from './core/initialize.js';
 import type { CommandContext } from './services/context.js';
 import { createCommandContext } from './services/context.js';
 import { ask } from './utils/prompt.js';
-import { readJsoncFile } from './utils/json.js';
+import { readJsoncFile } from './utils/jsonc.js';
 import type { ArchiverConfig } from './global.js';
 import { applyStyleFromConfig } from './utils/style.js';
 import { error, info, success } from './utils/terminal.js';

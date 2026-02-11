@@ -18,9 +18,9 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "node .scripts/e2e.js",
-    "build": "node .scripts/build.js",
+    "build": "vite build",
     "arv": "node .scripts/build.js --arv",
-    "pub": "node .scripts/publish.js"
+    "pub": "vite build && npm publish --access public"
   },
   "keywords": [
     "archiver",
