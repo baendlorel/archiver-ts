@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import { Defaults } from '../consts/index.js';
 import type { CommandContext } from '../services/context.js';
 import { ask, confirm } from '../utils/prompt.js';
-import { info, renderTable, styleVaultStatus, success, warn } from '../utils/terminal.js';
+import { info, success, warn } from '../utils/terminal.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
 
 export function registerVaultCommands(program: Command, ctx: CommandContext): void {
@@ -188,25 +188,15 @@ export function registerVaultCommands(program: Command, ctx: CommandContext): vo
     .option('-a, --all', 'Show removed vaults')
     .action((options: { all?: boolean }) =>
       runAction(async () => {
-        const config = await ctx.configService.getConfig();
         const vaults = await ctx.vaultService.listVaults(Boolean(options.all));
 
-        const headers = ['ID', 'Name', 'Status', 'Created At', 'Remark', 'Current'];
-        const rows = vaults.map((entry) => [
-          String(entry.id),
-          entry.name,
-          styleVaultStatus(entry.status),
-          entry.createdAt,
-          entry.remark,
-          config.currentVaultId === entry.id ? '*' : '',
-        ]);
-
-        if (rows.length === 0) {
+        if (vaults.length === 0) {
           info('No vaults found.');
           return;
         }
 
-        console.log(renderTable(headers, rows));
+        const output = vaults.map((entry) => `${String(entry.id).padStart(3, ' ')}  ${entry.name}`).join('\n');
+        console.log(output);
       }),
     );
 }

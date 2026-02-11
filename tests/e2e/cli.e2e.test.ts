@@ -63,7 +63,7 @@ describe('cli e2e', () => {
     expect(cdOutput.trim()).toBe(path.join(customRoot, 'vaults', '0', '1'));
   });
 
-  it('prints names only for list in non-interactive mode', () => {
+  it('prints id and status for list in non-interactive mode', () => {
     const projectDir = mkTempDir('archiver-e2e-list-');
     const defaultFilePath = path.join(projectDir, 'list-file.txt');
     const vaultFilePath = path.join(projectDir, 'list-file-in-work.txt');
@@ -80,8 +80,8 @@ describe('cli e2e', () => {
     run(['put', '--vault', 'work', vaultFilePath], { cwd: projectDir, env });
 
     const output = run(['list'], { cwd: projectDir, env });
-    expect(output).toContain('list-file.txt');
-    expect(output).toContain('work(1)::list-file-in-work.txt');
+    expect(output).toContain('[0001] A list-file.txt');
+    expect(output).toContain('[0002] A work(1)::list-file-in-work.txt');
     expect(output).not.toContain('@(0)');
   });
 
@@ -99,6 +99,22 @@ describe('cli e2e', () => {
     const output = run(['cd', '1'], { cwd: projectDir, env });
 
     expect(output.trim()).toBe(`__ARCHIVER_CD__:${path.join(projectDir, '.archiver', 'vaults', '0', '1')}`);
+  });
+
+  it('prints vault list as id and name only', () => {
+    const projectDir = mkTempDir('archiver-e2e-vault-list-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    run(['vault', 'create', 'work'], { cwd: projectDir, env });
+
+    const output = run(['vault', 'list'], { cwd: projectDir, env });
+    expect(output).toContain('  0  @');
+    expect(output).toContain('  1  work');
+    expect(output).not.toContain('Valid');
+    expect(output).not.toContain('Created At');
   });
 
   it('supports cd - marker and print mode for previous directory', () => {

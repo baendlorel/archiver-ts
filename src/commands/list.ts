@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { ArchiveStatus, Defaults } from '../consts/index.js';
 import type { CommandContext } from '../services/context.js';
-import { error, info, success } from '../utils/terminal.js';
+import { error, info, styleArchiveStatus, success } from '../utils/terminal.js';
 import { emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
 import {
@@ -27,8 +27,17 @@ function formatListName(entry: DecoratedListEntry, vaultItemSeparator: string): 
   return `${entry.vaultName}${vaultItemSeparator}${entry.item}`;
 }
 
+function formatListId(id: number): string {
+  return String(id).padStart(4, '0');
+}
+
+function formatListLine(entry: DecoratedListEntry, vaultItemSeparator: string): string {
+  const statusText = styleArchiveStatus(entry.status === ArchiveStatus.Archived ? 'A' : 'R');
+  return `[${formatListId(entry.id)}] ${statusText} ${formatListName(entry, vaultItemSeparator)}`;
+}
+
 function renderList(entries: DecoratedListEntry[], vaultItemSeparator: string): string {
-  return entries.map((entry) => formatListName(entry, vaultItemSeparator)).join('\n');
+  return entries.map((entry) => formatListLine(entry, vaultItemSeparator)).join('\n');
 }
 
 function toInteractiveEntries(entries: DecoratedListEntry[], vaultItemSeparator: string): InteractiveListEntry[] {

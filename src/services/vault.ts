@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ListEntry, Vault } from '../global.js';
+import type { ArchiverContext } from '../core/context.js';
+import type { ConfigService } from './config.js';
 
 import { Defaults, Paths, ArchiveStatus, VaultStatus } from '../consts/index.js';
-import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { pathAccessible } from '../utils/fs.js';
-import { ConfigService } from './config.js';
 
 export interface RemoveVaultResult {
   vault: Vault;

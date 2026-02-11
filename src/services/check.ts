@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { CheckIssue, CheckReport, ListEntry, LogEntry, Vault } from '../global.js';
 import { Defaults, ArchiveStatus, CheckIssueLevel, VaultStatus, Paths } from '../consts/index.js';
-import { ArchiverContext } from '../core/context.js';
+import type { ArchiverContext } from '../core/context.js';
 import { listDirectories, pathAccessible, safeLstat } from '../utils/fs.js';
 import { readJsonLinesFile } from '../utils/json.js';
 

@@ -46,8 +46,7 @@ function sanitizeListEntry(raw: ListEntry): ListEntry {
 }
 
 function sanitizeVault(raw: Vault): Vault {
-  VaultStatus[raw.status as VaultStatus];
-  const validStatus = VaultStatus[raw.status as VaultStatus] ?? VaultStatus.Valid;
+  const validStatus = VaultStatus[raw.status] ?? VaultStatus.Valid;
   return {
     id: raw.id,
     name: raw.name ?? '',

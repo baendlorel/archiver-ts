@@ -93,7 +93,7 @@ Current data layout:
 
 - Archive/restore/move use filesystem rename operations.
 - Default vault is `@` (id `0`) and is protected.
-- `list` plain mode prints names only; default vault entries omit vault prefix.
+- `list` plain mode prints `[id] status name`; default vault entries omit vault prefix in the name part.
 - Audit logs are appended into a single file: `log.jsonl`.
 - Auto update check interval is 24h (`src/consts/update.ts`).
 - Shell wrapper install is best-effort and should not block command execution.
@@ -121,4 +121,3 @@ Useful test focus:
 - e2e CLI flow: `tests/e2e/cli.e2e.test.ts`
 - archive/vault workflow: `tests/services/archive-workflow.test.ts`
 - shell wrapper init: `tests/core/initialize.test.ts`
-

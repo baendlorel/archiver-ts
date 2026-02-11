@@ -2,13 +2,13 @@ import fs from 'node:fs/promises';
 import type { Stats } from 'node:fs';
 import path from 'node:path';
 import type { ListEntry, OperationSource, Vault } from '../global.js';
+import type { ArchiverContext } from '../core/context.js';
+import type { ConfigService } from './config.js';
+import type { AuditLogger } from './audit-logger.js';
 
 import { ArchiveStatus, Paths } from '../consts/index.js';
-import { ArchiverContext } from '../core/context.js';
 import { formatDateTime } from '../utils/date.js';
 import { isParentOrSamePath, isSubPath, pathAccessible, safeLstat, safeRealPath } from '../utils/fs.js';
-import { ConfigService } from './config.js';
-import { AuditLogger } from './audit-logger.js';
 
 interface PutPreparedItem {
   input: string;

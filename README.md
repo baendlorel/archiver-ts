@@ -51,17 +51,18 @@ arv check
 
 ## List output behavior
 
-`arv list` plain mode prints names only (one per line):
+`arv list` plain mode prints one entry per line:
 
-- default vault (`@`, id `0`): show item name only
-- non-default vault: show `<vaultName>(<vaultId>)<sep><item>`
+- format: `[<archiveId>] <A|R> <display-name>`
+- default vault (`@`, id `0`): `<display-name>` is item name only
+- non-default vault: `<display-name>` is `<vaultName>(<vaultId>)<sep><item>`
 - `<sep>` comes from `config vault-item-sep` (default `::`)
 
 Example:
 
 ```text
-todo.txt
-work(1)::report.pdf
+[0001] A todo.txt
+[0002] A work(1)::report.pdf
 ```
 
 ## Shell wrapper note

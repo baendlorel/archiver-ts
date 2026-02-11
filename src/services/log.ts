@@ -1,7 +1,7 @@
-import { Defaults, Paths } from '../consts/index.js';
-import { ArchiverContext } from '../core/context.js';
+import type { ArchiverContext } from '../core/context.js';
 import type { ListEntry, LogEntry, Vault } from '../global.js';
 import type { LogRange } from '../utils/parse.js';
+import { Defaults, Paths } from '../consts/index.js';
 import { readJsonLinesFile } from '../utils/json.js';
 
 function normalizeLogEntry(raw: LogEntry): LogEntry {

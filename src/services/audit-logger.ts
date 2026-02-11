@@ -1,6 +1,6 @@
-import { Paths } from '../consts/index.js';
-import { ArchiverContext } from '../core/context.js';
+import type { ArchiverContext } from '../core/context.js';
 import type { LogEntry, LogLevel, Operation } from '../global.js';
+import { Paths } from '../consts/index.js';
 import { formatDateTime } from '../utils/date.js';
 import { appendJsonLine } from '../utils/json.js';
 
