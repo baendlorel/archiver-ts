@@ -44,7 +44,7 @@ function applyObjectEdits(source: string, value: object): string {
   return ensureTrailingNewline(next);
 }
 
-export async function readJsoncFile<T>(filePath: string, fallback: T): Promise<T> {
+export async function readJsonc<T>(filePath: string, fallback: T): Promise<T> {
   const content = await readFileIfExists(filePath);
   if (!content || !content.trim()) {
     return fallback;
@@ -52,7 +52,7 @@ export async function readJsoncFile<T>(filePath: string, fallback: T): Promise<T
   return parseJsoncText<T>(content, filePath);
 }
 
-export async function ensureJsoncFileWithTemplate(filePath: string, templateRaw: string): Promise<void> {
+export async function ensureJsonc(filePath: string, templateRaw: string): Promise<void> {
   const existing = await readFileIfExists(filePath);
   if (existing !== undefined) {
     return;
@@ -60,11 +60,7 @@ export async function ensureJsoncFileWithTemplate(filePath: string, templateRaw:
   await fs.writeFile(filePath, ensureTrailingNewline(templateRaw), 'utf8');
 }
 
-export async function writeJsoncFileKeepingComments(
-  filePath: string,
-  value: object,
-  templateRaw: string,
-): Promise<void> {
+export async function writeJsonc(filePath: string, value: object, templateRaw: string): Promise<void> {
   const existing = await readFileIfExists(filePath);
   const base = existing && existing.trim().length > 0 ? existing : templateRaw;
   parseJsoncText(base, filePath);

@@ -4,16 +4,8 @@ import type { ArchiverConfig, AutoIncrVars, ListEntry, Vault } from '../global.j
 import { Defaults, ArchiveStatus, VaultStatus, Paths } from '../consts/index.js';
 import { DEFAULT_AUTO_INCR_JSONC_RAW, DEFAULT_CONFIG_JSONC_RAW } from '../default-files/index.js';
 import { ensureDir, ensureFile, pathAccessible, safeLstat } from '../utils/fs.js';
-import {
-  ensureJsoncFileWithTemplate,
-  readJsoncFile,
-  writeJsoncFileKeepingComments,
-} from '../utils/jsonc.js';
-import {
-  appendJsonLine,
-  readJsonLinesFile,
-  writeJsonLinesFile,
-} from '../utils/json.js';
+import { ensureJsonc, readJsonc, writeJsonc } from '../utils/jsonc.js';
+import { appendJsonLine, readJsonLinesFile, writeJsonLinesFile } from '../utils/json.js';
 
 function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
   return {
@@ -81,8 +73,8 @@ export class ArchiverContext {
     }
     await ensureDir(this.vaultDir(Defaults.Vault.id));
 
-    await ensureJsoncFileWithTemplate(Paths.File.config, DEFAULT_CONFIG_JSONC_RAW);
-    await ensureJsoncFileWithTemplate(Paths.File.autoIncr, DEFAULT_AUTO_INCR_JSONC_RAW);
+    await ensureJsonc(Paths.File.config, DEFAULT_CONFIG_JSONC_RAW);
+    await ensureJsonc(Paths.File.autoIncr, DEFAULT_AUTO_INCR_JSONC_RAW);
 
     await ensureFile(Paths.File.list);
     await ensureFile(Paths.File.vaults);
@@ -102,7 +94,7 @@ export class ArchiverContext {
       return this.configCache;
     }
 
-    const loaded = await readJsoncFile(Paths.File.config, Defaults.Config);
+    const loaded = await readJsonc(Paths.File.config, Defaults.Config);
     const merged = sanitizeConfig({ ...Defaults.Config, ...loaded });
     this.configCache = merged;
     return merged;
@@ -110,7 +102,7 @@ export class ArchiverContext {
 
   async saveConfig(config: ArchiverConfig): Promise<void> {
     this.configCache = sanitizeConfig(config);
-    await writeJsoncFileKeepingComments(Paths.File.config, this.configCache, DEFAULT_CONFIG_JSONC_RAW);
+    await writeJsonc(Paths.File.config, this.configCache, DEFAULT_CONFIG_JSONC_RAW);
   }
 
   async loadAutoIncr(forceRefresh: boolean = false): Promise<AutoIncrVars> {
@@ -118,7 +110,7 @@ export class ArchiverContext {
       return this.autoIncrCache;
     }
 
-    const loaded = await readJsoncFile(Paths.File.autoIncr, Defaults.AutoIncr);
+    const loaded = await readJsonc(Paths.File.autoIncr, Defaults.AutoIncr);
     const merged = sanitizeAutoIncr({ ...Defaults.AutoIncr, ...loaded });
     this.autoIncrCache = merged;
     return merged;
@@ -126,7 +118,7 @@ export class ArchiverContext {
 
   async saveAutoIncr(vars: AutoIncrVars): Promise<void> {
     this.autoIncrCache = sanitizeAutoIncr(vars);
-    await writeJsoncFileKeepingComments(Paths.File.autoIncr, this.autoIncrCache, DEFAULT_AUTO_INCR_JSONC_RAW);
+    await writeJsonc(Paths.File.autoIncr, this.autoIncrCache, DEFAULT_AUTO_INCR_JSONC_RAW);
   }
 
   async nextAutoIncrement(key: keyof AutoIncrVars): Promise<number> {

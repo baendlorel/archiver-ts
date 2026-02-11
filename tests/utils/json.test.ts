@@ -2,12 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  ensureJsoncFileWithTemplate,
-  parseJsoncText,
-  readJsoncFile,
-  writeJsoncFileKeepingComments,
-} from '../../src/utils/jsonc.js';
+import { ensureJsonc, parseJsoncText, readJsonc, writeJsonc } from '../../src/utils/jsonc.js';
 
 const tempDirs: string[] = [];
 
@@ -48,10 +43,10 @@ describe('jsonc utilities', () => {
 }
 `;
 
-    await ensureJsoncFileWithTemplate(filePath, template);
+    await ensureJsonc(filePath, template);
     const content = await fs.readFile(filePath, 'utf8');
     expect(content).toContain('// style comment');
-    const parsed = await readJsoncFile<{ style: string }>(filePath, { style: 'off' });
+    const parsed = await readJsonc<{ style: string }>(filePath, { style: 'off' });
     expect(parsed.style).toBe('on');
   });
 
@@ -67,7 +62,7 @@ describe('jsonc utilities', () => {
 `;
 
     await fs.writeFile(filePath, template, 'utf8');
-    await writeJsoncFileKeepingComments(filePath, { style: 'off', count: 3 }, template);
+    await writeJsonc(filePath, { style: 'off', count: 3 }, template);
 
     const content = await fs.readFile(filePath, 'utf8');
     expect(content).toContain('// style comment');

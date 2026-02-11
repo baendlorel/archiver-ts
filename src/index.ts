@@ -4,7 +4,7 @@ import { ensureArvShellWrapper } from './core/initialize.js';
 import type { CommandContext } from './services/context.js';
 import { createCommandContext } from './services/context.js';
 import { ask } from './utils/prompt.js';
-import { readJsoncFile } from './utils/jsonc.js';
+import { readJsonc } from './utils/jsonc.js';
 import type { ArchiverConfig } from './global.js';
 import { applyStyleFromConfig } from './utils/style.js';
 import { error, info, success } from './utils/terminal.js';
@@ -46,7 +46,7 @@ async function promptNoCommandAction(ctx: CommandContext): Promise<NoCommandActi
 }
 
 async function main(): Promise<void> {
-  const rawConfig = await readJsoncFile<Partial<ArchiverConfig>>(Paths.File.config, Defaults.Config);
+  const rawConfig = await readJsonc<Partial<ArchiverConfig>>(Paths.File.config, Defaults.Config);
   applyStyleFromConfig({
     style: rawConfig.style === 'off' ? 'off' : 'on',
   });
@@ -67,8 +67,7 @@ async function main(): Promise<void> {
   const program = createProgram(context);
 
   if (process.argv.length <= 2) {
-    const action =
-      config.noCommandAction === 'unknown' ? await promptNoCommandAction(context) : config.noCommandAction;
+    const action = config.noCommandAction === 'unknown' ? await promptNoCommandAction(context) : config.noCommandAction;
 
     if (action === 'list') {
       await program.parseAsync([...process.argv, 'list']);
