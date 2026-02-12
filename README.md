@@ -40,6 +40,7 @@ arv list [--restored] [--all] [--vault <vault>] [--no-interactive] [--plain]
 arv log [YYYYMM | YYYYMM-YYYYMM | all]
 arv log --id <log-id>
 arv config list [-c|--comment]
+arv config edit
 arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
@@ -51,6 +52,22 @@ arv check
 ```
 
 `arv log` without range now prints all records by default (grep-friendly).
+
+## Interactive config editor
+
+Run:
+
+```bash
+arv config edit
+```
+
+In the editor:
+
+- Up/Down: activate config item
+- Left/Right: switch select options or move cursor in input
+- Type: edit input field text
+- Enter: save
+- q/Esc: cancel
 
 ## List output behavior
 

@@ -135,6 +135,16 @@ describe('cli e2e', () => {
     expect(output).toContain('"noCommandAction": "unknown"');
   });
 
+  it('shows TTY error when running config edit in non-TTY mode', () => {
+    const projectDir = mkTempDir('archiver-e2e-config-edit-no-tty-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    expect(() => run(['config', 'edit'], { cwd: projectDir, env })).toThrow(/TTY/);
+  });
+
   it('uses zh as default language and supports switching to en', () => {
     const projectDir = mkTempDir('archiver-e2e-language-');
     const env = {

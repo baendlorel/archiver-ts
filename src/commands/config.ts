@@ -4,7 +4,13 @@ import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { applyStyleFromConfig } from '../utils/style.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
-import { renderTable, success } from '../utils/terminal.js';
+import {
+  applyEditableConfigValues,
+  isEditableConfigEqual,
+  promptConfigEditor,
+  toEditableConfigValues,
+} from './config-interactive.js';
+import { info, renderTable, success } from '../utils/terminal.js';
 
 export function registerConfigCommands(program: Command, ctx: CommandContext): void {
   const config = program.command('config').alias('c').alias('cfg').description(t('command.config.description'));
@@ -40,6 +46,40 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
         } else {
           console.log(JSON.stringify(current, null, 2));
         }
+      }),
+    );
+
+  config
+    .command('edit')
+    .alias('e')
+    .description(t('command.config.edit.description'))
+    .action(() =>
+      runAction(async () => {
+        const current = await ctx.configService.getConfig();
+        const initialValues = toEditableConfigValues(current);
+        const editedValues = await promptConfigEditor(initialValues);
+        if (!editedValues) {
+          info(t('command.config.edit.cancelled'));
+          return;
+        }
+
+        if (isEditableConfigEqual(initialValues, editedValues)) {
+          info(t('command.config.edit.no_changes'));
+          return;
+        }
+
+        const updated = applyEditableConfigValues(current, editedValues);
+        await ctx.context.saveConfig(updated);
+        applyStyleFromConfig(updated);
+        success(t('command.config.edit.saved'));
+
+        await ctx.auditLogger.log(
+          'INFO',
+          { main: 'config', sub: 'edit', source: 'u' },
+          t('command.config.edit.audit.saved'),
+        );
+
+        await maybeAutoUpdateCheck(ctx);
       }),
     );
 
