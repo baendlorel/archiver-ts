@@ -55,6 +55,7 @@ export const en: I18nDictionary = {
   'command.list.interactive.filter.status.restored': 'Restored only',
   'command.list.interactive.filter.vault.label': 'Vault',
   'command.list.interactive.filter.vault.all': 'All',
+  'command.list.interactive.filter.vault.default': 'Default',
   'command.list.interactive.filter.query.label': 'Filter',
   'command.list.interactive.filter.query.placeholder': 'type name for fuzzy match',
   'command.list.interactive.empty_filtered': 'No entries matched current filters.',
@@ -65,12 +66,13 @@ export const en: I18nDictionary = {
   'command.list.interactive.key.enter': 'Enter',
   'command.list.interactive.key.cancel': 'q/Esc',
   'command.list.interactive.hint':
-    '{tab} switch area  {upDown} choose entry  {leftRight} change select/action  {type} input filter  {enter} confirm  {cancel} cancel',
+    '{tab} switch area  {upDown} select  {leftRight} select  {type} input filter  {enter} confirm  {cancel} cancel',
   'command.list.interactive.action_prefix': 'Action:',
   'command.list.interactive.note.restored_unavailable':
     'This entry is restored; enter/restore actions are unavailable.',
   'command.list.interactive.summary.query_empty': '(empty)',
-  'command.list.interactive.summary': 'Filter: status {status}, vault {vault}, query {query}; matched {matched}/{total}',
+  'command.list.interactive.summary':
+    'Filter: status {status}, vault {vault}, query {query}; matched {matched}/{total}',
   'command.list.interactive.showing': 'Matched {matched} / total {total}',
 
   'command.check.description': 'Check data consistency and health',

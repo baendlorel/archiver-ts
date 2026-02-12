@@ -13,6 +13,7 @@ import {
   renderSelect,
   type SelectOption,
 } from '../ui/select.js';
+import { getDisplayWidth, padDisplayWidth } from '../ui/text-width.js';
 
 export type ListAction = 'enter' | 'restore';
 type StatusFilter = 'all' | 'archived' | 'restored';
@@ -81,7 +82,7 @@ function createVaultOptions(entries: InteractiveListEntry[]): Array<SelectOption
     seen.add(entry.vaultId);
     options.push({
       value: entry.vaultId,
-      label: entry.vaultName,
+      label: entry.vaultId === 0 ? t('command.list.interactive.filter.vault.default') : entry.vaultName,
     });
   }
 
@@ -220,20 +221,30 @@ function renderScreen(options: {
   const statusState = createStatusState(statusFilter);
   const vaultState = createVaultState(vaultOptions, vaultFilter);
   const actionState = createActionState(selectedEntry, action);
+  const labelTexts = {
+    status: t('command.list.interactive.filter.status.label'),
+    vault: t('command.list.interactive.filter.vault.label'),
+    query: t('command.list.interactive.filter.query.label'),
+  };
+  const labelWidth = Math.max(
+    getDisplayWidth(labelTexts.status),
+    getDisplayWidth(labelTexts.vault),
+    getDisplayWidth(labelTexts.query),
+  );
 
   const selectLine = (target: FocusTarget, label: string, body: string): string => {
     const active = focus === target;
     const pointer = active ? chalk.cyan('>') : ' ';
-    const text = `${label} ${body}`;
+    const text = `${padDisplayWidth(label, labelWidth)}: ${body}`;
     return active ? `${pointer} ${chalk.bold(text)}` : `${pointer} ${text}`;
   };
 
   const headerLines: string[] = [
-    selectLine('status', `${t('command.list.interactive.filter.status.label')}:`, renderSelect(statusState, focus === 'status')),
-    selectLine('vault', `${t('command.list.interactive.filter.vault.label')}:`, renderSelect(vaultState, focus === 'vault')),
+    selectLine('status', labelTexts.status, renderSelect(statusState, focus === 'status')),
+    selectLine('vault', labelTexts.vault, renderSelect(vaultState, focus === 'vault')),
     selectLine(
       'query',
-      `${t('command.list.interactive.filter.query.label')}:`,
+      labelTexts.query,
       renderInput(queryState, focus === 'query', t('command.list.interactive.filter.query.placeholder')),
     ),
     '',
@@ -330,7 +341,7 @@ export async function pickInteractiveListAction(entries: InteractiveListEntry[])
 
   const input = process.stdin;
   const vaultOptions = createVaultOptions(entries);
-  let statusFilter: StatusFilter = 'all';
+  let statusFilter: StatusFilter = 'archived';
   let vaultFilter: VaultFilterValue = 'all';
   let queryState = createInputState('');
   let focus: FocusTarget = 'entries';
