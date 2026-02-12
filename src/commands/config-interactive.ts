@@ -83,7 +83,7 @@ export function isEditableConfigEqual(a: EditableConfigValues, b: EditableConfig
 
 export function validateEditableConfigValues(values: EditableConfigValues): I18nKey | undefined {
   if (!values.vaultItemSeparator.trim()) {
-    return 'command.config.vault_item_sep.error.empty';
+    return 'command.config.error.vault_item_sep_empty';
   }
   return undefined;
 }
@@ -97,7 +97,7 @@ function createEditorFields(values: EditableConfigValues): EditorField[] {
     {
       kind: 'select',
       key: 'updateCheck',
-      label: t('command.config.edit.field.update_check'),
+      label: t('command.config.field.update_check'),
       state: createSelectState(
         [
           { value: 'on', label: t('common.state.on') },
@@ -109,13 +109,13 @@ function createEditorFields(values: EditableConfigValues): EditorField[] {
     {
       kind: 'input',
       key: 'vaultItemSeparator',
-      label: t('command.config.edit.field.vault_item_sep'),
+      label: t('command.config.field.vault_item_sep'),
       state: createInputState(values.vaultItemSeparator),
     },
     {
       kind: 'select',
       key: 'style',
-      label: t('command.config.edit.field.style'),
+      label: t('command.config.field.style'),
       state: createSelectState(
         [
           { value: 'on', label: t('common.state.on') },
@@ -127,7 +127,7 @@ function createEditorFields(values: EditableConfigValues): EditorField[] {
     {
       kind: 'select',
       key: 'language',
-      label: t('command.config.edit.field.language'),
+      label: t('command.config.field.language'),
       state: createSelectState(
         [
           { value: 'zh', label: 'zh' },
@@ -139,7 +139,7 @@ function createEditorFields(values: EditableConfigValues): EditorField[] {
     {
       kind: 'select',
       key: 'noCommandAction',
-      label: t('command.config.edit.field.no_command_action'),
+      label: t('command.config.field.no_command_action'),
       state: createSelectState(
         [
           { value: 'list', label: t('common.action.list') },
@@ -208,16 +208,16 @@ function renderScreen(
   const labelWidth = getLabelWidth(fields);
   const actionsIndex = fields.length;
   const actionActive = activeIndex === actionsIndex;
-  const hint = t('command.config.edit.hint', {
-    upDown: renderKeyHint(t('command.config.edit.key.up_down')),
-    leftRight: renderKeyHint(t('command.config.edit.key.left_right')),
-    type: renderKeyHint(t('command.config.edit.key.type')),
-    enter: renderKeyHint(t('command.config.edit.key.enter')),
-    cancel: renderKeyHint(t('command.config.edit.key.cancel')),
+  const hint = t('command.config.hint', {
+    upDown: renderKeyHint(t('command.config.key.up_down')),
+    leftRight: renderKeyHint(t('command.config.key.left_right')),
+    type: renderKeyHint(t('command.config.key.type')),
+    enter: renderKeyHint(t('command.config.key.enter')),
+    cancel: renderKeyHint(t('command.config.key.cancel')),
   });
 
   const lines: string[] = [];
-  lines.push(chalk.bold(t('command.config.edit.title')));
+  lines.push(chalk.bold(t('command.config.title')));
   lines.push('');
 
   for (let index = 0; index < fields.length; index += 1) {
@@ -231,16 +231,16 @@ function renderScreen(
     const renderedValue =
       field.kind === 'select'
         ? renderSelect(field.state, active)
-        : renderInput(field.state, active, t('command.config.edit.input.placeholder'));
+        : renderInput(field.state, active, t('command.config.input.placeholder'));
     lines.push(`${pointer} ${label}  ${renderedValue}`);
   }
 
   lines.push('');
-  lines.push(`${t('command.config.edit.action_prefix')} ${renderSelect(actionState, actionActive)}`);
+  lines.push(`${t('command.config.action_prefix')} ${renderSelect(actionState, actionActive)}`);
   lines.push('');
   const statusLine = note
     ? chalk.yellow(note)
-    : chalk.dim(dirty ? t('command.config.edit.state.dirty') : t('command.config.edit.state.clean'));
+    : chalk.dim(dirty ? t('command.config.state.dirty') : t('command.config.state.clean'));
   const renderedLines = layoutFullscreenHintStatusLines({
     contentLines: lines,
     hintLine: hint,
@@ -254,15 +254,15 @@ function renderScreen(
 
 export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<ConfigEditorResult> {
   if (!canRunEditor()) {
-    throw new Error(t('command.config.edit.error.no_tty'));
+    throw new Error(t('command.config.error.no_tty'));
   }
 
   const input = process.stdin;
   const fields = createEditorFields(initialValues);
   let actionState = createSelectState<EditorAction>([
-    { value: 'save', label: t('command.config.edit.action.save') },
-    { value: 'cancel', label: t('command.config.edit.action.cancel') },
-    { value: 'reset-default', label: t('command.config.edit.action.reset_default') },
+    { value: 'save', label: t('command.config.action.save') },
+    { value: 'cancel', label: t('command.config.action.cancel') },
+    { value: 'reset-default', label: t('command.config.action.reset_default') },
   ]);
   let activeIndex = 0;
   let note = '';

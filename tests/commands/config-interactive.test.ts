@@ -74,7 +74,7 @@ describe('config interactive helpers', () => {
         language: 'zh',
         noCommandAction: 'list',
       }),
-    ).toBe('command.config.vault_item_sep.error.empty');
+    ).toBe('command.config.error.vault_item_sep_empty');
     expect(
       validateEditableConfigValues({
         updateCheck: 'on',

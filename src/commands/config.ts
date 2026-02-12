@@ -13,19 +13,19 @@ async function openConfigEditor(ctx: CommandContext): Promise<void> {
   const edited = await promptConfigEditor(initialValues);
 
   if (edited.action === 'cancel') {
-    info(t('command.config.edit.cancelled'));
+    info(t('command.config.cancelled'));
     return;
   }
 
   if (edited.action === 'reset-default') {
     await ctx.context.saveConfig({ ...Defaults.Config });
     applyStyleFromConfig(Defaults.Config);
-    success(t('command.config.edit.reset_default.saved'));
+    success(t('command.config.reset_default.saved'));
 
     await ctx.auditLogger.log(
       'INFO',
       { main: 'config', sub: 'reset-default', source: 'u' },
-      t('command.config.edit.audit.reset_default'),
+      t('command.config.audit.reset_default'),
     );
 
     await maybeAutoUpdateCheck(ctx);
@@ -33,7 +33,7 @@ async function openConfigEditor(ctx: CommandContext): Promise<void> {
   }
 
   if (isEditableConfigEqual(initialValues, edited.values)) {
-    info(t('command.config.edit.no_changes'));
+    info(t('command.config.no_changes'));
     return;
   }
 
@@ -44,12 +44,12 @@ async function openConfigEditor(ctx: CommandContext): Promise<void> {
 
   await ctx.context.saveConfig(updated);
   applyStyleFromConfig(updated);
-  success(t('command.config.edit.saved'));
+  success(t('command.config.saved'));
 
   await ctx.auditLogger.log(
     'INFO',
     { main: 'config', sub: 'edit', source: 'u' },
-    t('command.config.edit.audit.saved'),
+    t('command.config.audit.saved'),
   );
 
   await maybeAutoUpdateCheck(ctx);
