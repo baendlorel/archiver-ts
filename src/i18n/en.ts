@@ -60,7 +60,8 @@ export const en: I18nDictionary = {
   'command.list.interactive.key.cancel': 'q/Esc',
   'command.list.interactive.hint': '{upDown} choose entry  {leftRight} choose action  {enter} confirm  {cancel} cancel',
   'command.list.interactive.action_prefix': 'Action:',
-  'command.list.interactive.note.restored_unavailable': 'This entry is restored; enter/restore actions are unavailable.',
+  'command.list.interactive.note.restored_unavailable':
+    'This entry is restored; enter/restore actions are unavailable.',
   'command.list.interactive.showing': 'Showing {start}-{end} of {total}',
 
   'command.check.description': 'Check data consistency and health',
@@ -83,12 +84,13 @@ export const en: I18nDictionary = {
   'command.config.key.type': 'Type',
   'command.config.key.enter': 'Enter',
   'command.config.key.cancel': 'q/Esc',
-  'command.config.hint': '{upDown} activate item  {leftRight} change select/move cursor  {type} input text  {enter} confirm action  {cancel} cancel',
-  'command.config.field.update_check': 'update_check',
-  'command.config.field.vault_item_sep': 'vault_item_sep',
-  'command.config.field.style': 'style',
-  'command.config.field.language': 'language',
-  'command.config.field.no_command_action': 'no_command_action',
+  'command.config.hint':
+    '{upDown} activate item  {leftRight} change select/move cursor  {type} input text  {enter} confirm action  {cancel} cancel',
+  'command.config.field.update_check': 'Update Check',
+  'command.config.field.vault_item_sep': 'Vault Item Separator',
+  'command.config.field.style': 'Style',
+  'command.config.field.language': 'Language',
+  'command.config.field.no_command_action': 'No-Command Action',
   'command.config.action_prefix': 'Action:',
   'command.config.action.save': 'save',
   'command.config.action.cancel': 'cancel',
@@ -190,7 +192,8 @@ export const en: I18nDictionary = {
   'command.batch.operation.put': 'put',
   'command.batch.operation.restore': 'restore',
   'command.batch.operation.move': 'move',
-  'command.auto_update.new_available': 'New version available: {latestVersion} (current {currentVersion}). Run `archiver update`.',
+  'command.auto_update.new_available':
+    'New version available: {latestVersion} (current {currentVersion}). Run `archiver update`.',
 
   'service.archive.error.at_least_one_item': 'At least one item is required.',
   'service.archive.error.slot_exists': 'Archive slot already exists: {path}',
@@ -222,11 +225,13 @@ export const en: I18nDictionary = {
   'service.archive.error.slot_missing_invalid': 'Archive slot is missing or invalid: {path}',
   'service.archive.error.current_vault_invalid': 'Current vault is invalid.',
   'service.archive.error.vault_removed': 'Vault {vault} is removed.',
-  'service.archive.error.invalid_target_format': "Invalid target '{target}'. Use '<archive-id>' or '<vault>/<archive-id>'.",
+  'service.archive.error.invalid_target_format':
+    "Invalid target '{target}'. Use '<archive-id>' or '<vault>/<archive-id>'.",
   'service.archive.error.invalid_target_no_vault': "Invalid target '{target}'. Vault name or id cannot be empty.",
   'service.archive.error.invalid_target_archive_id': "Invalid archive id in target '{target}'.",
   'service.archive.error.path_not_exists': 'Path does not exist: {path}',
-  'service.archive.error.path_forbidden_archiver_scope': 'Path {path} is the archiver directory itself, inside it, or a parent of it. This is not allowed.',
+  'service.archive.error.path_forbidden_archiver_scope':
+    'Path {path} is the archiver directory itself, inside it, or a parent of it. This is not allowed.',
   'service.archive.error.duplicate_input_path': 'Duplicated input path: {path}',
   'service.archive.error.slot_already_occupied': 'Archive slot is already occupied: {path}',
   'service.archive.decorated.unknown_vault': 'unknown({vaultId})',
@@ -234,7 +239,8 @@ export const en: I18nDictionary = {
   'service.vault.error.name_empty': 'Vault name cannot be empty.',
   'service.vault.error.name_reserved': 'Vault name {name} is reserved.',
   'service.vault.error.exists': 'Vault {name} already exists.',
-  'service.vault.error.removed_exists': 'A removed vault named {name} exists. Use vault recover {name} or create with recovery option.',
+  'service.vault.error.removed_exists':
+    'A removed vault named {name} exists. Use vault recover {name} or create with recovery option.',
   'service.vault.error.not_found': 'Vault not found: {reference}',
   'service.vault.error.removed': 'Vault {name} is removed.',
   'service.vault.error.not_removed': 'Vault {name} is not removed.',
@@ -262,18 +268,25 @@ export const en: I18nDictionary = {
   'service.check.issue.duplicate_vault_name': 'Duplicated vault names found: {names}',
   'service.check.issue.vault_auto_incr_too_small': 'auto-incr.vault_id={autoIncr} but max vault id is {maxId}.',
   'service.check.issue.unknown_vault_reference': 'Archive id {archiveId} references unknown vault id {vaultId}.',
-  'service.check.issue.missing_archive_object': 'Archive id {archiveId} is marked archived but object is missing: {archivePath}',
-  'service.check.issue.type_mismatch_archived': 'Archive id {archiveId} type mismatch (expected dir={expectedIsDir}, actual dir={actualIsDir}).',
+  'service.check.issue.missing_archive_object':
+    'Archive id {archiveId} is marked archived but object is missing: {archivePath}',
+  'service.check.issue.type_mismatch_archived':
+    'Archive id {archiveId} type mismatch (expected dir={expectedIsDir}, actual dir={actualIsDir}).',
   'service.check.issue.restore_target_exists': 'Archive id {archiveId} has an existing restore path: {restorePath}',
-  'service.check.issue.restored_but_archive_exists': 'Archive id {archiveId} is restored but archive object still exists: {archivePath}',
-  'service.check.issue.type_mismatch_restored': 'Restored path type mismatch for archive id {archiveId} (expected dir={expectedIsDir}, actual dir={actualIsDir}).',
-  'service.check.issue.restored_target_missing': 'Archive id {archiveId} is restored but restore path does not exist: {restorePath}',
+  'service.check.issue.restored_but_archive_exists':
+    'Archive id {archiveId} is restored but archive object still exists: {archivePath}',
+  'service.check.issue.type_mismatch_restored':
+    'Restored path type mismatch for archive id {archiveId} (expected dir={expectedIsDir}, actual dir={actualIsDir}).',
+  'service.check.issue.restored_target_missing':
+    'Archive id {archiveId} is restored but restore path does not exist: {restorePath}',
   'service.check.issue.invalid_archive_status': 'Archive id {archiveId} has invalid status {status}.',
   'service.check.issue.non_numeric_vault_dir': 'Unexpected non-numeric vault directory: {path}',
   'service.check.issue.orphan_vault_dir': 'Vault directory exists but no metadata: {path}',
   'service.check.issue.non_numeric_archive_object': 'Vault {vaultId} contains unexpected object name: {name}',
-  'service.check.issue.invalid_archive_slot': 'Vault {vaultId} archive slot {slotName} must be a directory in the current layout.',
-  'service.check.issue.orphan_archive_object': 'Archive object {pairKey} exists on disk but not in list.jsonl as archived.',
+  'service.check.issue.invalid_archive_slot':
+    'Vault {vaultId} archive slot {slotName} must be a directory in the current layout.',
+  'service.check.issue.orphan_archive_object':
+    'Archive object {pairKey} exists on disk but not in list.jsonl as archived.',
   'service.check.issue.missing_vault_dir': 'Vault {vaultName}({vaultId}) is active but directory is missing: {path}',
   'service.check.issue.duplicate_log_id': 'Duplicated log ids found: {ids}',
   'service.check.issue.log_auto_incr_too_small': 'auto-incr.log_id={autoIncr} but max log id is {maxId}.',
