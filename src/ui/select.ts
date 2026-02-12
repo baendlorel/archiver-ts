@@ -1,7 +1,7 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
 import { t } from '../i18n/index.js';
-import { canUseInteractiveTerminal } from './interactive.js';
+import { canUseInteractiveTerminal, getInteractiveOutputStream } from './interactive.js';
 import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from './screen.js';
 import { getDisplayWidth, padDisplayWidth } from './text-width.js';
 
@@ -135,6 +135,7 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
   }
 
   const input = process.stdin;
+  const output = getInteractiveOutputStream();
   let state = initialState;
   const allowCancel = options.allowCancel !== false;
 
@@ -145,8 +146,8 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
   return new Promise<T | null>((resolve) => {
     const render = (): void => {
       const viewport = resolveTerminalSize({
-        rows: process.stdout.rows,
-        columns: process.stdout.columns,
+        rows: output.rows,
+        columns: output.columns,
       });
       if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
         const lines = layoutFullscreenHintStatusLines({
@@ -165,8 +166,8 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
           statusLine: '',
           rows: viewport.rows,
         });
-        process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-        process.stdout.write(lines.join('\n'));
+        output.write('\x1B[2J\x1B[H\x1B[?25l');
+        output.write(lines.join('\n'));
         return;
       }
 
@@ -181,16 +182,16 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
         statusLine: '',
         rows: viewport.rows,
       });
-      process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-      process.stdout.write(lines.join('\n'));
+      output.write('\x1B[2J\x1B[H\x1B[?25l');
+      output.write(lines.join('\n'));
     };
 
     const finalize = (selectedValue: T | null): void => {
       input.off('keypress', onKeypress);
-      process.stdout.off('resize', onResize);
+      output.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
-      process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
+      output.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(selectedValue);
     };
 
@@ -227,7 +228,7 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
     };
 
     input.on('keypress', onKeypress);
-    process.stdout.on('resize', onResize);
+    output.on('resize', onResize);
     render();
   });
 }

@@ -13,11 +13,12 @@ describe('ui interactive', () => {
     ).toBe(true);
   });
 
-  it('returns true when force interactive is on and stdout is not TTY', () => {
+  it('returns true when force interactive is on and stderr is TTY', () => {
     expect(
       canUseInteractiveTerminal({
         stdinIsTTY: true,
         stdoutIsTTY: false,
+        stderrIsTTY: true,
         hasRawMode: true,
         forceInteractive: true,
       }),
@@ -41,6 +42,18 @@ describe('ui interactive', () => {
         stdinIsTTY: true,
         stdoutIsTTY: true,
         hasRawMode: false,
+        forceInteractive: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when force interactive is on but both outputs are not TTY', () => {
+    expect(
+      canUseInteractiveTerminal({
+        stdinIsTTY: true,
+        stdoutIsTTY: false,
+        stderrIsTTY: false,
+        hasRawMode: true,
         forceInteractive: true,
       }),
     ).toBe(false);

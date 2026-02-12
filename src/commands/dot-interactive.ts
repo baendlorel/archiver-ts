@@ -3,7 +3,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import chalk from 'chalk';
 import { t } from '../i18n/index.js';
-import { canUseInteractiveTerminal } from '../ui/interactive.js';
+import { canUseInteractiveTerminal, getInteractiveOutputStream } from '../ui/interactive.js';
 import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from '../ui/screen.js';
 import { renderKeyHint } from '../ui/select.js';
 
@@ -99,11 +99,12 @@ function renderScreen(options: {
   entries: DotEntry[];
   selectedIndex: number;
   note: string;
+  output: NodeJS.WriteStream;
 }): void {
-  const { cwd, entries, selectedIndex, note } = options;
+  const { cwd, entries, selectedIndex, note, output } = options;
   const viewport = resolveTerminalSize({
-    rows: process.stdout.rows,
-    columns: process.stdout.columns,
+    rows: output.rows,
+    columns: output.columns,
   });
   if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
     const lines = layoutFullscreenHintStatusLines({
@@ -122,8 +123,8 @@ function renderScreen(options: {
       statusLine: '',
       rows: viewport.rows,
     });
-    process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-    process.stdout.write(lines.join('\n'));
+    output.write('\x1B[2J\x1B[H\x1B[?25l');
+    output.write(lines.join('\n'));
     return;
   }
 
@@ -168,8 +169,8 @@ function renderScreen(options: {
     rows,
   });
 
-  process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-  process.stdout.write(lines.join('\n'));
+  output.write('\x1B[2J\x1B[H\x1B[?25l');
+  output.write(lines.join('\n'));
 }
 
 export function canRunInteractiveDot(): boolean {
@@ -184,6 +185,7 @@ export async function runInteractiveDot(
   }
 
   const cwd = process.cwd();
+  const output = getInteractiveOutputStream();
   let entries = await listCurrentDirectoryEntries(cwd);
   let selectedIndex = resolveSelectedIndex(entries, 0);
   let processing = false;
@@ -200,6 +202,7 @@ export async function runInteractiveDot(
       entries,
       selectedIndex,
       note,
+      output,
     });
   };
 
@@ -211,10 +214,10 @@ export async function runInteractiveDot(
   return new Promise<void>((resolve) => {
     const finalize = (): void => {
       input.off('keypress', onKeypress);
-      process.stdout.off('resize', onResize);
+      output.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
-      process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
+      output.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve();
     };
 
@@ -273,7 +276,7 @@ export async function runInteractiveDot(
     };
 
     input.on('keypress', onKeypress);
-    process.stdout.on('resize', onResize);
+    output.on('resize', onResize);
     render();
   });
 }

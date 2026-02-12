@@ -4,6 +4,7 @@ import type { ArchiverConfig } from '../global.js';
 import { t } from '../i18n/index.js';
 import type { I18nKey } from '../i18n/zh.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
+import { getInteractiveOutputStream } from '../ui/interactive.js';
 import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from '../ui/screen.js';
 import {
   createSelectState,
@@ -208,10 +209,11 @@ function renderScreen(
   initialValues: EditableConfigValues,
   actionState: SelectState<EditorAction>,
   note: string,
+  output: NodeJS.WriteStream,
 ): void {
   const viewport = resolveTerminalSize({
-    rows: process.stdout.rows,
-    columns: process.stdout.columns,
+    rows: output.rows,
+    columns: output.columns,
   });
   if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
     const renderedLines = layoutFullscreenHintStatusLines({
@@ -230,8 +232,8 @@ function renderScreen(
       statusLine: '',
       rows: viewport.rows,
     });
-    process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-    process.stdout.write(renderedLines.join('\n'));
+    output.write('\x1B[2J\x1B[H\x1B[?25l');
+    output.write(renderedLines.join('\n'));
     return;
   }
 
@@ -281,8 +283,8 @@ function renderScreen(
     rows: viewport.rows,
   });
 
-  process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-  process.stdout.write(renderedLines.join('\n'));
+  output.write('\x1B[2J\x1B[H\x1B[?25l');
+  output.write(renderedLines.join('\n'));
 }
 
 export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<ConfigEditorResult> {
@@ -291,6 +293,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
   }
 
   const input = process.stdin;
+  const output = getInteractiveOutputStream();
   const fields = createEditorFields(initialValues);
   let actionState = createSelectState<EditorAction>([
     { value: 'save', label: t('command.config.action.save') },
@@ -307,15 +310,15 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
   return new Promise<ConfigEditorResult>((resolve) => {
     const finalize = (result: ConfigEditorResult): void => {
       input.off('keypress', onKeypress);
-      process.stdout.off('resize', onResize);
+      output.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
-      process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
+      output.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(result);
     };
 
     const onResize = (): void => {
-      renderScreen(fields, activeIndex, initialValues, actionState, note);
+      renderScreen(fields, activeIndex, initialValues, actionState, note, output);
     };
 
     const submit = (): void => {
@@ -323,7 +326,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
       const errorKey = validateEditableConfigValues(values);
       if (errorKey) {
         note = t(errorKey);
-        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note, output);
         return;
       }
       finalize({ action: 'save', values });
@@ -341,13 +344,13 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
       if (key.name === 'up') {
         activeIndex = moveActiveIndex(activeIndex, 'up', fields.length + 1);
         note = '';
-        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note, output);
         return;
       }
       if (key.name === 'down') {
         activeIndex = moveActiveIndex(activeIndex, 'down', fields.length + 1);
         note = '';
-        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note, output);
         return;
       }
 
@@ -359,7 +362,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
         if (key.name === 'left' || key.name === 'right') {
           actionState = moveSelect(actionState, key.name);
           note = '';
-          renderScreen(fields, activeIndex, initialValues, actionState, note);
+          renderScreen(fields, activeIndex, initialValues, actionState, note, output);
           return;
         }
         if (key.name === 'return' || key.name === 'enter') {
@@ -394,7 +397,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
           activeField.state = applyInputKeypress(activeField.state, value, key).state;
         }
         note = '';
-        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note, output);
         return;
       }
 
@@ -410,7 +413,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
           return;
         }
         note = '';
-        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note, output);
         return;
       }
 
@@ -420,7 +423,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
     };
 
     input.on('keypress', onKeypress);
-    process.stdout.on('resize', onResize);
-    renderScreen(fields, activeIndex, initialValues, actionState, note);
+    output.on('resize', onResize);
+    renderScreen(fields, activeIndex, initialValues, actionState, note, output);
   });
 }
