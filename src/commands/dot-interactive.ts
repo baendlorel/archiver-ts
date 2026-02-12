@@ -4,7 +4,7 @@ import readline from 'node:readline';
 import chalk from 'chalk';
 import { t } from '../i18n/index.js';
 import { canUseInteractiveTerminal } from '../ui/interactive.js';
-import { layoutFullscreenHintStatusLines } from '../ui/screen.js';
+import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from '../ui/screen.js';
 import { renderKeyHint } from '../ui/select.js';
 
 interface Keypress {
@@ -22,6 +22,11 @@ export interface DotArchiveResult {
   ok: boolean;
   message: string;
 }
+
+const MIN_TERMINAL_SIZE = {
+  rows: 7,
+  columns: 44,
+} as const;
 
 function moveEntryIndex(current: number, direction: 'up' | 'down', total: number): number {
   if (total <= 0) {
@@ -96,7 +101,33 @@ function renderScreen(options: {
   note: string;
 }): void {
   const { cwd, entries, selectedIndex, note } = options;
-  const rows = process.stdout.rows ?? 24;
+  const viewport = resolveTerminalSize({
+    rows: process.stdout.rows,
+    columns: process.stdout.columns,
+  });
+  if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
+    const lines = layoutFullscreenHintStatusLines({
+      contentLines: [
+        chalk.bold(t('ui.screen.too_small.title')),
+        t('ui.screen.too_small.required', {
+          minColumns: MIN_TERMINAL_SIZE.columns,
+          minRows: MIN_TERMINAL_SIZE.rows,
+        }),
+        t('ui.screen.too_small.current', {
+          columns: viewport.columns,
+          rows: viewport.rows,
+        }),
+      ],
+      hintLine: chalk.dim(t('ui.screen.too_small.hint')),
+      statusLine: '',
+      rows: viewport.rows,
+    });
+    process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
+    process.stdout.write(lines.join('\n'));
+    return;
+  }
+
+  const rows = viewport.rows;
   const contentLines: string[] = [chalk.bold(cwd), ''];
   const bottomBarLineCount = 2;
   const availableRows = Math.max(rows - contentLines.length - bottomBarLineCount, 1);
@@ -180,10 +211,15 @@ export async function runInteractiveDot(
   return new Promise<void>((resolve) => {
     const finalize = (): void => {
       input.off('keypress', onKeypress);
+      process.stdout.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve();
+    };
+
+    const onResize = (): void => {
+      render();
     };
 
     const onKeypress = (_value: string, key: Keypress): void => {
@@ -237,6 +273,7 @@ export async function runInteractiveDot(
     };
 
     input.on('keypress', onKeypress);
+    process.stdout.on('resize', onResize);
     render();
   });
 }

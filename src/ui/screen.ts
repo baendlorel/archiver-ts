@@ -11,17 +11,33 @@ export interface FullscreenHintStatusLayoutOptions {
   rows?: number;
 }
 
-function resolveRows(rows?: number): number {
-  if (typeof rows === 'number' && Number.isFinite(rows) && rows > 0) {
-    return Math.floor(rows);
+export interface TerminalSize {
+  rows: number;
+  columns: number;
+}
+
+function resolveSizeValue(value: number | undefined, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
   }
-  return 24;
+  return fallback;
+}
+
+export function resolveTerminalSize(options: { rows?: number; columns?: number } = {}): TerminalSize {
+  return {
+    rows: resolveSizeValue(options.rows, 24),
+    columns: resolveSizeValue(options.columns, 80),
+  };
+}
+
+export function isTerminalSizeEnough(size: TerminalSize, minimum: TerminalSize): boolean {
+  return size.rows >= minimum.rows && size.columns >= minimum.columns;
 }
 
 export function layoutFullscreenLines(options: FullscreenLayoutOptions): string[] {
   const contentLines = options.contentLines.length > 0 ? options.contentLines : [''];
   const footerLines = options.footerLines ?? [];
-  const rows = resolveRows(options.rows);
+  const rows = resolveTerminalSize({ rows: options.rows }).rows;
   const fillCount = Math.max(rows - contentLines.length - footerLines.length, 0);
 
   return [...contentLines, ...Array.from({ length: fillCount }, () => ''), ...footerLines];

@@ -7,6 +7,10 @@ export const en: I18nDictionary = {
   'common.action.help': 'help',
   'common.state.on': 'on',
   'common.state.off': 'off',
+  'ui.screen.too_small.title': 'Terminal size is too small',
+  'ui.screen.too_small.required': 'Need at least {minColumns}x{minRows}',
+  'ui.screen.too_small.current': 'Current {columns}x{rows}',
+  'ui.screen.too_small.hint': 'Resize your terminal window to continue',
 
   'index.no_command_action.unknown': 'No-command action is unknown.',
   'index.no_command_action.question': 'When you run `arv` with no subcommand, what should it do?',

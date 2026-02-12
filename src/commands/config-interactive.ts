@@ -4,7 +4,7 @@ import type { ArchiverConfig } from '../global.js';
 import { t } from '../i18n/index.js';
 import type { I18nKey } from '../i18n/zh.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
-import { layoutFullscreenHintStatusLines } from '../ui/screen.js';
+import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from '../ui/screen.js';
 import {
   createSelectState,
   getSelectedOption,
@@ -26,6 +26,11 @@ type EditableConfigKey = (typeof EDITABLE_CONFIG_KEYS)[number];
 type SelectFieldKey = 'updateCheck' | 'style' | 'language' | 'noCommandAction';
 type SelectFieldValue = EditableConfigValues[SelectFieldKey];
 type EditorAction = 'save' | 'cancel' | 'reset-default';
+
+const MIN_TERMINAL_SIZE = {
+  rows: 11,
+  columns: 52,
+} as const;
 
 interface EditorFieldBase<K extends EditableConfigKey> {
   key: K;
@@ -204,6 +209,32 @@ function renderScreen(
   actionState: SelectState<EditorAction>,
   note: string,
 ): void {
+  const viewport = resolveTerminalSize({
+    rows: process.stdout.rows,
+    columns: process.stdout.columns,
+  });
+  if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
+    const renderedLines = layoutFullscreenHintStatusLines({
+      contentLines: [
+        chalk.bold(t('ui.screen.too_small.title')),
+        t('ui.screen.too_small.required', {
+          minColumns: MIN_TERMINAL_SIZE.columns,
+          minRows: MIN_TERMINAL_SIZE.rows,
+        }),
+        t('ui.screen.too_small.current', {
+          columns: viewport.columns,
+          rows: viewport.rows,
+        }),
+      ],
+      hintLine: chalk.dim(t('ui.screen.too_small.hint')),
+      statusLine: '',
+      rows: viewport.rows,
+    });
+    process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
+    process.stdout.write(renderedLines.join('\n'));
+    return;
+  }
+
   const currentValues = readValues(fields, initialValues);
   const dirty = !isEditableConfigEqual(currentValues, initialValues);
   const labelWidth = getLabelWidth(fields);
@@ -247,7 +278,7 @@ function renderScreen(
     contentLines: lines,
     hintLine: hint,
     statusLine,
-    rows: process.stdout.rows,
+    rows: viewport.rows,
   });
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
@@ -276,10 +307,15 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
   return new Promise<ConfigEditorResult>((resolve) => {
     const finalize = (result: ConfigEditorResult): void => {
       input.off('keypress', onKeypress);
+      process.stdout.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(result);
+    };
+
+    const onResize = (): void => {
+      renderScreen(fields, activeIndex, initialValues, actionState, note);
     };
 
     const submit = (): void => {
@@ -384,6 +420,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
     };
 
     input.on('keypress', onKeypress);
+    process.stdout.on('resize', onResize);
     renderScreen(fields, activeIndex, initialValues, actionState, note);
   });
 }

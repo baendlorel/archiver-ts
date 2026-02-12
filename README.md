@@ -60,6 +60,12 @@ In the editor:
 - Enter: save current action (or quick-save on field)
 - q/Esc: cancel
 
+All fullscreen interactive UIs (`arv list` picker, `arv config`, `arv dot`, and no-command selector) now:
+
+- auto re-render on terminal resize
+- keep fullscreen layout after resize
+- show a terminal-size warning when the viewport is too small
+
 ## List output behavior
 
 `arv list` opens an interactive picker (TTY):

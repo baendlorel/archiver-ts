@@ -1,7 +1,8 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
+import { t } from '../i18n/index.js';
 import { canUseInteractiveTerminal } from './interactive.js';
-import { layoutFullscreenHintStatusLines } from './screen.js';
+import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from './screen.js';
 import { getDisplayWidth, padDisplayWidth } from './text-width.js';
 
 interface Keypress {
@@ -30,6 +31,11 @@ export interface SelectPromptOptions<T> {
   hint?: string;
   allowCancel?: boolean;
 }
+
+const MIN_TERMINAL_SIZE = {
+  rows: 6,
+  columns: 28,
+} as const;
 
 function findNextEnabledIndex<T>(
   options: ReadonlyArray<SelectOption<T>>,
@@ -138,6 +144,32 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
 
   return new Promise<T | null>((resolve) => {
     const render = (): void => {
+      const viewport = resolveTerminalSize({
+        rows: process.stdout.rows,
+        columns: process.stdout.columns,
+      });
+      if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
+        const lines = layoutFullscreenHintStatusLines({
+          contentLines: [
+            chalk.bold(t('ui.screen.too_small.title')),
+            t('ui.screen.too_small.required', {
+              minColumns: MIN_TERMINAL_SIZE.columns,
+              minRows: MIN_TERMINAL_SIZE.rows,
+            }),
+            t('ui.screen.too_small.current', {
+              columns: viewport.columns,
+              rows: viewport.rows,
+            }),
+          ],
+          hintLine: chalk.dim(t('ui.screen.too_small.hint')),
+          statusLine: '',
+          rows: viewport.rows,
+        });
+        process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
+        process.stdout.write(lines.join('\n'));
+        return;
+      }
+
       const contentLines: string[] = [options.title];
       if (options.description) {
         contentLines.push(chalk.dim(options.description));
@@ -147,7 +179,7 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
         contentLines,
         hintLine: options.hint,
         statusLine: '',
-        rows: process.stdout.rows,
+        rows: viewport.rows,
       });
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
       process.stdout.write(lines.join('\n'));
@@ -155,10 +187,15 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
 
     const finalize = (selectedValue: T | null): void => {
       input.off('keypress', onKeypress);
+      process.stdout.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(selectedValue);
+    };
+
+    const onResize = (): void => {
+      render();
     };
 
     const onKeypress = (_value: string, key: Keypress): void => {
@@ -190,6 +227,7 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
     };
 
     input.on('keypress', onKeypress);
+    process.stdout.on('resize', onResize);
     render();
   });
 }

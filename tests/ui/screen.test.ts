@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { layoutFullscreenHintStatusLines, layoutFullscreenLines } from '../../src/ui/screen.js';
+import {
+  isTerminalSizeEnough,
+  layoutFullscreenHintStatusLines,
+  layoutFullscreenLines,
+  resolveTerminalSize,
+} from '../../src/ui/screen.js';
 
 describe('ui screen layout', () => {
   it('pads empty lines so footer stays at bottom', () => {
@@ -31,5 +36,16 @@ describe('ui screen layout', () => {
     });
 
     expect(lines).toEqual(['title', '', '', 'hint', 'status']);
+  });
+
+  it('normalizes invalid terminal size values', () => {
+    expect(resolveTerminalSize({ rows: 0, columns: NaN })).toEqual({ rows: 24, columns: 80 });
+    expect(resolveTerminalSize({ rows: 18.8, columns: 120.2 })).toEqual({ rows: 18, columns: 120 });
+  });
+
+  it('checks terminal minimum size', () => {
+    expect(isTerminalSizeEnough({ rows: 24, columns: 80 }, { rows: 10, columns: 40 })).toBe(true);
+    expect(isTerminalSizeEnough({ rows: 9, columns: 80 }, { rows: 10, columns: 40 })).toBe(false);
+    expect(isTerminalSizeEnough({ rows: 24, columns: 39 }, { rows: 10, columns: 40 })).toBe(false);
   });
 });

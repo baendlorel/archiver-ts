@@ -4,7 +4,7 @@ import { ArchiveStatus } from '../consts/index.js';
 import { t } from '../i18n/index.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
 import { canUseInteractiveTerminal } from '../ui/interactive.js';
-import { layoutFullscreenHintStatusLines } from '../ui/screen.js';
+import { isTerminalSizeEnough, layoutFullscreenHintStatusLines, resolveTerminalSize } from '../ui/screen.js';
 import {
   createSelectState,
   getSelectedOption,
@@ -21,6 +21,10 @@ type VaultFilterValue = 'all' | number;
 type FocusTarget = 'status' | 'vault' | 'query' | 'entries' | 'action';
 
 const FOCUS_ORDER: FocusTarget[] = ['status', 'vault', 'query', 'entries', 'action'];
+const MIN_TERMINAL_SIZE = {
+  rows: 12,
+  columns: 56,
+} as const;
 
 export interface InteractiveListEntry {
   id: number;
@@ -222,7 +226,33 @@ function renderScreen(options: {
   } = options;
 
   const selectedEntry = filteredEntries[selectedIndex];
-  const rows = process.stdout.rows ?? 24;
+  const viewport = resolveTerminalSize({
+    rows: process.stdout.rows,
+    columns: process.stdout.columns,
+  });
+  if (!isTerminalSizeEnough(viewport, MIN_TERMINAL_SIZE)) {
+    const lines = layoutFullscreenHintStatusLines({
+      contentLines: [
+        chalk.bold(t('ui.screen.too_small.title')),
+        t('ui.screen.too_small.required', {
+          minColumns: MIN_TERMINAL_SIZE.columns,
+          minRows: MIN_TERMINAL_SIZE.rows,
+        }),
+        t('ui.screen.too_small.current', {
+          columns: viewport.columns,
+          rows: viewport.rows,
+        }),
+      ],
+      hintLine: chalk.dim(t('ui.screen.too_small.hint')),
+      statusLine: '',
+      rows: viewport.rows,
+    });
+    process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
+    process.stdout.write(lines.join('\n'));
+    return;
+  }
+
+  const rows = viewport.rows;
   const statusState = createStatusState(statusFilter);
   const vaultState = createVaultState(vaultOptions, vaultFilter);
   const actionState = createActionState(selectedEntry, action);
@@ -430,10 +460,15 @@ export async function pickInteractiveListAction(
   return new Promise<InteractiveListSelection | null>((resolve) => {
     const finalize = (selection: InteractiveListSelection | null): void => {
       input.off('keypress', onKeypress);
+      process.stdout.off('resize', onResize);
       input.setRawMode(false);
       input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
       resolve(selection);
+    };
+
+    const onResize = (): void => {
+      render();
     };
 
     const onKeypress = (value: string, key: Keypress): void => {
@@ -525,6 +560,7 @@ export async function pickInteractiveListAction(
     };
 
     input.on('keypress', onKeypress);
+    process.stdout.on('resize', onResize);
     render();
   });
 }

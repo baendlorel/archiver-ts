@@ -5,6 +5,10 @@ export const zh = {
   'common.action.help': 'help',
   'common.state.on': 'on',
   'common.state.off': 'off',
+  'ui.screen.too_small.title': '终端尺寸不足',
+  'ui.screen.too_small.required': '至少需要 {minColumns}x{minRows}',
+  'ui.screen.too_small.current': '当前 {columns}x{rows}',
+  'ui.screen.too_small.hint': '请放大终端窗口后继续',
 
   'index.no_command_action.unknown': '未配置无子命令行为。',
   'index.no_command_action.question': '当你输入 `arv` 且不带子命令时，希望执行什么？',
