@@ -9,14 +9,13 @@ afterEach(() => {
 });
 
 describe('cli e2e', () => {
-  it('uses project-local root when NODE_ENV is not production', () => {
+  it('uses project-local root when IS_PROD is falsy', () => {
     const projectDir = mkTempDir('archiver-e2e-dev-');
     const prodRoot = mkTempDir('archiver-e2e-dev-prod-root-');
     const filePath = path.join(projectDir, 'dev-file.txt');
     fs.writeFileSync(filePath, 'dev data\n', 'utf8');
 
     const env = {
-      NODE_ENV: 'development',
       ARCHIVER_PATH: prodRoot,
     };
 
@@ -33,7 +32,7 @@ describe('cli e2e', () => {
     expect(fs.existsSync(path.join(rootDir, 'vaults', '0', '1'))).toBe(false);
   });
 
-  it('uses ARCHIVER_PATH as root in production runtime', () => {
+  it('uses ARCHIVER_PATH as root when IS_PROD is truthy', () => {
     const projectDir = mkTempDir('archiver-e2e-prod-');
     const fakeHome = mkTempDir('archiver-e2e-home-');
     const customRoot = mkTempDir('archiver-e2e-custom-root-');
@@ -41,7 +40,7 @@ describe('cli e2e', () => {
     fs.writeFileSync(filePath, 'prod data\n', 'utf8');
 
     const env = {
-      NODE_ENV: 'production',
+      IS_PROD: '1',
       ARCHIVER_PATH: customRoot,
       HOME: fakeHome,
     };

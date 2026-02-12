@@ -78,6 +78,21 @@ export interface CheckReport {
 }
 
 declare global {
-  const __VERSION__: string;
-  const __IS_PROD__: boolean;
+  namespace NodeJS {
+    interface ProcessEnv {
+      /**
+       * Whether it's running in production environment.
+       *
+       * - This variable is injected at build time and should not be used directly. Use `__IS_PROD__` instead.
+       */
+      readonly IS_PROD: string;
+
+      /**
+       * The current version of the application.
+       *
+       * - This variable is injected at build time and should not be used directly. Use `__VERSION__` instead.
+       */
+      readonly VERSION: string;
+    }
+  }
 }

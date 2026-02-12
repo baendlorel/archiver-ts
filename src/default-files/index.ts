@@ -3,7 +3,7 @@ import path from 'node:path';
 
 function resolveDefaultFilePath(fileName: string): string {
   const distPath = path.join(import.meta.dirname, fileName);
-  if (__IS_PROD__ && fs.existsSync(distPath)) {
+  if (process.env.IS_PROD && fs.existsSync(distPath)) {
     return distPath;
   }
   return path.resolve(import.meta.dirname, '..', '..', 'public', fileName);

@@ -29,7 +29,7 @@ export async function createCommandContext(): Promise<CommandContext> {
   const vaultService = new VaultService(context, configService);
   const logService = new LogService(context);
   const checkService = new CheckService(context);
-  const version = __VERSION__;
+  const version = process.env.VERSION ?? '0.0.0-dev';
   const updateService = new UpdateService(version);
 
   return {
