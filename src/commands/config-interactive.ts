@@ -24,7 +24,7 @@ const EDITABLE_CONFIG_KEYS = ['updateCheck', 'vaultItemSeparator', 'style', 'lan
 type EditableConfigKey = (typeof EDITABLE_CONFIG_KEYS)[number];
 type SelectFieldKey = 'updateCheck' | 'style' | 'language' | 'noCommandAction';
 type SelectFieldValue = EditableConfigValues[SelectFieldKey];
-type EditorAction = 'save' | 'cancel';
+type EditorAction = 'save' | 'cancel' | 'reset-default';
 
 interface EditorFieldBase<K extends EditableConfigKey> {
   key: K;
@@ -50,6 +50,11 @@ export interface EditableConfigValues {
   language: ArchiverConfig['language'];
   noCommandAction: ArchiverConfig['noCommandAction'];
 }
+
+export type ConfigEditorResult =
+  | { action: 'save'; values: EditableConfigValues }
+  | { action: 'cancel' }
+  | { action: 'reset-default' };
 
 export function toEditableConfigValues(config: ArchiverConfig): EditableConfigValues {
   return {
@@ -247,7 +252,7 @@ function renderScreen(
   process.stdout.write(renderedLines.join('\n'));
 }
 
-export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<EditableConfigValues | null> {
+export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<ConfigEditorResult> {
   if (!canRunEditor()) {
     throw new Error(t('command.config.edit.error.no_tty'));
   }
@@ -257,6 +262,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
   let actionState = createSelectState<EditorAction>([
     { value: 'save', label: t('command.config.edit.action.save') },
     { value: 'cancel', label: t('command.config.edit.action.cancel') },
+    { value: 'reset-default', label: t('command.config.edit.action.reset_default') },
   ]);
   let activeIndex = 0;
   let note = '';
@@ -265,13 +271,13 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
   input.setRawMode(true);
   input.resume();
 
-  return new Promise<EditableConfigValues | null>((resolve) => {
-    const finalize = (values: EditableConfigValues | null): void => {
+  return new Promise<ConfigEditorResult>((resolve) => {
+    const finalize = (result: ConfigEditorResult): void => {
       input.off('keypress', onKeypress);
       input.setRawMode(false);
       input.pause();
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25h\n');
-      resolve(values);
+      resolve(result);
     };
 
     const submit = (): void => {
@@ -282,16 +288,16 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
         renderScreen(fields, activeIndex, initialValues, actionState, note);
         return;
       }
-      finalize(values);
+      finalize({ action: 'save', values });
     };
 
     const onKeypress = (value: string, key: Keypress): void => {
       if (key.ctrl && key.name === 'c') {
-        finalize(null);
+        finalize({ action: 'cancel' });
         return;
       }
       if (key.name === 'escape') {
-        finalize(null);
+        finalize({ action: 'cancel' });
         return;
       }
       if (key.name === 'up') {
@@ -309,7 +315,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
 
       if (activeIndex === fields.length) {
         if (key.name === 'q') {
-          finalize(null);
+          finalize({ action: 'cancel' });
           return;
         }
         if (key.name === 'left' || key.name === 'right') {
@@ -321,7 +327,11 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
         if (key.name === 'return' || key.name === 'enter') {
           const selectedAction = getSelectedOption(actionState)?.value ?? 'save';
           if (selectedAction === 'cancel') {
-            finalize(null);
+            finalize({ action: 'cancel' });
+            return;
+          }
+          if (selectedAction === 'reset-default') {
+            finalize({ action: 'reset-default' });
             return;
           }
           submit();
@@ -331,11 +341,11 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
 
       const activeField = fields[activeIndex];
       if (!activeField) {
-        finalize(null);
+        finalize({ action: 'cancel' });
         return;
       }
       if (key.name === 'q' && activeField.kind !== 'input') {
-        finalize(null);
+        finalize({ action: 'cancel' });
         return;
       }
 
@@ -354,7 +364,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
         const update = applyInputKeypress(activeField.state, value, key);
         activeField.state = update.state;
         if (update.action === 'cancel') {
-          finalize(null);
+          finalize({ action: 'cancel' });
           return;
         }
         if (update.action === 'submit') {

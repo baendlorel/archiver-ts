@@ -1,203 +1,67 @@
 import type { Command } from 'commander';
+import { Defaults } from '../consts/index.js';
 import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
 import { applyStyleFromConfig } from '../utils/style.js';
+import { info, success } from '../utils/terminal.js';
 import { maybeAutoUpdateCheck, runAction } from './command-utils.js';
-import {
-  applyEditableConfigValues,
-  isEditableConfigEqual,
-  promptConfigEditor,
-  toEditableConfigValues,
-} from './config-interactive.js';
-import { info, renderTable, success } from '../utils/terminal.js';
+import { isEditableConfigEqual, promptConfigEditor, toEditableConfigValues } from './config-interactive.js';
+
+async function openConfigEditor(ctx: CommandContext): Promise<void> {
+  const current = await ctx.configService.getConfig();
+  const initialValues = toEditableConfigValues(current);
+  const edited = await promptConfigEditor(initialValues);
+
+  if (edited.action === 'cancel') {
+    info(t('command.config.edit.cancelled'));
+    return;
+  }
+
+  if (edited.action === 'reset-default') {
+    await ctx.context.saveConfig({ ...Defaults.Config });
+    applyStyleFromConfig(Defaults.Config);
+    success(t('command.config.edit.reset_default.saved'));
+
+    await ctx.auditLogger.log(
+      'INFO',
+      { main: 'config', sub: 'reset-default', source: 'u' },
+      t('command.config.edit.audit.reset_default'),
+    );
+
+    await maybeAutoUpdateCheck(ctx);
+    return;
+  }
+
+  if (isEditableConfigEqual(initialValues, edited.values)) {
+    info(t('command.config.edit.no_changes'));
+    return;
+  }
+
+  const updated = {
+    ...current,
+    ...edited.values,
+  };
+
+  await ctx.context.saveConfig(updated);
+  applyStyleFromConfig(updated);
+  success(t('command.config.edit.saved'));
+
+  await ctx.auditLogger.log(
+    'INFO',
+    { main: 'config', sub: 'edit', source: 'u' },
+    t('command.config.edit.audit.saved'),
+  );
+
+  await maybeAutoUpdateCheck(ctx);
+}
 
 export function registerConfigCommands(program: Command, ctx: CommandContext): void {
-  const config = program.command('config').description(t('command.config.description'));
-
-  config
-    .command('list')
-    .description(t('command.config.list.description'))
-    .option('-c, --comment', t('command.config.list.option.comment'))
-    .action((options: { comment?: boolean }) =>
-      runAction(async () => {
-        const current = await ctx.configService.getConfig();
-        if (options.comment) {
-          const rows: string[][] = [
-            ['current_vault_id', String(current.currentVaultId), t('command.config.list.comment.current_vault_id')],
-            ['update_check', current.updateCheck, t('command.config.list.comment.update_check')],
-            ['last_update_check', current.lastUpdateCheck || '', t('command.config.list.comment.last_update_check')],
-            ['vault_item_sep', current.vaultItemSeparator, t('command.config.list.comment.vault_item_sep')],
-            ['style', current.style, t('command.config.list.comment.style')],
-            ['language', current.language, t('command.config.list.comment.language')],
-            ['no_command_action', current.noCommandAction, t('command.config.list.comment.no_command_action')],
-          ];
-          console.log(
-            renderTable(
-              [
-                t('command.config.list.table.key'),
-                t('command.config.list.table.value'),
-                t('command.config.list.table.comment'),
-              ],
-              rows,
-            ),
-          );
-        } else {
-          console.log(JSON.stringify(current, null, 2));
-        }
-      }),
-    );
-
-  config
-    .command('edit')
-    .alias('e')
-    .description(t('command.config.edit.description'))
+  program
+    .command('config')
+    .description(t('command.config.description'))
     .action(() =>
       runAction(async () => {
-        const current = await ctx.configService.getConfig();
-        const initialValues = toEditableConfigValues(current);
-        const editedValues = await promptConfigEditor(initialValues);
-        if (!editedValues) {
-          info(t('command.config.edit.cancelled'));
-          return;
-        }
-
-        if (isEditableConfigEqual(initialValues, editedValues)) {
-          info(t('command.config.edit.no_changes'));
-          return;
-        }
-
-        const updated = applyEditableConfigValues(current, editedValues);
-        await ctx.context.saveConfig(updated);
-        applyStyleFromConfig(updated);
-        success(t('command.config.edit.saved'));
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'edit', source: 'u' },
-          t('command.config.edit.audit.saved'),
-        );
-
-        await maybeAutoUpdateCheck(ctx);
-      }),
-    );
-
-  config
-    .command('update-check')
-    .description(t('command.config.update_check.description'))
-    .argument('<state>', t('command.config.update_check.argument'))
-    .action((state: string) =>
-      runAction(async () => {
-        const normalized = state.toLowerCase();
-        if (normalized !== 'on' && normalized !== 'off') {
-          throw new Error(t('command.config.state.error'));
-        }
-
-        await ctx.configService.setUpdateCheck(normalized);
-        success(t('command.config.update_check.updated', { state: normalized }));
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'update-check', args: [normalized], source: 'u' },
-          t('command.config.update_check.updated', { state: normalized }),
-        );
-
-        await maybeAutoUpdateCheck(ctx);
-      }),
-    );
-
-  config
-    .command('style')
-    .description(t('command.config.style.description'))
-    .argument('<state>', t('command.config.style.argument'))
-    .action((state: string) =>
-      runAction(async () => {
-        const normalized = state.toLowerCase();
-        if (normalized !== 'on' && normalized !== 'off') {
-          throw new Error(t('command.config.state.error'));
-        }
-
-        const updated = await ctx.configService.setStyle(normalized);
-        applyStyleFromConfig(updated);
-        success(t('command.config.style.updated', { state: normalized }));
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'style', args: [normalized], source: 'u' },
-          t('command.config.style.updated', { state: normalized }),
-        );
-      }),
-    );
-
-  config
-    .command('vault-item-sep')
-    .description(t('command.config.vault_item_sep.description'))
-    .argument('<sep>', t('command.config.vault_item_sep.argument'))
-    .action((separator: string) =>
-      runAction(async () => {
-        if (!separator.trim()) {
-          throw new Error(t('command.config.vault_item_sep.error.empty'));
-        }
-
-        await ctx.configService.setVaultItemSeparator(separator);
-        success(
-          t('command.config.vault_item_sep.updated', {
-            separator,
-          }),
-        );
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'vault-item-sep', args: [separator], source: 'u' },
-          t('command.config.vault_item_sep.updated', {
-            separator,
-          }),
-        );
-
-        await maybeAutoUpdateCheck(ctx);
-      }),
-    );
-
-  config
-    .command('no-command-action')
-    .description(t('command.config.no_command_action.description'))
-    .argument('<action>', t('command.config.no_command_action.argument'))
-    .action((action: string) =>
-      runAction(async () => {
-        const normalized = action.toLowerCase();
-        if (normalized !== 'help' && normalized !== 'list' && normalized !== 'unknown') {
-          throw new Error(t('command.config.no_command_action.error.invalid'));
-        }
-
-        await ctx.configService.setNoCommandAction(normalized);
-        success(t('command.config.no_command_action.updated', { action: normalized }));
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'no-command-action', args: [normalized], source: 'u' },
-          t('command.config.no_command_action.updated', { action: normalized }),
-        );
-      }),
-    );
-
-  config
-    .command('language')
-    .description(t('command.config.language.description'))
-    .argument('<language>', t('command.config.language.argument'))
-    .action((language: string) =>
-      runAction(async () => {
-        const normalized = language.toLowerCase();
-        if (normalized !== 'zh' && normalized !== 'en') {
-          throw new Error(t('command.config.language.error.invalid'));
-        }
-
-        await ctx.configService.setLanguage(normalized);
-        success(t('command.config.language.updated', { language: normalized }));
-
-        await ctx.auditLogger.log(
-          'INFO',
-          { main: 'config', sub: 'language', args: [normalized], source: 'u' },
-          t('command.config.language.updated', { language: normalized }),
-        );
+        await openConfigEditor(ctx);
       }),
     );
 }

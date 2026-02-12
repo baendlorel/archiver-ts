@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import stripAnsi from 'strip-ansi';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanDirs, mkTempDir, run } from './mock-cli.js';
+import { cleanDirs, mkTempDir, run, writeConfig } from './mock-cli.js';
 
 afterEach(() => {
   cleanDirs();
@@ -19,7 +19,7 @@ describe('cli e2e', () => {
       ARCHIVER_PATH: prodRoot,
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off' });
     run(['put', filePath], { cwd: projectDir, env });
 
     const rootDir = path.join(projectDir, '.archiver');
@@ -45,7 +45,7 @@ describe('cli e2e', () => {
       HOME: fakeHome,
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off' });
     run(['put', filePath], { cwd: projectDir, env });
 
     const archivedObjectPath = path.join(customRoot, 'vaults', '0', '1', 'prod-file.txt');
@@ -68,7 +68,7 @@ describe('cli e2e', () => {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off' });
     run(['put', defaultFilePath], { cwd: projectDir, env });
     run(['vault', 'create', 'work'], { cwd: projectDir, env });
     run(['put', '--vault', 'work', vaultFilePath], { cwd: projectDir, env });
@@ -89,7 +89,7 @@ describe('cli e2e', () => {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off' });
     run(['vault', 'create', 'work'], { cwd: projectDir, env });
 
     const output = run(['vault', 'list'], { cwd: projectDir, env });
@@ -105,7 +105,7 @@ describe('cli e2e', () => {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off' });
     const output = run(['list', '--plain'], { cwd: projectDir, env });
     expect(output).toBe('');
   });
@@ -116,47 +116,45 @@ describe('cli e2e', () => {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off', noCommandAction: 'unknown' });
     const output = run([], { cwd: projectDir, env });
     expect(output).toContain('Usage: archiver');
   });
 
-  it('accepts no-command-action unknown in config', () => {
+  it('respects no-command-action unknown in config file', () => {
     const projectDir = mkTempDir('archiver-e2e-no-command-unknown-');
     const env = {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
-    run(['config', 'no-command-action', 'unknown'], { cwd: projectDir, env });
-
-    const output = run(['config', 'list'], { cwd: projectDir, env });
-    expect(output).toContain('"noCommandAction": "unknown"');
+    writeConfig(projectDir, env, { updateCheck: 'off', noCommandAction: 'unknown' });
+    const output = run([], { cwd: projectDir, env });
+    expect(output).toContain('Usage: archiver');
   });
 
-  it('shows TTY error when running config edit in non-TTY mode', () => {
+  it('shows TTY error when running config in non-TTY mode', () => {
     const projectDir = mkTempDir('archiver-e2e-config-edit-no-tty-');
     const env = {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
-    expect(() => run(['config', 'edit'], { cwd: projectDir, env })).toThrow(/TTY/);
+    writeConfig(projectDir, env, { updateCheck: 'off' });
+    expect(() => run(['config'], { cwd: projectDir, env })).toThrow(/TTY/);
   });
 
-  it('uses zh as default language and supports switching to en', () => {
+  it('uses language from config file', () => {
     const projectDir = mkTempDir('archiver-e2e-language-');
     const env = {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
-    const before = run(['config', 'list'], { cwd: projectDir, env });
-    expect(before).toContain('"language": "zh"');
+    writeConfig(projectDir, env, { updateCheck: 'off', language: 'zh' });
+    const zhOutput = run(['list'], { cwd: projectDir, env });
+    expect(zhOutput).toContain('没有匹配的条目。');
 
-    run(['config', 'language', 'en'], { cwd: projectDir, env });
-    const after = run(['config', 'list'], { cwd: projectDir, env });
-    expect(after).toContain('"language": "en"');
+    writeConfig(projectDir, env, { updateCheck: 'off', language: 'en' });
+    const enOutput = run(['list'], { cwd: projectDir, env });
+    expect(enOutput).toContain('No entries matched.');
   });
 
   it('runs list when no-command-action is list', () => {
@@ -168,9 +166,8 @@ describe('cli e2e', () => {
       NODE_ENV: 'development',
     };
 
-    run(['config', 'update-check', 'off'], { cwd: projectDir, env });
+    writeConfig(projectDir, env, { updateCheck: 'off', noCommandAction: 'list' });
     run(['put', filePath], { cwd: projectDir, env });
-    run(['config', 'no-command-action', 'list'], { cwd: projectDir, env });
 
     const output = stripAnsi(run([], { cwd: projectDir, env }));
     expect(output).toContain('[0001] A no-command.txt');

@@ -39,13 +39,7 @@ Query and maintenance:
 arv list [--restored] [--all] [--vault <vault>] [--no-interactive] [--plain]
 arv log [YYYYMM | YYYYMM-YYYYMM | all]
 arv log --id <log-id>
-arv config list [-c|--comment]
-arv config edit
-arv config update-check <on|off>
-arv config vault-item-sep <separator>
-arv config style <on|off>
-arv config language <zh|en>
-arv config no-command-action <help|list|unknown>
+arv config
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
@@ -57,13 +51,13 @@ arv check
 Run:
 
 ```bash
-arv config edit
+arv config
 ```
 
 In the editor:
 
 - Up/Down: activate config item
-- Left/Right: switch select options, move cursor in input, or choose save/cancel action
+- Left/Right: switch select options, move cursor in input, or choose save/cancel/reset-default action
 - Type: edit input field text
 - Enter: save current action (or quick-save on field)
 - q/Esc: cancel
@@ -76,7 +70,7 @@ In the editor:
 - `<archiveId>` is zero-padded to 4 digits
 - default vault (`@`, id `0`): `<display-name>` is item name only
 - non-default vault: `<display-name>` is `<vaultName>(<vaultId>)<sep><item>`
-- `<sep>` comes from `config vault-item-sep` (default `::`)
+- `<sep>` comes from config editor (`vault_item_sep`, default `::`)
 
 Use `arv list --plain` for grep/script usage:
 
@@ -114,22 +108,19 @@ When you run `arv` without any subcommand, behavior is controlled by config:
 
 If `no_command_action` is `unknown` and input is not TTY (e.g. piped/CI), `arv` falls back to help text for that run.
 
-Set it with:
+Set it in:
 
 ```bash
-arv config no-command-action unknown
-arv config no-command-action help
-arv config no-command-action list
+arv config
 ```
 
 ## Language
 
 - default language is `zh`
-- switch language with:
+- switch language in:
 
 ```bash
-arv config language zh
-arv config language en
+arv config
 ```
 
 ## JSONC defaults and comments

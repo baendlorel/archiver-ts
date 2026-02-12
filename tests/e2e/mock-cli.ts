@@ -16,8 +16,50 @@ export function mkTempDir(prefix: string): string {
   createdDirs.push(dir);
   return dir;
 }
-function shellQuote(value: string): string {
-  return `'${value.replaceAll("'", "'\\''")}'`;
+
+interface E2EConfig {
+  currentVaultId: number;
+  updateCheck: 'on' | 'off';
+  lastUpdateCheck: string;
+  style: 'on' | 'off';
+  language: 'zh' | 'en';
+  vaultItemSeparator: string;
+  noCommandAction: 'help' | 'list' | 'unknown';
+}
+
+const DEFAULT_TEST_CONFIG: E2EConfig = {
+  currentVaultId: 0,
+  updateCheck: 'off',
+  lastUpdateCheck: '',
+  style: 'on',
+  language: 'zh',
+  vaultItemSeparator: '::',
+  noCommandAction: 'unknown',
+};
+
+function resolveRoot(cwd: string, env?: NodeJS.ProcessEnv): string {
+  const mergedEnv = {
+    ...process.env,
+    ...env,
+  };
+  if (mergedEnv.IS_PROD) {
+    return mergedEnv.ARCHIVER_PATH ?? path.join(mergedEnv.HOME ?? mergedEnv.USERPROFILE ?? os.homedir(), '.archiver');
+  }
+  return path.join(cwd, '.archiver');
+}
+
+export function writeConfig(cwd: string, env?: NodeJS.ProcessEnv, overrides: Partial<E2EConfig> = {}): string {
+  const root = resolveRoot(cwd, env);
+  fs.mkdirSync(root, { recursive: true });
+
+  const configPath = path.join(root, 'config.jsonc');
+  const config: E2EConfig = {
+    ...DEFAULT_TEST_CONFIG,
+    ...overrides,
+  };
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+
+  return configPath;
 }
 
 const entry = path.join(import.meta.dirname, '..', '..', 'src', 'index.ts');
