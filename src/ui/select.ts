@@ -1,7 +1,7 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
 import { canUseInteractiveTerminal } from './interactive.js';
-import { layoutFullscreenLines } from './screen.js';
+import { layoutFullscreenHintStatusLines } from './screen.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -142,8 +142,12 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
         contentLines.push(chalk.dim(options.description));
       }
       contentLines.push('', renderSelect(state));
-      const footerLines = options.hint ? [options.hint] : [];
-      const lines = layoutFullscreenLines({ contentLines, footerLines, rows: process.stdout.rows });
+      const lines = layoutFullscreenHintStatusLines({
+        contentLines,
+        hintLine: options.hint,
+        statusLine: '',
+        rows: process.stdout.rows,
+      });
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
       process.stdout.write(lines.join('\n'));
     };

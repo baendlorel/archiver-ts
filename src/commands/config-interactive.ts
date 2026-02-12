@@ -4,7 +4,7 @@ import type { ArchiverConfig } from '../global.js';
 import { t } from '../i18n/index.js';
 import type { I18nKey } from '../i18n/zh.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
-import { layoutFullscreenLines } from '../ui/screen.js';
+import { layoutFullscreenHintStatusLines } from '../ui/screen.js';
 import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect, type SelectState } from '../ui/select.js';
 
 interface Keypress {
@@ -226,13 +226,13 @@ function renderScreen(
   lines.push('');
   lines.push(`${t('command.config.edit.action_prefix')} ${renderSelect(actionState, actionActive)}`);
   lines.push('');
-  lines.push(chalk.dim(dirty ? t('command.config.edit.state.dirty') : t('command.config.edit.state.clean')));
-  if (note) {
-    lines.push(chalk.yellow(note));
-  }
-  const renderedLines = layoutFullscreenLines({
+  const statusLine = note
+    ? chalk.yellow(note)
+    : chalk.dim(dirty ? t('command.config.edit.state.dirty') : t('command.config.edit.state.clean'));
+  const renderedLines = layoutFullscreenHintStatusLines({
     contentLines: lines,
-    footerLines: [hint],
+    hintLine: hint,
+    statusLine,
     rows: process.stdout.rows,
   });
 

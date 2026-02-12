@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutFullscreenLines } from '../../src/ui/screen.js';
+import { layoutFullscreenHintStatusLines, layoutFullscreenLines } from '../../src/ui/screen.js';
 
 describe('ui screen layout', () => {
   it('pads empty lines so footer stays at bottom', () => {
@@ -20,5 +20,16 @@ describe('ui screen layout', () => {
     });
 
     expect(lines).toEqual(['a', 'b', 'c', 'd', 'e']);
+  });
+
+  it('keeps hint/status on the last two lines', () => {
+    const lines = layoutFullscreenHintStatusLines({
+      contentLines: ['title'],
+      hintLine: 'hint',
+      statusLine: 'status',
+      rows: 5,
+    });
+
+    expect(lines).toEqual(['title', '', '', 'hint', 'status']);
   });
 });
