@@ -13,7 +13,7 @@ import {
 import { info, renderTable, success } from '../utils/terminal.js';
 
 export function registerConfigCommands(program: Command, ctx: CommandContext): void {
-  const config = program.command('config').alias('c').alias('cfg').description(t('command.config.description'));
+  const config = program.command('config').description(t('command.config.description'));
 
   config
     .command('list')
@@ -31,15 +31,15 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
             ['vault_item_sep', current.vaultItemSeparator, t('command.config.list.comment.vault_item_sep')],
             ['style', current.style, t('command.config.list.comment.style')],
             ['language', current.language, t('command.config.list.comment.language')],
-            [
-              'no_command_action',
-              current.noCommandAction,
-              t('command.config.list.comment.no_command_action'),
-            ],
+            ['no_command_action', current.noCommandAction, t('command.config.list.comment.no_command_action')],
           ];
           console.log(
             renderTable(
-              [t('command.config.list.table.key'), t('command.config.list.table.value'), t('command.config.list.table.comment')],
+              [
+                t('command.config.list.table.key'),
+                t('command.config.list.table.value'),
+                t('command.config.list.table.comment'),
+              ],
               rows,
             ),
           );

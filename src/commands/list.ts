@@ -111,8 +111,6 @@ async function runSelectionAction(ctx: CommandContext, selection: InteractiveLis
 export function registerListCommands(program: Command, ctx: CommandContext): void {
   program
     .command('list')
-    .alias('l')
-    .alias('ls')
     .description(t('command.list.description'))
     .option('-r, --restored', t('command.list.option.restored'))
     .option('-a, --all', t('command.list.option.all'))

@@ -8,7 +8,6 @@ import { runAction } from './command-utils.js';
 export function registerLogCommands(program: Command, ctx: CommandContext): void {
   program
     .command('log')
-    .alias('lg')
     .description(t('command.log.description'))
     .argument('[range]', t('command.log.argument.range'))
     .option('--id <id>', t('command.log.option.id'))
@@ -45,7 +44,10 @@ export function registerLogCommands(program: Command, ctx: CommandContext): void
                   t('command.log.detail.field.archive_id'),
                   detail.log.archiveIds !== undefined ? String(detail.log.archiveIds) : '',
                 ],
-                [t('command.log.detail.field.vault_id'), detail.log.vaultIds !== undefined ? String(detail.log.vaultIds) : ''],
+                [
+                  t('command.log.detail.field.vault_id'),
+                  detail.log.vaultIds !== undefined ? String(detail.log.vaultIds) : '',
+                ],
               ],
             ),
           );
