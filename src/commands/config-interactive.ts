@@ -5,7 +5,14 @@ import { t } from '../i18n/index.js';
 import type { I18nKey } from '../i18n/zh.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
 import { layoutFullscreenHintStatusLines } from '../ui/screen.js';
-import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect, type SelectState } from '../ui/select.js';
+import {
+  createSelectState,
+  getSelectedOption,
+  moveSelect,
+  renderKeyHint,
+  renderSelect,
+  type SelectState,
+} from '../ui/select.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -77,7 +84,7 @@ export function validateEditableConfigValues(values: EditableConfigValues): I18n
 }
 
 function canRunEditor(): boolean {
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY && typeof process.stdin.setRawMode === 'function');
+  return typeof process.stdin.setRawMode === 'function';
 }
 
 function createEditorFields(values: EditableConfigValues): EditorField[] {

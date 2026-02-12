@@ -31,6 +31,11 @@ const POSIX_TEMPLATE: ShellWrapperTemplate = {
   endMarker: '# <<< archiver arv wrapper <<<',
   functionPattern: /(^|\n)\s*(function\s+)?arv\s*(\(\))?\s*\{/m,
   body: `arv() {
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    command arv "$@"
+    return $?
+  fi
+
   local line target status
   while IFS= read -r line; do
     if [[ "$line" == *__ARCHIVER_CD__:* ]]; then
@@ -58,6 +63,15 @@ const FISH_TEMPLATE: ShellWrapperTemplate = {
   endMarker: '# <<< archiver arv wrapper <<<',
   functionPattern: /(^|\n)\s*function\s+arv\b/m,
   body: `function arv
+    if not test -t 0
+        command arv $argv
+        return $status
+    end
+    if not test -t 1
+        command arv $argv
+        return $status
+    end
+
     set -l target_tmp (mktemp)
     env ARCHIVER_FORCE_INTERACTIVE=1 command arv $argv | while read -l line
         if string match -q "__ARCHIVER_CD__:*" -- $line
@@ -90,6 +104,13 @@ const POWERSHELL_TEMPLATE: ShellWrapperTemplate = {
         [Parameter(ValueFromRemainingArguments = $true)]
         [string[]]$argv
     )
+
+    if ([Console]::IsInputRedirected -or [Console]::IsOutputRedirected) {
+        $app = Get-Command arv -CommandType Application -ErrorAction Stop | Select-Object -First 1
+        & $app.Source @argv
+        $global:LASTEXITCODE = $LASTEXITCODE
+        return
+    }
 
     $target = $null
     $status = 1

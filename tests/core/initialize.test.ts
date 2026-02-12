@@ -38,6 +38,7 @@ describe('shell wrapper initialize', () => {
     expect(content).toContain('# >>> archiver arv wrapper >>>');
     expect(content).toContain('arv() {');
     expect(content).toContain('command arv "$@"');
+    expect(content).toContain('if [[ ! -t 0 || ! -t 1 ]]; then');
     expect(content).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
 
@@ -130,6 +131,8 @@ arv() {
     expect(result.shell).toBe('fish');
     const fishFunction = await fs.readFile(path.join(homeDir, '.config', 'fish', 'functions', 'arv.fish'), 'utf8');
     expect(fishFunction).toContain('function arv');
+    expect(fishFunction).toContain('if not test -t 0');
+    expect(fishFunction).toContain('if not test -t 1');
     expect(fishFunction).toContain('__ARCHIVER_CD__:');
     expect(fishFunction).toContain('ARCHIVER_FORCE_INTERACTIVE=1');
   });
@@ -155,6 +158,7 @@ arv() {
       : profilePath;
     const profileContent = await fs.readFile(absoluteProfilePath, 'utf8');
     expect(profileContent).toContain('function arv');
+    expect(profileContent).toContain('[Console]::IsInputRedirected -or [Console]::IsOutputRedirected');
     expect(profileContent).toContain('__ARCHIVER_CD__:');
     expect(profileContent).toContain('$env:ARCHIVER_FORCE_INTERACTIVE = "1"');
   });
