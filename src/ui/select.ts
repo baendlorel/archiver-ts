@@ -2,6 +2,7 @@ import readline from 'node:readline';
 import chalk from 'chalk';
 import { canUseInteractiveTerminal } from './interactive.js';
 import { layoutFullscreenHintStatusLines } from './screen.js';
+import { getDisplayWidth, padDisplayWidth } from './text-width.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -81,7 +82,7 @@ export function getSelectedOption<T>(state: SelectState<T>): SelectOption<T> | u
 }
 
 function getMaxLabelWidth<T>(options: ReadonlyArray<SelectOption<T>>): number {
-  return Math.max(...options.map((option) => option.label.length), 1);
+  return Math.max(...options.map((option) => getDisplayWidth(option.label)), 1);
 }
 
 function renderOption<T>(
@@ -91,7 +92,7 @@ function renderOption<T>(
   labelWidth: number,
 ): string {
   const marker = option.disabled ? 'x' : selected ? '>' : ' ';
-  const content = `${marker} ${option.label.padEnd(labelWidth, ' ')}`;
+  const content = `${marker} ${padDisplayWidth(option.label, labelWidth)}`;
   if (option.disabled) {
     return chalk.dim(`[${content}]`);
   }

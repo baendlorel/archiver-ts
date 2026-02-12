@@ -13,6 +13,7 @@ import {
   renderSelect,
   type SelectState,
 } from '../ui/select.js';
+import { getDisplayWidth, padDisplayWidth } from '../ui/text-width.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -193,7 +194,7 @@ function readValues(fields: EditorField[], fallback: EditableConfigValues): Edit
 }
 
 function getLabelWidth(fields: EditorField[]): number {
-  return Math.max(...fields.map((field) => field.label.length), 1);
+  return Math.max(...fields.map((field) => getDisplayWidth(field.label)), 1);
 }
 
 function renderScreen(
@@ -227,7 +228,8 @@ function renderScreen(
     }
     const active = index === activeIndex;
     const pointer = active ? chalk.cyan('>') : ' ';
-    const label = active ? chalk.bold(field.label.padEnd(labelWidth, ' ')) : field.label.padEnd(labelWidth, ' ');
+    const paddedLabel = padDisplayWidth(field.label, labelWidth);
+    const label = active ? chalk.bold(paddedLabel) : paddedLabel;
     const renderedValue =
       field.kind === 'select'
         ? renderSelect(field.state, active)
