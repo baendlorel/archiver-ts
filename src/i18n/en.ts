@@ -69,6 +69,8 @@ export const en: I18nDictionary = {
   'command.list.interactive.action_prefix': 'Action:',
   'command.list.interactive.note.restored_unavailable':
     'This entry is restored; enter/restore actions are unavailable.',
+  'command.list.interactive.summary.query_empty': '(empty)',
+  'command.list.interactive.summary': 'Filter: status {status}, vault {vault}, query {query}; matched {matched}/{total}',
   'command.list.interactive.showing': 'Matched {matched} / total {total}',
 
   'command.check.description': 'Check data consistency and health',

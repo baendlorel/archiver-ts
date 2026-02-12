@@ -92,6 +92,10 @@ function createVaultState(options: Array<SelectOption<VaultFilterValue>>, select
   return createSelectState<VaultFilterValue>(options, selected);
 }
 
+function getVaultLabel(options: Array<SelectOption<VaultFilterValue>>, value: VaultFilterValue): string {
+  return options.find((option) => option.value === value)?.label ?? t('command.list.interactive.filter.vault.all');
+}
+
 function createActionState(entry: InteractiveListEntry | undefined, action: ListAction) {
   return createSelectState<ListAction>(
     [
@@ -283,13 +287,17 @@ function renderScreen(options: {
     cancel: renderKeyHint(t('command.list.interactive.key.cancel')),
   });
 
-  const showing = t('command.list.interactive.showing', {
+  const queryText = queryState.value.trim() || t('command.list.interactive.summary.query_empty');
+  const summary = t('command.list.interactive.summary', {
     matched: filteredEntries.length,
     total: entries.length,
+    status: getStatusLabel(statusFilter),
+    vault: getVaultLabel(vaultOptions, vaultFilter),
+    query: queryText,
   });
   const statusLine = note
     ? chalk.yellow(note)
-    : chalk.dim(showing);
+    : chalk.dim(summary);
   const lines = layoutFullscreenHintStatusLines({
     contentLines,
     hintLine: hint,

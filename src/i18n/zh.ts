@@ -65,6 +65,8 @@ export const zh = {
   'command.list.interactive.hint': '{tab} 切换区域  {upDown} 选择条目  {leftRight} 切换选择/动作  {type} 输入过滤  {enter} 确认  {cancel} 取消',
   'command.list.interactive.action_prefix': '动作：',
   'command.list.interactive.note.restored_unavailable': '该条目已恢复，不能执行进入/取回。',
+  'command.list.interactive.summary.query_empty': '（空）',
+  'command.list.interactive.summary': '筛选：状态 {status}，归档仓 {vault}，过滤 {query}；匹配 {matched}/{total}',
   'command.list.interactive.showing': '匹配 {matched} / 总计 {total}',
 
   'command.check.description': '检查数据一致性与健康状态',
