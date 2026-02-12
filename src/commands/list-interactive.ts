@@ -36,6 +36,11 @@ export interface InteractiveListSelection {
   action: ListAction;
 }
 
+export interface InteractiveRestoreResult {
+  ok: boolean;
+  message: string;
+}
+
 interface Keypress {
   ctrl?: boolean;
   shift?: boolean;
@@ -334,32 +339,37 @@ export function isActionAvailable(entry: InteractiveListEntry | undefined, actio
   return false;
 }
 
-export async function pickInteractiveListAction(entries: InteractiveListEntry[]): Promise<InteractiveListSelection | null> {
+export async function pickInteractiveListAction(
+  entries: InteractiveListEntry[],
+  onRestore: (selection: InteractiveListSelection) => Promise<InteractiveRestoreResult>,
+): Promise<InteractiveListSelection | null> {
   if (entries.length === 0 || !canRunInteractiveList()) {
     return null;
   }
 
+  const sourceEntries = entries.map((entry) => ({ ...entry }));
   const input = process.stdin;
-  const vaultOptions = createVaultOptions(entries);
+  const vaultOptions = createVaultOptions(sourceEntries);
   let statusFilter: StatusFilter = 'archived';
   let vaultFilter: VaultFilterValue = 'all';
   let queryState = createInputState('');
   let focus: FocusTarget = 'entries';
-  let filteredEntries = filterInteractiveEntries(entries, statusFilter, vaultFilter, queryState.value);
+  let filteredEntries = filterInteractiveEntries(sourceEntries, statusFilter, vaultFilter, queryState.value);
   let selectedIndex = resolveSelectedIndex(filteredEntries, 0);
   let action: ListAction = getResolvedAction(filteredEntries[selectedIndex], 'enter');
+  let restoring = false;
   let note = '';
 
   const refreshFiltered = (): void => {
     const preferredId = filteredEntries[selectedIndex]?.id;
-    filteredEntries = filterInteractiveEntries(entries, statusFilter, vaultFilter, queryState.value);
+    filteredEntries = filterInteractiveEntries(sourceEntries, statusFilter, vaultFilter, queryState.value);
     selectedIndex = resolveSelectedIndex(filteredEntries, selectedIndex, preferredId);
     action = getResolvedAction(filteredEntries[selectedIndex], action);
   };
 
   const render = (): void => {
     renderScreen({
-      entries,
+      entries: sourceEntries,
       filteredEntries,
       selectedIndex,
       statusFilter,
@@ -387,6 +397,29 @@ export async function pickInteractiveListAction(entries: InteractiveListEntry[])
       return;
     }
 
+    if (selectedAction === 'restore') {
+      restoring = true;
+      void (async () => {
+        try {
+          const result = await onRestore({ entry, action: selectedAction });
+          if (result.ok) {
+            const target = sourceEntries.find((item) => item.id === entry.id);
+            if (target) {
+              target.status = ArchiveStatus.Restored;
+            }
+          }
+          note = result.message;
+        } catch (error) {
+          note = (error as Error).message;
+        } finally {
+          restoring = false;
+          refreshFiltered();
+          render();
+        }
+      })();
+      return;
+    }
+
     finalize({ entry, action: selectedAction });
   };
 
@@ -404,6 +437,10 @@ export async function pickInteractiveListAction(entries: InteractiveListEntry[])
     };
 
     const onKeypress = (value: string, key: Keypress): void => {
+      if (restoring) {
+        return;
+      }
+
       if (key.ctrl && key.name === 'c') {
         finalize(null);
         return;

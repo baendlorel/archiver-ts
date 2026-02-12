@@ -1,16 +1,13 @@
 import type { Command } from 'commander';
+import type { InteractiveListEntry, InteractiveRestoreResult } from './list-interactive.js';
+import type { CommandContext } from '../services/context.js';
+
 import { ArchiveStatus, Defaults } from '../consts/index.js';
 import { t } from '../i18n/index.js';
-import type { CommandContext } from '../services/context.js';
 import { error, info, styleArchiveStatus, success } from '../utils/terminal.js';
 import { emitCdTarget } from './cd-shell.js';
 import { maybeAutoUpdateCheck, runAction, summarizeBatch } from './command-utils.js';
-import {
-  canRunInteractiveList,
-  pickInteractiveListAction,
-  type InteractiveListEntry,
-} from './list-interactive.js';
-
+import { canRunInteractiveList, pickInteractiveListAction } from './list-interactive.js';
 interface ListCommandOptions {
   plain?: boolean;
 }
@@ -56,6 +53,49 @@ function toInteractiveEntries(entries: DecoratedListEntry[], vaultItemSeparator:
     vaultId: entry.vaultId,
     vaultName: entry.vaultName,
   }));
+}
+
+async function restoreFromInteractiveList(
+  ctx: CommandContext,
+  entry: InteractiveListEntry,
+): Promise<InteractiveRestoreResult> {
+  try {
+    const result = await ctx.archiveService.restore([entry.id]);
+    const restored = result.ok[0];
+    if (restored) {
+      return {
+        ok: true,
+        message: t('command.archive.result.restore.ok', {
+          id: restored.id ?? entry.id,
+          message: restored.message,
+        }),
+      };
+    }
+
+    const failed = result.failed[0];
+    if (failed) {
+      return {
+        ok: false,
+        message: t('command.archive.result.restore.failed', {
+          id: failed.id ?? entry.id,
+          message: failed.message,
+        }),
+      };
+    }
+
+    return {
+      ok: false,
+      message: t('command.archive.result.restore.failed', {
+        id: entry.id,
+        message: '-',
+      }),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: (error as Error).message,
+    };
+  }
 }
 
 async function runSelectionAction(
@@ -137,7 +177,10 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
           return;
         }
 
-        const selection = await pickInteractiveListAction(toInteractiveEntries(decorated, config.vaultItemSeparator));
+        const selection = await pickInteractiveListAction(
+          toInteractiveEntries(decorated, config.vaultItemSeparator),
+          async ({ entry }) => restoreFromInteractiveList(ctx, entry),
+        );
         if (!selection) {
           info(t('command.list.cancelled'));
           return;
