@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { ArchiveStatus } from '../consts/index.js';
 import { t } from '../i18n/index.js';
 import { canUseInteractiveTerminal } from '../ui/interactive.js';
+import { layoutFullscreenLines } from '../ui/screen.js';
 import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect } from '../ui/select.js';
 
 export type ListAction = 'enter' | 'restore';
@@ -80,25 +81,28 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   }
 
   const rows = process.stdout.rows ?? 24;
-  const maxListRows = Math.max(rows - 8, 5);
-  const centerOffset = Math.floor(maxListRows / 2);
-  const maxStart = Math.max(entries.length - maxListRows, 0);
-  const start = Math.min(Math.max(selectedIndex - centerOffset, 0), maxStart);
-  const end = Math.min(start + maxListRows, entries.length);
-
-  const lines: string[] = [];
-  lines.push(t('command.list.interactive.hint', {
+  const hint = t('command.list.interactive.hint', {
     upDown: renderKeyHint(t('command.list.interactive.key.up_down')),
     leftRight: renderKeyHint(t('command.list.interactive.key.left_right')),
     enter: renderKeyHint(t('command.list.interactive.key.enter')),
     cancel: renderKeyHint(t('command.list.interactive.key.cancel')),
-  }));
+  });
+
   const actionState = createActionState(selectedEntry, action);
-  lines.push(
+  const headerLines: string[] = [
     `${t('command.list.interactive.action_prefix')} ${renderSelect(actionState)}`,
-  );
-  lines.push(note ? chalk.yellow(note) : chalk.dim(''));
-  lines.push('');
+    note ? chalk.yellow(note) : '',
+    '',
+  ];
+  const footerLineCount = 2;
+  const maxListRows = Math.max(rows - headerLines.length - footerLineCount, 2);
+  const maxEntries = Math.max(Math.floor(maxListRows / 2), 1);
+  const centerOffset = Math.floor(maxEntries / 2);
+  const maxStart = Math.max(entries.length - maxEntries, 0);
+  const start = Math.min(Math.max(selectedIndex - centerOffset, 0), maxStart);
+  const end = Math.min(start + maxEntries, entries.length);
+
+  const contentLines: string[] = [...headerLines];
 
   for (let index = start; index < end; index += 1) {
     const entry = entries[index];
@@ -113,16 +117,15 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
     const pathLine = `      ${chalk.dim(entry.path)}`;
 
     if (isSelected) {
-      lines.push(chalk.bold(mainLine));
-      lines.push(chalk.cyan(pathLine));
+      contentLines.push(chalk.bold(mainLine));
+      contentLines.push(chalk.cyan(pathLine));
     } else {
-      lines.push(mainLine);
-      lines.push(pathLine);
+      contentLines.push(mainLine);
+      contentLines.push(pathLine);
     }
   }
 
-  lines.push('');
-  lines.push(
+  const footerLines = [
     chalk.dim(
       t('command.list.interactive.showing', {
         start: start + 1,
@@ -130,7 +133,9 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
         total: entries.length,
       }),
     ),
-  );
+    hint,
+  ];
+  const lines = layoutFullscreenLines({ contentLines, footerLines, rows });
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
   process.stdout.write(`${lines.join('\n')}\n`);

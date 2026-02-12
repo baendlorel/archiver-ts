@@ -22,9 +22,10 @@ async function promptNoCommandAction(ctx: CommandContext): Promise<NoCommandActi
   info(t('index.no_command_action.unknown'));
   const selected = await promptSelect<NoCommandAction>({
     title: t('index.no_command_action.question'),
+    description: t('index.no_command_action.note'),
     options: [
-      { value: 'list', label: t('common.action.list') },
-      { value: 'help', label: t('common.action.help') },
+      { value: 'list', label: t('index.no_command_action.option.list') },
+      { value: 'help', label: t('index.no_command_action.option.help') },
     ],
     initialValue: 'list',
     allowCancel: false,

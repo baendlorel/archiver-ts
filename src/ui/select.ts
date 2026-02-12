@@ -1,6 +1,7 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
 import { canUseInteractiveTerminal } from './interactive.js';
+import { layoutFullscreenLines } from './screen.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -22,6 +23,7 @@ export interface SelectState<T> {
 
 export interface SelectPromptOptions<T> {
   title: string;
+  description?: string;
   options: ReadonlyArray<SelectOption<T>>;
   initialValue?: T;
   hint?: string;
@@ -135,10 +137,13 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
 
   return new Promise<T | null>((resolve) => {
     const render = (): void => {
-      const lines: string[] = [options.title, renderSelect(state)];
-      if (options.hint) {
-        lines.push(options.hint);
+      const contentLines: string[] = [options.title];
+      if (options.description) {
+        contentLines.push(chalk.dim(options.description));
       }
+      contentLines.push('', renderSelect(state));
+      const footerLines = options.hint ? [options.hint] : [];
+      const lines = layoutFullscreenLines({ contentLines, footerLines, rows: process.stdout.rows });
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
       process.stdout.write(`${lines.join('\n')}\n`);
     };

@@ -81,18 +81,15 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       /**
-       * Whether it's running in production environment.
-       *
-       * - This variable is injected at build time and should not be used directly. Use `__IS_PROD__` instead.
+       * Runtime production flag, injected by build/test tools.
+       * Use truthy check, e.g. `if (process.env.IS_PROD)`.
        */
-      readonly IS_PROD: string;
+      IS_PROD?: string;
 
       /**
-       * The current version of the application.
-       *
-       * - This variable is injected at build time and should not be used directly. Use `__VERSION__` instead.
+       * Runtime app version, injected by build tools.
        */
-      readonly VERSION: string;
+      VERSION?: string;
     }
   }
 }

@@ -8,6 +8,9 @@ export const zh = {
 
   'index.no_command_action.unknown': '未配置无子命令行为。',
   'index.no_command_action.question': '当你输入 `arv` 且不带子命令时，希望执行什么？',
+  'index.no_command_action.note': '此行为可通过 config 命令随时更改。',
+  'index.no_command_action.option.list': '可互动的Archiver列表',
+  'index.no_command_action.option.help': '显示帮助文本',
   'index.no_command_action.option_list': '  1) list',
   'index.no_command_action.option_help': '  2) help',
   'index.no_command_action.choose': '请选择 [1/2]（默认 1）：',

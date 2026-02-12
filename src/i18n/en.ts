@@ -10,6 +10,9 @@ export const en: I18nDictionary = {
 
   'index.no_command_action.unknown': 'No-command action is unknown.',
   'index.no_command_action.question': 'When you run `arv` with no subcommand, what should it do?',
+  'index.no_command_action.note': 'You can change this later with the config command.',
+  'index.no_command_action.option.list': 'Interactive Archiver list',
+  'index.no_command_action.option.help': 'Show help text',
   'index.no_command_action.option_list': '  1) list',
   'index.no_command_action.option_help': '  2) help',
   'index.no_command_action.choose': 'Choose [1/2] (default 1): ',

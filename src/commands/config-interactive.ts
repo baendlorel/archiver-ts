@@ -4,6 +4,7 @@ import type { ArchiverConfig } from '../global.js';
 import { t } from '../i18n/index.js';
 import type { I18nKey } from '../i18n/zh.js';
 import { applyInputKeypress, createInputState, renderInput, type InputState } from '../ui/input.js';
+import { layoutFullscreenLines } from '../ui/screen.js';
 import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect, type SelectState } from '../ui/select.js';
 
 interface Keypress {
@@ -195,18 +196,16 @@ function renderScreen(
   const labelWidth = getLabelWidth(fields);
   const actionsIndex = fields.length;
   const actionActive = activeIndex === actionsIndex;
+  const hint = t('command.config.edit.hint', {
+    upDown: renderKeyHint(t('command.config.edit.key.up_down')),
+    leftRight: renderKeyHint(t('command.config.edit.key.left_right')),
+    type: renderKeyHint(t('command.config.edit.key.type')),
+    enter: renderKeyHint(t('command.config.edit.key.enter')),
+    cancel: renderKeyHint(t('command.config.edit.key.cancel')),
+  });
 
   const lines: string[] = [];
   lines.push(chalk.bold(t('command.config.edit.title')));
-  lines.push(
-    t('command.config.edit.hint', {
-      upDown: renderKeyHint(t('command.config.edit.key.up_down')),
-      leftRight: renderKeyHint(t('command.config.edit.key.left_right')),
-      type: renderKeyHint(t('command.config.edit.key.type')),
-      enter: renderKeyHint(t('command.config.edit.key.enter')),
-      cancel: renderKeyHint(t('command.config.edit.key.cancel')),
-    }),
-  );
   lines.push('');
 
   for (let index = 0; index < fields.length; index += 1) {
@@ -231,9 +230,14 @@ function renderScreen(
   if (note) {
     lines.push(chalk.yellow(note));
   }
+  const renderedLines = layoutFullscreenLines({
+    contentLines: lines,
+    footerLines: [hint],
+    rows: process.stdout.rows,
+  });
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-  process.stdout.write(`${lines.join('\n')}\n`);
+  process.stdout.write(`${renderedLines.join('\n')}\n`);
 }
 
 export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<EditableConfigValues | null> {
