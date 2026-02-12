@@ -169,7 +169,7 @@ export const zh = {
   'command.vault.list.option.all': '显示已删除 vault',
   'command.vault.list.empty': '未找到 vault。',
 
-  'command.log.description': '查看操作日志',
+  'command.log.description': '输出全部操作日志（便于 grep）',
   'command.log.argument.range': 'YYYYMM | YYYYMM-YYYYMM | all|*|a',
   'command.log.option.id': '按 id 查看单条日志',
   'command.log.error.invalid_id': '无效日志 id：{id}',

@@ -37,14 +37,12 @@ Query and maintenance:
 
 ```bash
 arv list [-p|--plain]
-arv log [YYYYMM | YYYYMM-YYYYMM | all]
-arv log --id <log-id>
+arv log
 arv config
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
 
-`arv log` without range now prints all records by default (grep-friendly).
 
 ## Interactive config editor
 
@@ -94,6 +92,20 @@ Examples:
 [0002] A work(1)::report.pdf
 1	A	todo.txt
 2	A	work(1)::report.pdf
+```
+
+## Log output behavior
+
+`arv log` always prints all records (no options) in a grep-friendly format.
+
+- format: `<logId><TAB><time><TAB><level><TAB><op><TAB><message><TAB><archiveId><TAB><vaultId>`
+- `op` uses `main/sub` when sub operation exists
+- `archiveId` and `vaultId` are empty when not present
+
+Example:
+
+```text
+12\t2026-02-12 10:22:33\tINFO\tarchive/put\tArchived foo.txt\t34\t0
 ```
 
 ## Shell wrapper note

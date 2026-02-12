@@ -173,7 +173,7 @@ export const en: I18nDictionary = {
   'command.vault.list.option.all': 'Show removed vaults',
   'command.vault.list.empty': 'No vaults found.',
 
-  'command.log.description': 'Show operation logs',
+  'command.log.description': 'Print all operation logs (grep-friendly)',
   'command.log.argument.range': 'YYYYMM | YYYYMM-YYYYMM | all|*|a',
   'command.log.option.id': 'Show one log record by id',
   'command.log.error.invalid_id': 'Invalid log id: {id}',
