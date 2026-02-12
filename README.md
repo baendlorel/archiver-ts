@@ -36,7 +36,7 @@ arv vault list [-a|--all]
 Query and maintenance:
 
 ```bash
-arv list [--restored] [--all] [--vault <vault>] [--no-interactive] [--plain]
+arv list [-p|--plain]
 arv log [YYYYMM | YYYYMM-YYYYMM | all]
 arv log --id <log-id>
 arv config
@@ -64,7 +64,16 @@ In the editor:
 
 ## List output behavior
 
-`arv list` default non-interactive output is one line per entry:
+`arv list` opens an interactive picker (TTY):
+
+- status filter: Archived / Restored / All (default All)
+- vault filter: All or a specific vault (default All)
+- fuzzy filter input: matches archive names and hides non-matching rows
+- actions: enter slot / restore (when applicable)
+
+When not in TTY, `arv list` falls back to plain list lines.
+
+Non-interactive line format:
 
 - format: `[<archiveId>] <A|R> <display-name>`
 - `<archiveId>` is zero-padded to 4 digits

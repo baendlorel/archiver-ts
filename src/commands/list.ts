@@ -9,14 +9,9 @@ import {
   canRunInteractiveList,
   pickInteractiveListAction,
   type InteractiveListEntry,
-  type InteractiveListSelection,
 } from './list-interactive.js';
 
 interface ListCommandOptions {
-  restored?: boolean;
-  all?: boolean;
-  vault?: string;
-  interactive?: boolean;
   plain?: boolean;
 }
 
@@ -58,10 +53,15 @@ function toInteractiveEntries(entries: DecoratedListEntry[], vaultItemSeparator:
     status: entry.status,
     title: formatListName(entry, vaultItemSeparator),
     path: entry.displayPath,
+    vaultId: entry.vaultId,
+    vaultName: entry.vaultName,
   }));
 }
 
-async function runSelectionAction(ctx: CommandContext, selection: InteractiveListSelection): Promise<void> {
+async function runSelectionAction(
+  ctx: CommandContext,
+  selection: { entry: InteractiveListEntry; action: 'enter' | 'restore' },
+): Promise<void> {
   const archiveId = selection.entry.id;
 
   if (selection.action === 'restore') {
@@ -112,14 +112,10 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
   program
     .command('list')
     .description(t('command.list.description'))
-    .option('-r, --restored', t('command.list.option.restored'))
-    .option('-a, --all', t('command.list.option.all'))
-    .option('-v, --vault <vault>', t('command.list.option.vault'))
-    .option('--no-interactive', t('command.list.option.no_interactive'))
     .option('-p, --plain', t('command.list.option.plain'))
     .action((options: ListCommandOptions) =>
       runAction(async () => {
-        const entries = await ctx.archiveService.listEntries(options);
+        const entries = await ctx.archiveService.listEntries({ all: true });
         const decorated = await ctx.archiveService.decorateEntries(entries);
         const config = await ctx.configService.getConfig();
 
@@ -136,14 +132,8 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
           return;
         }
 
-        const shouldUseInteractive = options.interactive !== false && canRunInteractiveList();
-        const hasArchivedEntry = decorated.some((entry) => entry.status === ArchiveStatus.Archived);
-
-        if (!shouldUseInteractive || !hasArchivedEntry) {
+        if (!canRunInteractiveList()) {
           console.log(renderList(decorated, config.vaultItemSeparator));
-          if (shouldUseInteractive && !hasArchivedEntry) {
-            info(t('command.list.restored_only_notice'));
-          }
           return;
         }
 
@@ -152,7 +142,6 @@ export function registerListCommands(program: Command, ctx: CommandContext): voi
           info(t('command.list.cancelled'));
           return;
         }
-
         await runSelectionAction(ctx, selection);
       }),
     );
