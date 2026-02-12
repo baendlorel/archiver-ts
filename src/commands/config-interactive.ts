@@ -16,6 +16,7 @@ const EDITABLE_CONFIG_KEYS = ['updateCheck', 'vaultItemSeparator', 'style', 'lan
 type EditableConfigKey = (typeof EDITABLE_CONFIG_KEYS)[number];
 type SelectFieldKey = 'updateCheck' | 'style' | 'language' | 'noCommandAction';
 type SelectFieldValue = EditableConfigValues[SelectFieldKey];
+type EditorAction = 'save' | 'cancel';
 
 interface EditorFieldBase<K extends EditableConfigKey> {
   key: K;
@@ -186,11 +187,14 @@ function renderScreen(
   fields: EditorField[],
   activeIndex: number,
   initialValues: EditableConfigValues,
+  actionState: SelectState<EditorAction>,
   note: string,
 ): void {
   const currentValues = readValues(fields, initialValues);
   const dirty = !isEditableConfigEqual(currentValues, initialValues);
   const labelWidth = getLabelWidth(fields);
+  const actionsIndex = fields.length;
+  const actionActive = activeIndex === actionsIndex;
 
   const lines: string[] = [];
   lines.push(chalk.bold(t('command.config.edit.title')));
@@ -221,6 +225,8 @@ function renderScreen(
   }
 
   lines.push('');
+  lines.push(`${t('command.config.edit.action_prefix')} ${renderSelect(actionState, actionActive)}`);
+  lines.push('');
   lines.push(chalk.dim(dirty ? t('command.config.edit.state.dirty') : t('command.config.edit.state.clean')));
   if (note) {
     lines.push(chalk.yellow(note));
@@ -237,6 +243,10 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
 
   const input = process.stdin;
   const fields = createEditorFields(initialValues);
+  let actionState = createSelectState<EditorAction>([
+    { value: 'save', label: t('command.config.edit.action.save') },
+    { value: 'cancel', label: t('command.config.edit.action.cancel') },
+  ]);
   let activeIndex = 0;
   let note = '';
 
@@ -258,7 +268,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
       const errorKey = validateEditableConfigValues(values);
       if (errorKey) {
         note = t(errorKey);
-        renderScreen(fields, activeIndex, initialValues, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note);
         return;
       }
       finalize(values);
@@ -274,15 +284,37 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
         return;
       }
       if (key.name === 'up') {
-        activeIndex = moveActiveIndex(activeIndex, 'up', fields.length);
+        activeIndex = moveActiveIndex(activeIndex, 'up', fields.length + 1);
         note = '';
-        renderScreen(fields, activeIndex, initialValues, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note);
         return;
       }
       if (key.name === 'down') {
-        activeIndex = moveActiveIndex(activeIndex, 'down', fields.length);
+        activeIndex = moveActiveIndex(activeIndex, 'down', fields.length + 1);
         note = '';
-        renderScreen(fields, activeIndex, initialValues, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note);
+        return;
+      }
+
+      if (activeIndex === fields.length) {
+        if (key.name === 'q') {
+          finalize(null);
+          return;
+        }
+        if (key.name === 'left' || key.name === 'right') {
+          actionState = moveSelect(actionState, key.name);
+          note = '';
+          renderScreen(fields, activeIndex, initialValues, actionState, note);
+          return;
+        }
+        if (key.name === 'return' || key.name === 'enter') {
+          const selectedAction = getSelectedOption(actionState)?.value ?? 'save';
+          if (selectedAction === 'cancel') {
+            finalize(null);
+            return;
+          }
+          submit();
+        }
         return;
       }
 
@@ -303,7 +335,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
           activeField.state = applyInputKeypress(activeField.state, value, key).state;
         }
         note = '';
-        renderScreen(fields, activeIndex, initialValues, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note);
         return;
       }
 
@@ -319,7 +351,7 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
           return;
         }
         note = '';
-        renderScreen(fields, activeIndex, initialValues, note);
+        renderScreen(fields, activeIndex, initialValues, actionState, note);
         return;
       }
 
@@ -329,6 +361,6 @@ export async function promptConfigEditor(initialValues: EditableConfigValues): P
     };
 
     input.on('keypress', onKeypress);
-    renderScreen(fields, activeIndex, initialValues, note);
+    renderScreen(fields, activeIndex, initialValues, actionState, note);
   });
 }

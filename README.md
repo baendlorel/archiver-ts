@@ -64,9 +64,9 @@ arv config edit
 In the editor:
 
 - Up/Down: activate config item
-- Left/Right: switch select options or move cursor in input
+- Left/Right: switch select options, move cursor in input, or choose save/cancel action
 - Type: edit input field text
-- Enter: save
+- Enter: save current action (or quick-save on field)
 - q/Esc: cancel
 
 ## List output behavior

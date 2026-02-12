@@ -1,5 +1,3 @@
-import './macros.js';
-
 import type { CommandContext } from './services/context.js';
 import type { ArchiverConfig } from './global.js';
 

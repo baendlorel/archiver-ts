@@ -2,6 +2,7 @@ import readline from 'node:readline';
 import chalk from 'chalk';
 import { ArchiveStatus } from '../consts/index.js';
 import { t } from '../i18n/index.js';
+import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect } from '../ui/select.js';
 
 export type ListAction = 'enter' | 'restore';
 
@@ -22,17 +23,11 @@ interface Keypress {
   name?: string;
 }
 
-const LIST_ACTIONS: ListAction[] = ['enter', 'restore'];
-
 function getActionLabel(action: ListAction): string {
   if (action === 'enter') {
     return t('command.list.interactive.action.enter');
   }
   return t('command.list.interactive.action.restore');
-}
-
-function getActionLabelWidth(): number {
-  return Math.max(...LIST_ACTIONS.map((action) => getActionLabel(action).length));
 }
 
 export function canRunInteractiveList(): boolean {
@@ -49,29 +44,25 @@ export function isActionAvailable(entry: InteractiveListEntry, action: ListActio
   return false;
 }
 
-function renderActionLabel(action: ListAction, selected: boolean, disabled: boolean): string {
-  const label = getActionLabel(action);
-  const paddedLabel = label.padEnd(getActionLabelWidth(), ' ');
-  const marker = disabled ? 'x' : selected ? '>' : ' ';
-  const content = `${marker} ${paddedLabel}`;
-  if (disabled) {
-    return chalk.dim(`[${content}]`);
-  }
-  if (selected) {
-    return chalk.black.bgGreen(`[${content}]`);
-  }
-  return chalk.green(`[${content}]`);
+function createActionState(entry: InteractiveListEntry, action: ListAction) {
+  return createSelectState<ListAction>(
+    [
+      { value: 'enter', label: getActionLabel('enter'), disabled: !isActionAvailable(entry, 'enter') },
+      { value: 'restore', label: getActionLabel('restore'), disabled: !isActionAvailable(entry, 'restore') },
+    ],
+    action,
+  );
 }
 
-function renderKeyHint(label: string): string {
-  return chalk.black.bgWhite(` ${label} `);
+function getResolvedAction(entry: InteractiveListEntry, action: ListAction): ListAction {
+  const selected = getSelectedOption(createActionState(entry, action))?.value;
+  return selected ?? action;
 }
 
-function moveAction(current: ListAction, direction: 'left' | 'right'): ListAction {
-  const currentIndex = LIST_ACTIONS.indexOf(current);
-  const offset = direction === 'left' ? -1 : 1;
-  const nextIndex = (currentIndex + offset + LIST_ACTIONS.length) % LIST_ACTIONS.length;
-  return LIST_ACTIONS[nextIndex] ?? current;
+function moveAction(entry: InteractiveListEntry, current: ListAction, direction: 'left' | 'right'): ListAction {
+  const state = createActionState(entry, current);
+  const moved = moveSelect(state, direction);
+  return getSelectedOption(moved)?.value ?? current;
 }
 
 function moveEntryIndex(current: number, direction: 'up' | 'down', total: number): number {
@@ -104,8 +95,9 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
     enter: renderKeyHint(t('command.list.interactive.key.enter')),
     cancel: renderKeyHint(t('command.list.interactive.key.cancel')),
   }));
+  const actionState = createActionState(selectedEntry, action);
   lines.push(
-    `${t('command.list.interactive.action_prefix')} ${renderActionLabel('enter', action === 'enter', !isActionAvailable(selectedEntry, 'enter'))}  ${renderActionLabel('restore', action === 'restore', !isActionAvailable(selectedEntry, 'restore'))}`,
+    `${t('command.list.interactive.action_prefix')} ${renderSelect(actionState)}`,
   );
   lines.push(note ? chalk.yellow(note) : chalk.dim(''));
   lines.push('');
@@ -192,14 +184,24 @@ export async function pickInteractiveListAction(
       }
 
       if (key.name === 'left') {
-        action = moveAction(action, 'left');
+        const entry = entries[selectedIndex];
+        if (!entry) {
+          finalize(null);
+          return;
+        }
+        action = moveAction(entry, action, 'left');
         note = '';
         renderScreen(entries, selectedIndex, action, note);
         return;
       }
 
       if (key.name === 'right') {
-        action = moveAction(action, 'right');
+        const entry = entries[selectedIndex];
+        if (!entry) {
+          finalize(null);
+          return;
+        }
+        action = moveAction(entry, action, 'right');
         note = '';
         renderScreen(entries, selectedIndex, action, note);
         return;
@@ -211,14 +213,15 @@ export async function pickInteractiveListAction(
           finalize(null);
           return;
         }
+        const selectedAction = getResolvedAction(entry, action);
 
-        if (!isActionAvailable(entry, action)) {
+        if (!isActionAvailable(entry, selectedAction)) {
           note = t('command.list.interactive.note.restored_unavailable');
           renderScreen(entries, selectedIndex, action, note);
           return;
         }
 
-        finalize({ entry, action });
+        finalize({ entry, action: selectedAction });
         return;
       }
 

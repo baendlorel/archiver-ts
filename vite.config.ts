@@ -14,7 +14,8 @@ export default defineConfig({
     },
   },
   define: {
-    'process.env.NODE_ENV': JSON.stringify('production'),
+    // 'process.env.IS_PROD': JSON.stringify(true),
+    // 'process.env.VERSION': JSON.stringify(pkg.version),
     __IS_PROD__: JSON.stringify(true),
     __VERSION__: JSON.stringify(pkg.version),
   },
