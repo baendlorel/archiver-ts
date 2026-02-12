@@ -16,7 +16,6 @@ function sanitizeConfig(config: ArchiverConfig): ArchiverConfig {
         : Defaults.Config.currentVaultId,
     updateCheck: config.updateCheck === 'off' ? 'off' : 'on',
     lastUpdateCheck: typeof config.lastUpdateCheck === 'string' ? config.lastUpdateCheck : '',
-    aliasMap: typeof config.aliasMap === 'object' && config.aliasMap !== null ? config.aliasMap : {},
     vaultItemSeparator:
       typeof config.vaultItemSeparator === 'string' && config.vaultItemSeparator.length > 0
         ? config.vaultItemSeparator

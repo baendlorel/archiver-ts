@@ -58,7 +58,7 @@ async function createRuntime(): Promise<{
 
   return {
     context,
-    archiveService: new ArchiveService(context, configService, logger),
+    archiveService: new ArchiveService(context, logger),
     vaultService: new VaultService(context, configService),
     checkService: new CheckService(context),
   };

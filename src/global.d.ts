@@ -24,7 +24,6 @@ export interface ArchiverConfig {
   currentVaultId: number;
   updateCheck: 'on' | 'off';
   lastUpdateCheck: string;
-  aliasMap: Record<string, string>;
   vaultItemSeparator: string;
   style: 'on' | 'off';
   language: 'zh' | 'en';

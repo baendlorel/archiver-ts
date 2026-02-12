@@ -3,7 +3,6 @@ import type { Stats } from 'node:fs';
 import path from 'node:path';
 import type { ListEntry, OperationSource, Vault } from '../global.js';
 import type { ArchiverContext } from '../core/context.js';
-import type { ConfigService } from './config.js';
 import type { AuditLogger } from './audit-logger.js';
 
 import { ArchiveStatus, Paths } from '../consts/index.js';
@@ -54,7 +53,6 @@ type ArchiveStorageLocation = NonNullable<Awaited<ReturnType<ArchiverContext['re
 export class ArchiveService {
   constructor(
     private readonly context: ArchiverContext,
-    private readonly configService: ConfigService,
     private readonly logger: AuditLogger,
   ) {}
 
@@ -562,12 +560,10 @@ export class ArchiveService {
   > {
     const vaults = await this.context.getVaults({ includeRemoved: true, withDefault: true });
     const vaultMap = new Map<number, Vault>(vaults.map((vault) => [vault.id, vault]));
-    const config = await this.context.loadConfig();
 
     return entries.map((entry) => {
       const vault = vaultMap.get(entry.vaultId);
-      const fullPath = path.join(entry.directory, entry.item);
-      const displayPath = this.configService.renderPathWithAlias(fullPath, config.aliasMap);
+      const displayPath = path.join(entry.directory, entry.item);
 
       return {
         ...entry,

@@ -1,4 +1,3 @@
-import path from 'node:path';
 import type { Command } from 'commander';
 import { t } from '../i18n/index.js';
 import type { CommandContext } from '../services/context.js';
@@ -27,7 +26,6 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
             ['current_vault_id', String(current.currentVaultId), t('command.config.list.comment.current_vault_id')],
             ['update_check', current.updateCheck, t('command.config.list.comment.update_check')],
             ['last_update_check', current.lastUpdateCheck || '', t('command.config.list.comment.last_update_check')],
-            ['alias_map', JSON.stringify(current.aliasMap), t('command.config.list.comment.alias_map')],
             ['vault_item_sep', current.vaultItemSeparator, t('command.config.list.comment.vault_item_sep')],
             ['style', current.style, t('command.config.list.comment.style')],
             ['language', current.language, t('command.config.list.comment.language')],
@@ -78,48 +76,6 @@ export function registerConfigCommands(program: Command, ctx: CommandContext): v
           { main: 'config', sub: 'edit', source: 'u' },
           t('command.config.edit.audit.saved'),
         );
-
-        await maybeAutoUpdateCheck(ctx);
-      }),
-    );
-
-  config
-    .command('alias')
-    .description(t('command.config.alias.description'))
-    .argument('<alias-path>', t('command.config.alias.argument'))
-    .option('-r, --remove', t('command.config.alias.option.remove'))
-    .action((aliasPath: string, options: { remove?: boolean }) =>
-      runAction(async () => {
-        if (options.remove) {
-          const alias = aliasPath.includes('=') ? aliasPath.split('=', 1)[0] : aliasPath;
-          if (!alias) {
-            throw new Error(t('command.config.alias.error.empty'));
-          }
-          await ctx.configService.removeAlias(alias);
-          success(t('command.config.alias.removed', { alias }));
-
-          await ctx.auditLogger.log(
-            'INFO',
-            { main: 'config', sub: 'alias', args: [alias], opts: { remove: true }, source: 'u' },
-            t('command.config.alias.removed', { alias }),
-          );
-        } else {
-          const split = aliasPath.split('=');
-          if (split.length !== 2 || !split[0] || !split[1]) {
-            throw new Error(t('command.config.alias.error.format'));
-          }
-          const alias = split[0].trim();
-          const targetPath = split[1].trim();
-          await ctx.configService.addAlias(alias, targetPath);
-          const resolvedPath = path.resolve(targetPath);
-          success(t('command.config.alias.set', { alias, path: resolvedPath }));
-
-          await ctx.auditLogger.log(
-            'INFO',
-            { main: 'config', sub: 'alias', args: [aliasPath], source: 'u' },
-            t('command.config.alias.set', { alias, path: resolvedPath }),
-          );
-        }
 
         await maybeAutoUpdateCheck(ctx);
       }),

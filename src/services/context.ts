@@ -25,7 +25,7 @@ export async function createCommandContext(): Promise<CommandContext> {
 
   const configService = new ConfigService(context);
   const auditLogger = new AuditLogger(context);
-  const archiveService = new ArchiveService(context, configService, auditLogger);
+  const archiveService = new ArchiveService(context, auditLogger);
   const vaultService = new VaultService(context, configService);
   const logService = new LogService(context);
   const checkService = new CheckService(context);

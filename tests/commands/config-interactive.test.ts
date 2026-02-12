@@ -12,7 +12,6 @@ function makeConfig() {
     currentVaultId: 3,
     updateCheck: 'on' as const,
     lastUpdateCheck: '2026-02-12T00:00:00.000Z',
-    aliasMap: { docs: '/tmp/docs' },
     vaultItemSeparator: '::',
     style: 'on' as const,
     language: 'zh' as const,
@@ -43,7 +42,6 @@ describe('config interactive helpers', () => {
     });
 
     expect(next.currentVaultId).toBe(3);
-    expect(next.aliasMap).toEqual({ docs: '/tmp/docs' });
     expect(next.lastUpdateCheck).toBe('2026-02-12T00:00:00.000Z');
     expect(next.updateCheck).toBe('off');
     expect(next.vaultItemSeparator).toBe('--');

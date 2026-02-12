@@ -41,7 +41,6 @@ arv log [YYYYMM | YYYYMM-YYYYMM | all]
 arv log --id <log-id>
 arv config list [-c|--comment]
 arv config edit
-arv config alias <alias=path> [-r|--remove]
 arv config update-check <on|off>
 arv config vault-item-sep <separator>
 arv config style <on|off>

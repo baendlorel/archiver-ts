@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { createSelectState, getSelectedOption, moveSelect, type SelectOption } from '../../src/ui/select.js';
 
 describe('ui select', () => {
+  it('defaults to first option when initial value is not provided', () => {
+    const options: SelectOption<string>[] = [
+      { value: 'list', label: 'list' },
+      { value: 'help', label: 'help' },
+    ];
+    const state = createSelectState(options);
+    expect(getSelectedOption(state)?.value).toBe('list');
+  });
+
   it('uses initial value when available', () => {
     const options: SelectOption<string>[] = [
       { value: 'list', label: 'list' },
