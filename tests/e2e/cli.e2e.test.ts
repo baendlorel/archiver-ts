@@ -142,6 +142,16 @@ describe('cli e2e', () => {
     expect(() => run(['config'], { cwd: projectDir, env })).toThrow(/TTY/);
   });
 
+  it('shows TTY error when running dot command in non-TTY mode', () => {
+    const projectDir = mkTempDir('archiver-e2e-dot-no-tty-');
+    const env = {
+      NODE_ENV: 'development',
+    };
+
+    writeConfig(projectDir, env, { updateCheck: 'off' });
+    expect(() => run(['.'], { cwd: projectDir, env })).toThrow(/TTY/);
+  });
+
   it('uses language from config file', () => {
     const projectDir = mkTempDir('archiver-e2e-language-');
     const env = {

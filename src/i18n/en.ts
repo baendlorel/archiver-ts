@@ -75,6 +75,16 @@ export const en: I18nDictionary = {
     'Filter: status {status}, vault {vault}, query {query}; matched {matched}/{total}',
   'command.list.interactive.showing': 'Matched {matched} / total {total}',
 
+  'command.dot.description': 'Interactively browse current directory and archive quickly',
+  'command.dot.error.no_tty': 'Interactive directory archive requires a TTY terminal.',
+  'command.dot.empty': 'Current directory has no entries to show.',
+  'command.dot.archiving': 'Archiving: {name}',
+  'command.dot.summary': 'Current directory items: {total}',
+  'command.dot.key.up_down': 'Up/Down',
+  'command.dot.key.enter': 'Enter',
+  'command.dot.key.cancel': 'q/Esc',
+  'command.dot.hint': '{upDown} select  {enter} archive current item  {cancel} exit',
+
   'command.check.description': 'Check data consistency and health',
   'command.check.table.level': 'Level',
   'command.check.table.code': 'Code',

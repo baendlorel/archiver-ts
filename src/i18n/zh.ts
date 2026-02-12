@@ -71,6 +71,16 @@ export const zh = {
   'command.list.interactive.summary': '筛选：状态 {status}，归档仓 {vault}，过滤 {query}；匹配 {matched}/{total}',
   'command.list.interactive.showing': '匹配 {matched} / 总计 {total}',
 
+  'command.dot.description': '交互式浏览当前目录并快速归档',
+  'command.dot.error.no_tty': '交互式目录归档需要在 TTY 终端中运行。',
+  'command.dot.empty': '当前目录下没有可显示的条目。',
+  'command.dot.archiving': '正在归档：{name}',
+  'command.dot.summary': '当前目录共 {total} 项',
+  'command.dot.key.up_down': '上/下',
+  'command.dot.key.enter': '回车',
+  'command.dot.key.cancel': 'q/Esc',
+  'command.dot.hint': '{upDown} 选择  {enter} 归档当前条目  {cancel} 退出',
+
   'command.check.description': '检查数据一致性与健康状态',
   'command.check.table.level': '级别',
   'command.check.table.code': '代码',
