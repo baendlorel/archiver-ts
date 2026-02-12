@@ -145,7 +145,7 @@ export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<
       const footerLines = options.hint ? [options.hint] : [];
       const lines = layoutFullscreenLines({ contentLines, footerLines, rows: process.stdout.rows });
       process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-      process.stdout.write(`${lines.join('\n')}\n`);
+      process.stdout.write(lines.join('\n'));
     };
 
     const finalize = (selectedValue: T | null): void => {

@@ -1,6 +1,6 @@
 {
   "name": "archiver-ts",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A TypeScript rewrite of Archiver CLI",
   "description_zh": "用TypeScript重写的Archiver CLI",
   "type": "module",

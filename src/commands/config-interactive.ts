@@ -237,7 +237,7 @@ function renderScreen(
   });
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-  process.stdout.write(`${renderedLines.join('\n')}\n`);
+  process.stdout.write(renderedLines.join('\n'));
 }
 
 export async function promptConfigEditor(initialValues: EditableConfigValues): Promise<EditableConfigValues | null> {

@@ -138,7 +138,7 @@ function renderScreen(entries: InteractiveListEntry[], selectedIndex: number, ac
   const lines = layoutFullscreenLines({ contentLines, footerLines, rows });
 
   process.stdout.write('\x1B[2J\x1B[H\x1B[?25l');
-  process.stdout.write(`${lines.join('\n')}\n`);
+  process.stdout.write(lines.join('\n'));
 }
 
 export async function pickInteractiveListAction(
