@@ -7,6 +7,7 @@ import { ensureArvShellWrapper } from './core/initialize.js';
 import { createCommandContext } from './services/context.js';
 import { readJsonc } from './utils/jsonc.js';
 import { setLanguage, t } from './i18n/index.js';
+import { canUseInteractiveTerminal } from './ui/interactive.js';
 import { promptSelect, renderKeyHint } from './ui/select.js';
 import { applyStyleFromConfig } from './utils/style.js';
 import { error, info, success } from './utils/terminal.js';
@@ -14,7 +15,7 @@ import { error, info, success } from './utils/terminal.js';
 type NoCommandAction = Exclude<ArchiverConfig['noCommandAction'], 'unknown'>;
 
 async function promptNoCommandAction(ctx: CommandContext): Promise<NoCommandAction> {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+  if (!canUseInteractiveTerminal()) {
     return 'help';
   }
 

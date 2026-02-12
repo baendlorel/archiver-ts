@@ -1,5 +1,6 @@
 import readline from 'node:readline';
 import chalk from 'chalk';
+import { canUseInteractiveTerminal } from './interactive.js';
 
 interface Keypress {
   ctrl?: boolean;
@@ -115,16 +116,12 @@ export function renderKeyHint(label: string): string {
   return chalk.black.bgWhite(` ${label} `);
 }
 
-function canRunPrompt(): boolean {
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY && typeof process.stdin.setRawMode === 'function');
-}
-
 export async function promptSelect<T>(options: SelectPromptOptions<T>): Promise<T | null> {
   const initialState = createSelectState(options.options, options.initialValue);
   if (options.options.length === 0) {
     return null;
   }
-  if (!canRunPrompt()) {
+  if (!canUseInteractiveTerminal()) {
     return getSelectedOption(initialState)?.value ?? null;
   }
 

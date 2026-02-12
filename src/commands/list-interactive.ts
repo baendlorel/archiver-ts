@@ -2,6 +2,7 @@ import readline from 'node:readline';
 import chalk from 'chalk';
 import { ArchiveStatus } from '../consts/index.js';
 import { t } from '../i18n/index.js';
+import { canUseInteractiveTerminal } from '../ui/interactive.js';
 import { createSelectState, getSelectedOption, moveSelect, renderKeyHint, renderSelect } from '../ui/select.js';
 
 export type ListAction = 'enter' | 'restore';
@@ -31,10 +32,7 @@ function getActionLabel(action: ListAction): string {
 }
 
 export function canRunInteractiveList(): boolean {
-  if (process.stdin.isTTY && process.stdout.isTTY) {
-    return true;
-  }
-  return Boolean(process.stdin.isTTY && process.env.ARCHIVER_FORCE_INTERACTIVE === '1');
+  return canUseInteractiveTerminal();
 }
 
 export function isActionAvailable(entry: InteractiveListEntry, action: ListAction): boolean {
