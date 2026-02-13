@@ -2,7 +2,7 @@
 
 `archiver` (binary: `arv`) archives files/folders into a managed vault directory and lets you restore them later.
 
-It uses filesystem move/rename semantics (no compression), keeps metadata in `.archiver`, and records audit logs.
+**Archiver is interactive Now !**
 
 ## Quick start
 
@@ -11,6 +11,46 @@ Install dependencies and build:
 ```bash
 npm install -g archiver-ts
 ```
+
+### First run
+
+```bash
+arv # run without subcommand to initialize
+```
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo01.jpg" width="200"/>
+
+### Open Current Directory
+
+In this mode you can archive items by simply press `Enter` on them.
+
+```bash
+arv .
+```
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo03.jpg" width="200"/>
+
+### View Archived List
+
+An interactive list of all archived items is available:
+
+```bash
+arv
+# or
+arv list
+```
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo02.jpg" width="200"/>
+
+### Config
+
+An interactive config editor is available for all settings, including language, no-command behavior, and more:
+
+```bash
+arv config
+```
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo04.jpg" width="200"/>
 
 ## Common commands
 
@@ -42,7 +82,6 @@ arv config
 arv update [--repo <owner/repo>] [--install]
 arv check
 ```
-
 
 ## Interactive config editor
 
