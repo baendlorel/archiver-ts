@@ -99,7 +99,7 @@ export const zh = {
   'command.config.description': '交互式编辑配置',
   'command.config.error.no_tty': '交互式配置编辑器需要在 TTY 终端中运行。',
   'command.config.error.vault_item_sep_empty': '分隔符不能为空。',
-  'command.config.title': '配置编辑器',
+  'command.config.title': 'Archiver配置编辑器',
   'command.config.key.up_down': '上/下',
   'command.config.key.left_right': '左/右',
   'command.config.key.type': '输入',

@@ -251,7 +251,7 @@ function renderScreen(
   });
 
   const lines: string[] = [];
-  lines.push(chalk.bold(t('command.config.title')));
+  lines.push(chalk.bold(t('command.config.title') + ' v' + process.env.VERSION));
   lines.push('');
 
   for (let index = 0; index < fields.length; index += 1) {

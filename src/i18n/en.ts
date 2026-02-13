@@ -103,7 +103,7 @@ export const en: I18nDictionary = {
   'command.config.description': 'Interactively edit config',
   'command.config.error.no_tty': 'Interactive config editor requires a TTY terminal.',
   'command.config.error.vault_item_sep_empty': 'Separator cannot be empty.',
-  'command.config.title': 'Config editor',
+  'command.config.title': 'Archiver Config Editor',
   'command.config.key.up_down': 'Up/Down',
   'command.config.key.left_right': 'Left/Right',
   'command.config.key.type': 'Type',

@@ -84,12 +84,12 @@ declare global {
        * Runtime production flag, injected by build/test tools.
        * Use truthy check, e.g. `if (process.env.IS_PROD)`.
        */
-      IS_PROD?: string;
+      readonly IS_PROD: string;
 
       /**
        * Runtime app version, injected by build tools.
        */
-      VERSION?: string;
+      readonly VERSION: string;
     }
   }
 }
