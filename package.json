@@ -1,6 +1,6 @@
 {
   "name": "archiver-ts",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "A TypeScript rewrite of Archiver CLI",
   "description_zh": "用TypeScript重写的Archiver CLI",
   "type": "module",
@@ -21,7 +21,7 @@
     "e2e": "node .scripts/e2e.js",
     "build": "vite build",
     "arv": "node .scripts/build.js --arv",
-    "pub": "vite build && npm publish --access public"
+    "pub": "node .scripts/publish.js"
   },
   "keywords": [
     "archiver",
