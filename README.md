@@ -1,4 +1,16 @@
-# archiver
+# Archiver
+
+<p align="left">
+	<a href="https://www.npmjs.com/package/archiver-ts" target="_blank">
+		<img src="https://img.shields.io/npm/v/archiver-ts.svg?style=flat-square" alt="NPM Version" />
+	</a>
+	<a href="https://www.npmjs.com/package/archiver-ts" target="_blank">
+		<img src="https://img.shields.io/npm/dm/archiver-ts.svg?style=flat-square" alt="NPM Monthly Downloads" />
+	</a>
+	<a href="https://github.com/aldia-dev/archiver-ts/blob/main/LICENSE" target="_blank">
+		<img src="https://img.shields.io/npm/l/archiver-ts.svg?style=flat-square" alt="License" />
+	</a>
+</p>
 
 `archiver` (binary: `arv`) archives files/folders into a managed vault directory and lets you restore them later.
 
@@ -14,11 +26,15 @@ npm install -g archiver-ts
 
 ### First run
 
+Initialize archiver by running:
+
 ```bash
 arv # run without subcommand to initialize
 ```
 
-<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo01.jpg" width="200"/>
+You may choose the default behavior when running `arv` without subcommands, and it will be saved to config for future runs.
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo01.jpg" width="68%"/>
 
 ### Open Current Directory
 
@@ -28,11 +44,13 @@ In this mode you can archive items by simply press `Enter` on them.
 arv .
 ```
 
-<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo03.jpg" width="200"/>
+Press `↑/↓` to select items, `Enter` to archive, and `q` to quit.
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo03.jpg" width="68%"/>
 
 ### View Archived List
 
-An interactive list of all archived items is available:
+An interactive list of all archived items is available.
 
 ```bash
 arv
@@ -40,7 +58,9 @@ arv
 arv list
 ```
 
-<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo02.jpg" width="200"/>
+Press `↑/↓` to select items,`←/→` to choose action, `Enter` to archive, and `q` to quit.
+
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo02.jpg" width="68%"/>
 
 ### Config
 
@@ -50,7 +70,7 @@ An interactive config editor is available for all settings, including language, 
 arv config
 ```
 
-<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo04.jpg" width="200"/>
+<img src="https://raw.githubusercontent.com/baendlorel/archiver-ts/main/.assets/demo04.jpg" width="68%"/>
 
 ## Common commands
 
